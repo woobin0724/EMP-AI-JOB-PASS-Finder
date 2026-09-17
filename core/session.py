@@ -225,6 +225,11 @@ def login(user: dict) -> None:
     st.session_state["resume_code"] = user.get("resume_code", "")
     st.session_state["login_error"] = ""
 
+    # 이전 사용자의 찜 캐시·디바운스 기록이 남아 있으면 남의 데이터를 보게 된다.
+    # (같은 브라우저 세션에서 이어하기 코드로 계정을 바꾸는 경우가 실제로 있다.)
+    from services.activity import clear_caches
+    clear_caches()
+
     saved = store.upsert_user(
         user["user_id"],
         provider=user.get("provider", "guest"),

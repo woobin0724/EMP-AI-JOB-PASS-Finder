@@ -307,6 +307,26 @@ div[data-testid="stTextArea"] textarea {{
     }}
     .st-key-mjp_navbar .stButton > button {{ font-size: 13px; white-space: nowrap; }}
 
+    /* --- 예외 2: 카드 하단의 짧은 버튼 줄은 가로 유지 ---
+       기업 카드마다 [♡][합격 정보][이력서] 3개가 세로로 쌓이면 카드 하나가
+       화면 절반을 먹는다. 컨테이너 key 를 mjp_row_ 로 시작하게 만들고
+       부분 일치 선택자로 한 번에 잡는다 (key 는 카드마다 달라야 하므로
+       클래스를 공유할 수 없다). */
+    div[class*="st-key-mjp_row"] div[data-testid="stHorizontalBlock"] {{
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        gap: 0.35rem !important;
+    }}
+    div[class*="st-key-mjp_row"] div[data-testid="stColumn"] {{
+        width: auto !important;
+        min-width: 0 !important;
+        flex: 1 1 0 !important;
+    }}
+    div[class*="st-key-mjp_row"] .stButton > button {{
+        font-size: 12.5px; padding-left: 4px; padding-right: 4px;
+        white-space: nowrap; overflow: hidden;
+    }}
+
     /* 표/데이터프레임 가로 스크롤 허용 (레이아웃을 밀어내지 않도록) */
     div[data-testid="stDataFrame"] {{ overflow-x: auto; }}
 }}

@@ -109,8 +109,19 @@ def _company_detail(c: dict) -> None:
     </div>
     """, unsafe_allow_html=True)
 
-    if st.button("📝 이 회사로 자소서 쓰기", type="primary"):
-        ss.goto(ss.PAGE_RESUME)
+    with st.container(key="mjp_row_guide_actions"):
+        gb1, gb2 = st.columns([1, 1.6])
+        with gb1:
+            marked = activity.is_bookmarked(c["id"])
+            if st.button("♥ 찜 해제" if marked else "♡ 찜하기",
+                         key="guide_fav", use_container_width=True,
+                         type="primary" if marked else "secondary"):
+                activity.toggle_bookmark(c["id"])
+                st.rerun()
+        with gb2:
+            if st.button("📝 이 회사로 자소서 쓰기", type="primary",
+                         use_container_width=True, key="guide_to_resume"):
+                ss.goto(ss.PAGE_RESUME)
 
     st.markdown("##### 🏅 고졸 출신 선배들의 직무별 세부 평점 (예시)")
     rcols = st.columns(3)

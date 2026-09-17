@@ -11,9 +11,12 @@ views/mypage.py
 import streamlit as st
 
 from core import session as ss
+from data.company_showcase import COMPANY_BY_ID
+from data.roadmap import MILESTONES
+from services import activity
 from services import store
-from ui.components import back_to_hub, section_title, topbar
-from ui.theme import CARD_BORDER, GOLD, GREEN, MUTED, PURPLE, TEXT
+from ui.components import back_to_hub, grid_columns, section_title, show_sticker, topbar
+from ui.theme import BRAND, BRAND_LIGHT, CARD_BORDER, GOLD, GREEN, MUTED, PURPLE, RED, TEXT
 
 _PROVIDER_LABEL = {"kakao": "카카오", "naver": "네이버", "google": "Google", "guest": "게스트모드"}
 _ROLE_LABEL = {"student": "🎓 학생", "teacher": "🧑‍🏫 선생님"}
@@ -67,29 +70,20 @@ def render() -> None:
     # ---------- [Phase 2] 반 정보 ----------
     _class_section(saved)
 
-    # ---------- 활동 기록 (Phase 3 예정) ----------
+    # ---------- [Phase 3] 나의 활동 기록 ----------
     st.markdown(f'<div style="height:1px;background:{CARD_BORDER};margin:18px 0;"></div>',
                 unsafe_allow_html=True)
     st.markdown("#### 📌 나의 활동 기록")
 
-    acols = st.columns(3)
-    upcoming = [
-        ("♡", "찜한 기업", "기업 탐색기에서 하트를 누른 기업이 여기 모입니다."),
-        ("👀", "조사한 기업", "가이드에서 열어본 기업의 이력이 쌓입니다."),
-        ("📈", "매칭 점수 히스토리", "진단할 때마다 점수 변화가 기록됩니다."),
-    ]
-    for col, (icon, title, desc) in zip(acols, upcoming):
-        with col:
-            st.markdown(f"""
-            <div class="mjp-card" style="border-style:dashed; text-align:center;">
-                <div style="font-size:26px;">{icon}</div>
-                <div style="font-weight:800; color:{TEXT}; margin-top:8px;">{title}</div>
-                <div class="mjp-muted" style="margin-top:6px; line-height:1.5;">{desc}</div>
-                <div style="margin-top:10px;">
-                    <span class="mjp-badge" style="background:{PURPLE}; color:#fff;">다음 업데이트</span>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+    tabs = st.tabs(["📈 매칭 점수", "🗺 로드맵", "♥ 찜한 기업", "👀 조사한 기업"])
+    with tabs[0]:
+        _score_section(saved)
+    with tabs[1]:
+        _roadmap_section()
+    with tabs[2]:
+        _bookmark_section(saved)
+    with tabs[3]:
+        _viewed_section(saved)
 
     # ---------- 계정 관리 ----------
     st.markdown(f'<div style="height:1px;background:{CARD_BORDER};margin:18px 0;"></div>',
@@ -191,3 +185,281 @@ def _class_section(saved: dict) -> None:
     """, unsafe_allow_html=True)
     if st.button("🏫 반 코드 입력하기", use_container_width=True, key="mypage_join_class"):
         ss.goto(ss.PAGE_CLASS_JOIN)
+
+
+# ============================================================
+# [Phase 3] 활동 기록 섹션
+# ============================================================
+
+def _empty(icon: str, title: str, desc: str, button: str, page: str, key: str) -> None:
+    """빈 상태 공통 렌더러 — '아무것도 없음'이 아니라 '다음에 뭘 하면 되는지'를 보여준다."""
+    c1, c2 = st.columns([1, 2.6])
+    with c1:
+        show_sticker(icon, width=120)
+    with c2:
+        st.markdown(f"""
+        <div style="padding-top:8px;">
+            <div style="font-weight:800; color:{TEXT}; font-size:15px;">{title}</div>
+            <div class="mjp-muted" style="margin-top:6px; line-height:1.6;">{desc}</div>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button(button, key=key, type="primary"):
+            ss.goto(page)
+
+
+# ------------------------------------------------------------
+# 1. 매칭 점수
+# ------------------------------------------------------------
+def _score_section(saved: dict) -> None:
+    """
+    ▣ 형태 선택
+       기록이 1건이면 라인 차트는 점 하나짜리 빈 그래프가 된다.
+       '한 값 + 추세'는 차트가 아니라 스탯 타일이 맞는 형태라서,
+       2건 이상 쌓였을 때만 시간축 차트를 덧붙인다.
+       차트는 단일 시리즈이므로 한 가지 색(브랜드 블루)만 쓴다.
+    """
+    series = activity.score_series(saved)
+    if not series:
+        _empty("thinking", "아직 진단 기록이 없어요",
+               "스펙 진단에서 내신·자격증을 입력하면 점수가 여기에 쌓입니다. "
+               "진단할 때마다 기록되니 점수가 어떻게 오르는지 볼 수 있어요.",
+               "📊 스펙 진단 하러 가기", ss.PAGE_SPEC, "mypage_go_spec")
+        return
+
+    latest, delta = activity.score_delta(saved)
+
+    # --- 스탯 타일 (헤드라인) ---
+    if latest >= 80:
+        tone, verdict = GREEN, "합격 안정권"
+    elif latest >= 50:
+        tone, verdict = GOLD, "분발 필요"
+    else:
+        tone, verdict = RED, "보완 시급"
+
+    if delta is None:
+        delta_html = f'<div class="mjp-muted">첫 진단 기록</div>'
+    elif delta > 0:
+        delta_html = (f'<div style="color:{GREEN}; font-size:13px; font-weight:700;">'
+                      f'▲ {delta}점 상승</div>')
+    elif delta < 0:
+        delta_html = (f'<div style="color:{RED}; font-size:13px; font-weight:700;">'
+                      f'▼ {abs(delta)}점 하락</div>')
+    else:
+        delta_html = f'<div class="mjp-muted">직전과 동일</div>'
+
+    st.markdown(f"""
+    <div class="mjp-card" style="display:flex; align-items:center; gap:22px; flex-wrap:wrap;">
+        <div>
+            <div class="mjp-muted">최근 매칭 점수</div>
+            <div style="font-size:46px; font-weight:800; color:{tone}; line-height:1.1;">{latest}
+                <span style="font-size:17px; color:{MUTED}; font-weight:700;">/ 100</span></div>
+            {delta_html}
+        </div>
+        <div style="width:1px; height:56px; background:{CARD_BORDER};"></div>
+        <div>
+            <div class="mjp-muted">판정</div>
+            <div style="font-size:19px; font-weight:800; color:{tone}; margin-top:4px;">{verdict}</div>
+            <div class="mjp-muted" style="margin-top:4px;">기록 {len(series)}회</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    if len(series) < 2:
+        st.caption("진단을 한 번 더 하면 점수 변화 그래프가 나타납니다.")
+        return
+
+    _score_chart(series)
+
+
+def score_dataframe(series: list[dict]):
+    """
+    점수 히스토리 → 차트용 DataFrame. (순수 함수 — 테스트에서 직접 검증한다)
+
+    ▣ x축을 '시각'이 아니라 '진단 회차'로 잡은 이유
+       처음에는 시간축으로 그렸는데, 실제로 렌더링해보니 점이 세로로 한 줄
+       쌓였다. 학생이 슬라이더를 조정하며 연속으로 진단하면 기록 여러 건이
+       같은 분·초에 찍히기 때문이다(저장 시각은 초 단위). 반대로 며칠 만에
+       다시 들어오면 점 두 개가 화면 양끝에 떨어져 추세가 안 보인다.
+
+       학생이 이 차트에서 알고 싶은 건 "몇 시에 쟀나"가 아니라 "내 점수가
+       오르고 있나"다. 그래서 x는 회차(1,2,3…)로 두고 실제 시각은 툴팁에
+       담았다. 이러면 진단이 몰려 있든 띄엄띄엄이든 추세가 항상 읽힌다.
+    """
+    import pandas as pd
+
+    return pd.DataFrame([
+        {"회차": i + 1,
+         "시각": pd.to_datetime(row["at"]),
+         "점수": row["score"],
+         "목표 기업": row.get("company_name") or "일반 진단"}
+        for i, row in enumerate(series)
+    ])
+
+
+def build_score_chart(series: list[dict]):
+    """
+    점수 추이 라인 차트를 만든다.
+
+    Streamlit 호출과 분리한 이유: AppTest 는 vega-lite 차트를 UnknownElement 로만
+    노출해서 화면 테스트로는 '차트가 제대로 만들어졌는지'를 확인할 수 없다.
+    스펙을 반환하는 순수 함수로 두면 축 범위·색·툴팁을 직접 단언할 수 있다.
+
+    단일 시리즈이므로 색은 브랜드 블루 하나만 쓴다. 점수 구간 색(초록/금색/빨강)은
+    위 스탯 타일에서 라벨과 함께 쓰이는 '상태 표시'이고, 그걸 선 색으로 가져오면
+    선 하나에 두 가지 의미가 섞인다.
+    """
+    import altair as alt
+
+    df = score_dataframe(series)
+
+    axis_common = dict(labelColor=MUTED, titleColor=MUTED,
+                       domainColor=CARD_BORDER, tickColor=CARD_BORDER)
+
+    chart = (
+        alt.Chart(df)
+        .mark_line(
+            color=BRAND, strokeWidth=2, strokeCap="round",
+            point=alt.OverlayMarkDef(color=BRAND_LIGHT, size=70,
+                                     stroke=CARD_BORDER, strokeWidth=2),
+        )
+        .encode(
+            x=alt.X("회차:Q", title="진단 회차",
+                    scale=alt.Scale(nice=False, padding=18),
+                    axis=alt.Axis(tickMinStep=1, format="d", grid=False, **axis_common)),
+            y=alt.Y("점수:Q", title=None,
+                    scale=alt.Scale(domain=[0, 100]),
+                    axis=alt.Axis(grid=True, gridColor=CARD_BORDER, gridOpacity=0.55,
+                                  tickCount=5, **axis_common)),
+            tooltip=[
+                alt.Tooltip("시각:T", title="진단 시각", format="%Y-%m-%d %H:%M"),
+                alt.Tooltip("점수:Q", title="매칭 점수"),
+                alt.Tooltip("목표 기업:N", title="목표 기업"),
+            ],
+        )
+        .properties(height=230)
+        .configure_view(strokeWidth=0, fill=None)
+        .configure_axis(domainWidth=1)
+    )
+    return chart
+
+
+def _score_chart(series: list[dict]) -> None:
+    """차트 + 표 보기. 표를 함께 두는 이유는 정보가 색과 위치에만 의존하지 않게 하기 위함."""
+    st.altair_chart(build_score_chart(series), use_container_width=True)
+    st.caption("가로축은 진단 회차입니다. 점 위에 손가락을 올리면 실제 진단 시각과 "
+               "목표 기업이 표시됩니다.")
+
+    with st.expander("표로 보기"):
+        table = score_dataframe(series).iloc[::-1].copy()   # 최신순
+        table["시각"] = table["시각"].dt.strftime("%Y-%m-%d %H:%M")
+        table = table[["회차", "시각", "점수", "목표 기업"]]
+        st.dataframe(table, use_container_width=True, hide_index=True)
+
+
+# ------------------------------------------------------------
+# 2. 커리어 로드맵
+# ------------------------------------------------------------
+def _roadmap_section() -> None:
+    milestones = st.session_state.get("milestones") or {}
+    done = sum(1 for v in milestones.values() if v)
+    total = len(MILESTONES)
+
+    st.progress(done / total, text=f"{done} / {total} 단계 완료")
+
+    for col, (key, label, desc) in zip(grid_columns(total, 3), MILESTONES):
+        with col:
+            checked = bool(milestones.get(key))
+            color = GREEN if checked else CARD_BORDER
+            mark = "✅" if checked else "⬜"
+            st.markdown(f"""
+            <div class="mjp-card" style="border-color:{color};">
+                <div style="font-size:20px;">{mark}</div>
+                <div style="font-weight:800; color:{TEXT if checked else MUTED};
+                            margin-top:8px;">{label}</div>
+                <div class="mjp-muted" style="margin-top:6px; line-height:1.5;">{desc}</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+    if done == total:
+        st.success("세 단계를 모두 완료했습니다. 이제 실제 지원서를 넣을 준비가 끝났어요 🎉")
+    else:
+        st.caption("단계 체크는 '채용 대비 가이드 & 커리큘럼' 화면에서 할 수 있습니다.")
+        if st.button("🛠 로드맵 이어서 하기", key="mypage_go_guide"):
+            ss.goto(ss.PAGE_GUIDE)
+
+
+# ------------------------------------------------------------
+# 3. 찜한 기업
+# ------------------------------------------------------------
+def _bookmark_section(saved: dict) -> None:
+    marks = [cid for cid in (saved.get("bookmarks") or []) if cid in COMPANY_BY_ID]
+
+    if not marks:
+        _empty("encourage", "아직 찜한 기업이 없어요",
+               "기업 탐색기에서 마음에 드는 기업의 ♡ 를 누르면 여기에 모입니다. "
+               "나중에 자소서를 쓸 때 바로 꺼내 쓸 수 있어요.",
+               "🔍 기업 탐색하러 가기", ss.PAGE_EXPLORE, "mypage_go_explore")
+        return
+
+    st.caption(f"찜한 기업 {len(marks)}곳")
+
+    for col, cid in zip(grid_columns(len(marks), 2), marks):
+        company = COMPANY_BY_ID[cid]
+        with col:
+            st.markdown(f"""
+            <div class="mjp-card">
+                <span class="mjp-tag">{company['size_tag']} · {company['field_tag']}</span>
+                <div style="font-size:17px; font-weight:800; color:{TEXT}; margin-top:8px;">
+                    {company['name']}</div>
+                <div class="mjp-muted" style="margin-top:4px;">{company['description']}</div>
+                <div class="mjp-muted" style="margin-top:8px;">인재상
+                    <b style="color:{TEXT};">{', '.join(company['ideal_talent'])}</b></div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            with st.container(key=f"mjp_row_fav_{cid}"):
+                f1, f2, f3 = st.columns([0.8, 1, 1])
+                with f1:
+                    if st.button("♥", key=f"unfav_{cid}", use_container_width=True,
+                                 type="primary", help="찜 해제"):
+                        activity.toggle_bookmark(cid)
+                        st.rerun()
+                with f2:
+                    if st.button("합격 정보", key=f"myfav_info_{cid}", use_container_width=True):
+                        st.session_state.selected_company_id = cid
+                        ss.goto(ss.PAGE_GUIDE)
+                with f3:
+                    if st.button("자소서 📄", key=f"myfav_resume_{cid}", use_container_width=True):
+                        st.session_state.selected_company_id = cid
+                        ss.goto(ss.PAGE_RESUME)
+
+
+# ------------------------------------------------------------
+# 4. 조사한 기업
+# ------------------------------------------------------------
+def _viewed_section(saved: dict) -> None:
+    viewed = [v for v in (saved.get("viewed") or []) if v.get("company_id") in COMPANY_BY_ID]
+
+    if not viewed:
+        _empty("thinking", "아직 열어본 기업이 없어요",
+               "'채용 대비 가이드'에서 기업을 선택하면 열람 이력이 여기에 쌓입니다. "
+               "어떤 기업을 조사했는지 되짚어볼 때 쓰세요.",
+               "🛠 기업 가이드 보러 가기", ss.PAGE_GUIDE, "mypage_go_guide2")
+        return
+
+    st.caption(f"최근 열어본 기업 {len(viewed)}곳 · 최신순")
+
+    for item in viewed:
+        company = COMPANY_BY_ID[item["company_id"]]
+        marked = "♥" if activity.is_bookmarked(company["id"]) else ""
+        st.markdown(f"""
+        <div class="mjp-card" style="padding:12px 16px; display:flex; align-items:center;
+                    gap:12px; flex-wrap:wrap;">
+            <div style="flex:1; min-width:160px;">
+                <div style="font-weight:800; color:{TEXT};">{company['name']}
+                    <span style="color:{RED};">{marked}</span></div>
+                <div class="mjp-muted">{company['size_tag']} · {company['description']}</div>
+            </div>
+            <div class="mjp-muted">{item.get('at', '')[:10]}</div>
+        </div>
+        """, unsafe_allow_html=True)

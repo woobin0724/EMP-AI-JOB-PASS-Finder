@@ -12,6 +12,7 @@ import streamlit as st
 from core import session as ss
 from core.matching import filter_results
 from data.company_showcase import COMPANY_CATEGORIES, COMPANY_SHOWCASE
+from services import activity
 from services import fallback as fb
 from services.strong_sme_api import PRIORITY_DEPARTMENTS, prioritize_by_department
 from ui.components import back_to_hub, disclaimer, grid_columns, section_title, show_sticker, topbar
@@ -53,15 +54,25 @@ def render() -> None:
                 </div>
             </div>
             """, unsafe_allow_html=True)
-            bc1, bc2 = st.columns(2)
-            with bc1:
-                if st.button("합격 정보 →", key=f"info_{c['id']}", use_container_width=True):
-                    st.session_state.selected_company_id = c["id"]
-                    ss.goto(ss.PAGE_GUIDE)
-            with bc2:
-                if st.button("이력서 연동 📄", key=f"resume_{c['id']}", use_container_width=True):
-                    st.session_state.selected_company_id = c["id"]
-                    ss.goto(ss.PAGE_RESUME)
+            # 버튼 줄은 mjp_row_ 컨테이너로 감싸 모바일에서도 가로로 유지한다
+            with st.container(key=f"mjp_row_card_{c['id']}"):
+                bc1, bc2, bc3 = st.columns([0.7, 1.2, 1.2])
+                with bc1:
+                    marked = activity.is_bookmarked(c["id"])
+                    if st.button("♥" if marked else "♡",
+                                 key=f"fav_{c['id']}", use_container_width=True,
+                                 help="찜 해제" if marked else "이 기업 찜하기",
+                                 type="primary" if marked else "secondary"):
+                        activity.toggle_bookmark(c["id"])
+                        st.rerun()
+                with bc2:
+                    if st.button("합격 정보", key=f"info_{c['id']}", use_container_width=True):
+                        st.session_state.selected_company_id = c["id"]
+                        ss.goto(ss.PAGE_GUIDE)
+                with bc3:
+                    if st.button("자소서 📄", key=f"resume_{c['id']}", use_container_width=True):
+                        st.session_state.selected_company_id = c["id"]
+                        ss.goto(ss.PAGE_RESUME)
 
     st.divider()
 

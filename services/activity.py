@@ -130,3 +130,84 @@ def student_summary(user: dict) -> dict:
         "last_seen": (user.get("last_seen_at") or "")[:10],
         "active": bool(history or milestones or profile),
     }
+
+
+# ------------------------------------------------------------
+# [Phase 3] 찜하기(북마크)
+# ------------------------------------------------------------
+_BOOKMARK_CACHE = "_bookmarks_cache"
+
+
+def bookmarks() -> set:
+    """
+    현재 사용자가 찜한 기업 id 집합.
+
+    ▣ 왜 세션 캐시가 필요한가
+       기업 탐색기는 카드 20장을 한 화면에 그린다. 카드마다 하트 상태를
+       확인하려고 store.is_bookmarked() 를 부르면 JSON 파일을 20번 읽는다.
+       상호작용 한 번마다 그게 반복된다. 그래서 세션에 한 번만 읽어두고,
+       토글할 때 캐시를 함께 갱신한다.
+
+       사용자가 바뀔 때(로그인/로그아웃) 캐시가 남지 않도록
+       core/session.py 의 login()/logout() 에서 비운다.
+    """
+    if _BOOKMARK_CACHE not in st.session_state:
+        user = store.get_user(_uid()) or {}
+        st.session_state[_BOOKMARK_CACHE] = set(user.get("bookmarks") or [])
+    return st.session_state[_BOOKMARK_CACHE]
+
+
+def is_bookmarked(company_id: str) -> bool:
+    return company_id in bookmarks()
+
+
+def toggle_bookmark(company_id: str) -> bool:
+    """찜 토글. 반환값은 토글 후 상태(True=찜함)."""
+    uid = _uid()
+    if not uid or not company_id:
+        return False
+
+    now_on = store.toggle_bookmark(uid, company_id)
+    cache = bookmarks()
+    if now_on:
+        cache.add(company_id)
+    else:
+        cache.discard(company_id)
+    return now_on
+
+
+def clear_caches() -> None:
+    """사용자 전환 시 호출 — 찜 캐시와 디바운스 기록을 모두 비운다."""
+    st.session_state.pop(_BOOKMARK_CACHE, None)
+    for key in [k for k in st.session_state if str(k).startswith("_act_")]:
+        st.session_state.pop(key, None)
+
+
+# ------------------------------------------------------------
+# [Phase 3] 마이페이지 조회
+# ------------------------------------------------------------
+def my_record() -> dict:
+    """마이페이지가 쓰는 내 활동 기록 전체."""
+    return store.get_user(_uid()) or {}
+
+
+def score_series(user: dict | None = None) -> list[dict]:
+    """
+    점수 히스토리를 **오래된 순**으로 반환한다.
+
+    저장소에는 최신이 앞에 오도록(insert(0)) 쌓이지만, 시간축 차트는
+    왼쪽이 과거여야 하므로 여기서 뒤집는다.
+    """
+    user = user if user is not None else my_record()
+    return list(reversed(user.get("score_history") or []))
+
+
+def score_delta(user: dict | None = None) -> tuple[float | None, float | None]:
+    """(최근 점수, 직전 대비 증감). 기록이 없으면 (None, None)."""
+    history = (user if user is not None else my_record()).get("score_history") or []
+    if not history:
+        return None, None
+    latest = history[0]["score"]
+    if len(history) < 2:
+        return latest, None
+    return latest, round(latest - history[1]["score"], 1)
