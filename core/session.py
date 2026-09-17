@@ -111,6 +111,7 @@ def _defaults() -> dict:
         "cover_letter": None,
         "cover_letter_source": None,
         "cover_letter_cached": False,
+        "cover_letter_options": None,   # [Phase 5] 문체·분량·회차
         "live_jobs": None,
         "tracker": SourceTracker(),
 
