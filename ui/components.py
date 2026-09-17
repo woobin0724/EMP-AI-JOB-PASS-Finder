@@ -1,0 +1,139 @@
+# -*- coding: utf-8 -*-
+"""
+ui/components.py
+여러 화면이 공유하는 렌더링 조각 (스티커 · 상단 내비 · 설정 패널)
+"""
+
+import streamlit as st
+
+from core import session as ss
+from data import ogq_assets as ogq
+from services import auth as auth_svc
+from services import fallback as fb
+from ui.theme import BG, CARD_BORDER, GREEN, MUTED, TEXT
+
+
+# ------------------------------------------------------------
+# OGQ 스티커
+# ------------------------------------------------------------
+def show_sticker(key: str, width: int = 130, caption: str | None = None) -> None:
+    """
+    OGQ 스티커를 렌더링한다. 이미지가 없으면 이모지로 자동 대체된다.
+    (원본 app.py 의 show_sticker 를 그대로 이관 — 이미지 부재로 앱이 죽지 않게 하는 방어)
+    """
+    src = ogq.sticker(key)
+    if src:
+        try:
+            st.image(src, width=width, caption=caption)
+            return
+        except Exception:
+            pass
+    st.markdown(
+        f'<div style="font-size:{int(width * 0.42)}px; text-align:center;">{ogq.emoji(key)}</div>',
+        unsafe_allow_html=True,
+    )
+    if caption:
+        st.caption(caption)
+
+
+# ------------------------------------------------------------
+# 상단 내비게이션 (사이드바 대체)
+# ------------------------------------------------------------
+def topbar(active: str | None = None) -> None:
+    """
+    로고 · 서비스명 · 기능 메뉴 · 마이페이지를 한 줄로 배치한다.
+
+    ▣ 왜 사이드바를 버렸는가
+       Streamlit 사이드바는 모바일에서 기본 접힘 상태다. 학생이 QR 로 접속하면
+       햄버거를 한 번 눌러야 메뉴가 나오는데, 시연 흐름에서 그 한 번의 터치가
+       이탈 지점이 된다. 그래서 내비게이션을 전부 본문 상단으로 끌어올렸다.
+       (ui/theme.py 의 @media 블록에서 이 내비만 모바일에서도 가로 스크롤로
+        유지되도록 예외 처리한다 — 5개 버튼이 세로로 쌓이면 화면을 다 먹는다.)
+    """
+    name = ss.display_name()
+    role_label = {"student": "학생", "teacher": "선생님"}.get(st.session_state.get("role"), "")
+
+    bcol, ucol = st.columns([2.4, 1])
+    with bcol:
+        st.markdown(f"""
+        <div class="mjp-brand" style="padding-top:4px;">
+            <div class="mjp-brand-mark">EMP</div>
+            <div>
+                <div class="mjp-brand-name">AI Job Pass Finder</div>
+                <div class="mjp-brand-sub">마이스터고 취업 성공 올인원 패스파인더</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    with ucol:
+        st.markdown(f"""
+        <div class="mjp-userchip">
+            <div class="mjp-userchip-name">{name} 님</div>
+            <div class="mjp-muted">{role_label}{' · ' if role_label else ''}{_provider_label()}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # --- 기능 메뉴 (모바일에서도 가로 유지) ---
+    with st.container(key="mjp_navbar"):
+        cols = st.columns(6)
+        items = [(f["key"], f"{f['icon']} {f['title'].split(' & ')[0]}") for f in ss.FEATURES]
+        items.append((ss.PAGE_NEXT, "🚀 향후 로드맵"))
+        items.append((ss.PAGE_MYPAGE, "👤 마이페이지"))
+
+        for i, (key, label) in enumerate(items):
+            with cols[i % 6]:
+                is_active = (active == key)
+                if st.button(label, key=f"nav_{key}", use_container_width=True,
+                             type="primary" if is_active else "secondary"):
+                    ss.goto(key)
+
+    st.markdown(f'<div style="height:1px;background:{CARD_BORDER};margin:2px 0 16px;"></div>',
+                unsafe_allow_html=True)
+
+
+def _provider_label() -> str:
+    mapping = {"kakao": "카카오", "naver": "네이버", "google": "Google", "guest": "게스트"}
+    return mapping.get(ss.provider(), "")
+
+
+def back_to_hub(label: str = "← 메인 허브로") -> None:
+    """기능 화면 좌상단 뒤로가기. 브라우저 뒤로가기가 없는 Streamlit 의 보완책."""
+    if st.button(label, key=f"back_hub_{ss.current_page()}"):
+        ss.goto(ss.PAGE_HUB)
+
+
+# ------------------------------------------------------------
+# 데이터 연동 설정 (기존 사이드바 내용을 접이식 패널로 이관)
+# ------------------------------------------------------------
+def settings_expander() -> None:
+    """외부 API 키 입력. 사이드바를 없앴으므로 본문 expander 로 내렸다."""
+    with st.expander("⚙️ 데이터 연동 설정 (선택)", expanded=False):
+        st.session_state["qnet_key"] = st.text_input(
+            "Q-Net / 공공데이터포털 서비스키", type="password",
+            value=st.session_state.get("qnet_key") or auth_svc.safe_secret("QNET_API_KEY"),
+            key="qnet_key_widget",
+        )
+        st.session_state["worknet_key"] = st.text_input(
+            "고용24(워크넷) Open API 인증키", type="password",
+            value=st.session_state.get("worknet_key") or auth_svc.safe_secret("WORKNET_API_KEY"),
+            key="worknet_key_widget",
+        )
+        st.caption("키가 없어도 앱은 백업 마스터 데이터로 100% 동작합니다.")
+        st.caption(f"📦 내장 백업: {fb.backup_summary()}")
+
+
+def disclaimer(text: str) -> None:
+    st.markdown(f'<div class="mjp-disclaimer">{text}</div>', unsafe_allow_html=True)
+
+
+def section_title(title: str, sub: str = "") -> None:
+    """화면 상단 제목 블록 — 큰 타이포 + 여백 (참고 디자인 톤)."""
+    st.markdown(f"""
+    <div style="margin:4px 0 18px;">
+        <div class="mjp-section-title">{title}</div>
+        {f'<div class="mjp-section-sub">{sub}</div>' if sub else ''}
+    </div>
+    """, unsafe_allow_html=True)
+
+
+def pill(text: str, color: str = GREEN) -> str:
+    return f'<span class="mjp-badge" style="background:{color}; color:{BG};">{text}</span>'
