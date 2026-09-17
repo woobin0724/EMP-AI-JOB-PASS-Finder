@@ -47,7 +47,6 @@ def render() -> None:
     # 입력
     # ------------------------------------------------------------
     with left:
-        st.markdown('<div class="mjp-card">', unsafe_allow_html=True)
         st.markdown("#### 내 현재 스펙 정보 기입")
 
         dept = st.selectbox("학과/계열 (하이파이브 분류 기준)", DEPARTMENT_LIST,
@@ -70,6 +69,9 @@ def render() -> None:
             "취득 전공 자격증 다중 선택 (Q-Net 기반)", cert_options,
             default=[c for c in st.session_state.user_certs if c in cert_options],
             key="user_certs_widget",
+            # Streamlit 기본 placeholder 가 "Choose options" 영문이라
+            # 한국어 화면에 영어가 섞인다
+            placeholder="자격증을 선택하세요",
         )
         st.session_state.user_certs = certs
 
@@ -79,6 +81,7 @@ def render() -> None:
             default=[k for k in st.session_state.strength_keywords if k in talent_keywords],
             key="strength_keywords_widget",
             help="선택한 키워드가 기업 '인재상'과 일치하면 인재상 점수(10점)에 반영됩니다.",
+            placeholder="강점 키워드를 선택하세요",
         )
         st.session_state.strength_keywords = strengths
 
@@ -90,7 +93,6 @@ def render() -> None:
             st.session_state.selected_company_id = target_company["id"]
 
         st.caption("※ 입력값을 바꾸면 오른쪽 점수가 **즉시** 갱신됩니다.")
-        st.markdown('</div>', unsafe_allow_html=True)
 
     # ------------------------------------------------------------
     # 점수 (순수 로컬 연산, 과금 0원)
@@ -159,7 +161,6 @@ def render() -> None:
     # ------------------------------------------------------------
     gcol1, gcol2 = st.columns(2)
     with gcol1:
-        st.markdown('<div class="mjp-card">', unsafe_allow_html=True)
         st.markdown(f'<span class="mjp-badge" style="background:{BLUE}; color:#fff;">Q-NET</span> '
                     f'**자격 분석 가이드 (예시 가산점)**', unsafe_allow_html=True)
         if not certs:
@@ -171,10 +172,8 @@ def render() -> None:
                 st.markdown(f"- **{cert}** → {size_for_bonus} 예시 가산점 "
                             f"**+{get_bonus_points(cert, size_for_bonus)}점**")
             st.caption("※ 실제 공식 가산점 규정이 아닌 예시 데이터입니다.")
-        st.markdown('</div>', unsafe_allow_html=True)
 
     with gcol2:
-        st.markdown('<div class="mjp-card">', unsafe_allow_html=True)
         st.markdown("**매칭 기업 탐색 (실시간 반영)**")
         size_pick = st.radio("기업 규모", COMPANY_SIZE_TAGS[1:], horizontal=True,
                              key="match_size", label_visibility="collapsed")
@@ -189,4 +188,3 @@ def render() -> None:
                 if st.button(f"{c['name']} 자세히 보기", key=f"match_{c['id']}"):
                     st.session_state.selected_company_id = c["id"]
                     ss.goto(ss.PAGE_GUIDE)
-        st.markdown('</div>', unsafe_allow_html=True)

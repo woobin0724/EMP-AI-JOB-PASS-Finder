@@ -232,12 +232,19 @@ div[data-testid="stToolbar"] {{ right: 0.4rem; }}
 .mjp-userchip-name {{ color: {TEXT}; font-size: 13px; font-weight: 700; }}
 
 /* ===== 5. Streamlit 위젯 다듬기 ===== */
-.stButton > button {{
+/* 버튼 선택자를 data-testid 기반으로 잡는다.
+   .stButton 클래스만 쓰면 Streamlit 버전에 따라 일부 버튼이 규칙 밖으로
+   빠진다 (실측에서 '다시 생성하기'가 40px 로 남아 있었다). */
+.stButton > button,
+div[data-testid="stButton"] button,
+div[data-testid="stFormSubmitButton"] button,
+div[data-testid="stDownloadButton"] button {{
     border-radius: 10px; font-weight: 700; border: 1px solid {CARD_BORDER};
     min-height: 44px;              /* 터치 타깃 최소 44px (애플 HIG 권장) */
     transition: border-color .15s ease;
 }}
-.stButton > button:hover {{ border-color: {BRAND}; }}
+.stButton > button:hover,
+div[data-testid="stButton"] button:hover {{ border-color: {BRAND}; }}
 div[data-testid="stTextInput"] input,
 div[data-testid="stNumberInput"] input,
 div[data-testid="stTextArea"] textarea {{
@@ -274,7 +281,45 @@ div[data-testid="stTextArea"] textarea {{
     .mjp-feature-desc {{ min-height: 0; }}
 
     /* 모바일에서는 버튼을 더 크게 (엄지 터치) */
-    .stButton > button {{ min-height: 48px; font-size: 15px; }}
+    .stButton > button,
+    div[data-testid="stButton"] button,
+    div[data-testid="stFormSubmitButton"] button,
+    div[data-testid="stDownloadButton"] button {{
+        min-height: 48px !important; font-size: 15px;
+    }}
+
+    /* 입력 컨트롤 자체의 터치 높이 확보.
+       실측 결과 selectbox 는 38px, 비밀번호 입력 래퍼는 40px 이라
+       44px 기준에 미달했다. 컨트롤을 키우면 안쪽 토글도 같이 커진다. */
+    div[data-baseweb="select"] > div,
+    div[data-testid="stSelectbox"] div[data-baseweb="select"],
+    div[data-testid="stTextInputRootElement"],
+    div[data-testid="stMultiSelect"] div[data-baseweb="select"] > div {{
+        min-height: 44px !important;
+    }}
+    div[data-baseweb="select"] [aria-label="Open"],
+    div[data-testid="stTextInputRootElement"] button {{
+        min-height: 44px !important; min-width: 40px !important;
+    }}
+
+    /* --- iOS 사파리 자동 확대 방지 (측정으로 발견) ---
+       입력창 폰트가 16px 미만이면 사파리가 포커스할 때 화면을 확대하고,
+       그 확대가 풀리지 않아 이후 레이아웃이 어긋난 채로 남는다.
+       stTextInput/stTextArea 만 막아뒀는데 실제로는 selectbox·multiselect 의
+       내부 input 이 14px 이라 그대로 뚫렸다. BaseWeb 이 만드는 input 까지 덮는다. */
+    div[data-testid="stSelectbox"] input,
+    div[data-testid="stMultiSelect"] input,
+    div[data-testid="stMultiSelectTagsContainer"] input,
+    div[data-baseweb="select"] input,
+    div[data-baseweb="input"] input {{
+        font-size: 16px !important;
+    }}
+
+    /* 도움말(?) 아이콘의 탭 영역 확보 — 16px 은 손가락으로 누르기 어렵다 */
+    div[data-testid="stTooltipHoverTarget"] {{
+        min-width: 30px; min-height: 30px;
+        display: inline-flex; align-items: center; justify-content: center;
+    }}
 
     /* 상단 브랜드 줄바꿈 허용 */
     .mjp-topbar {{ flex-wrap: wrap; gap: 8px; }}

@@ -36,7 +36,6 @@ def render() -> None:
     left, right = st.columns([1.2, 1])
 
     with left:
-        st.markdown('<div class="mjp-card">', unsafe_allow_html=True)
         school = st.text_input("학교명", placeholder="예: 전북기계공업고등학교",
                                key="cls_school")
         gcol, ccol = st.columns(2)
@@ -45,7 +44,6 @@ def render() -> None:
         with ccol:
             class_no = st.text_input("반", placeholder="예: 2반", key="cls_no")
 
-        st.markdown('</div>', unsafe_allow_html=True)
 
         if st.button("우리 반 만들고 코드 받기", type="primary",
                      use_container_width=True, key="cls_create"):

@@ -31,7 +31,6 @@ def render() -> None:
     left, right = st.columns([1, 1.3])
 
     with left:
-        st.markdown('<div class="mjp-card">', unsafe_allow_html=True)
         st.markdown("#### 나의 프로필 & 스토리 연동 기입")
 
         name = st.text_input("학생 이름",
@@ -64,16 +63,18 @@ def render() -> None:
         story = st.text_area("고교 생활 이야기 (선택)", height=80,
                              placeholder="동아리·자격증 준비 과정 등")
 
-        st.markdown("###### 문체와 분량")
+        # 라벨을 숨기면 컨트롤 높이가 눌려 모바일 터치 타깃이 44px 아래로 떨어진다
+        # (실측 38px). 모바일에서는 컬럼이 1단으로 접히므로 라벨을 보여주는 편이
+        # 공간 손해도 없고 무엇을 고르는지도 분명해진다.
         ocol1, ocol2 = st.columns(2)
         with ocol1:
             tone = st.radio("문체", list(TONE_OPTIONS.keys()), horizontal=True,
-                            label_visibility="collapsed", key="cl_tone")
+                            key="cl_tone")
         with ocol2:
             length = st.selectbox(
                 "분량", list(LENGTH_OPTIONS.keys()), index=1,
                 format_func=lambda n: LENGTH_OPTIONS[n]["label"],
-                label_visibility="collapsed", key="cl_length",
+                key="cl_length",
             )
         st.caption(f"구성: {LENGTH_OPTIONS[length]['structure']}")
 
@@ -101,7 +102,6 @@ def render() -> None:
                        "이전 회차 초안까지 사라져 되돌아올 때 API를 다시 호출합니다.")
 
         st.caption(cost_guard_caption())
-        st.markdown('</div>', unsafe_allow_html=True)
 
     with right:
         target_company = next(c for c in COMPANY_SHOWCASE if c["name"] == target_company_name)
@@ -139,14 +139,21 @@ def render() -> None:
             badges += (f'<span class="mjp-badge" style="background:{CARD_BORDER}; color:{MUTED};">'
                        f'{opts["tone"]} · {opts["length"]}자 · {opts["variation"] + 1}회차</span>')
 
-        st.markdown(f"""
-        <div class="mjp-card">
-            <span class="mjp-badge" style="background:{CARD_BORDER}; color:{MUTED};">DRAFT SHEET</span>
-            {badges}
-            <div style="font-size:18px; font-weight:800; margin-top:10px;">합격 자기소개서 전문 통합 시트</div>
-            <div class="mjp-muted" style="margin-top:4px;">{target_company['name']} 인재상: {', '.join(target_company['ideal_talent'])}</div>
-        </div>
-        """, unsafe_allow_html=True)
+        # ▣ 들여쓰기 금지
+        #   markdown 은 4칸 이상 들여쓴 줄을 코드 블록으로 해석한다. 이 블록을
+        #   12칸 들여썼더니 안쪽 <div> 한 줄이 화면에 **원시 HTML 텍스트로**
+        #   그대로 노출됐다. 그래서 들여쓰기 없이 조립한다.
+        st.markdown(
+            '<div class="mjp-card">'
+            f'<span class="mjp-badge" style="background:{CARD_BORDER}; color:{MUTED};">DRAFT SHEET</span> '
+            f'{badges}'
+            '<div style="font-size:18px; font-weight:800; margin-top:10px;">'
+            '합격 자기소개서 전문 통합 시트</div>'
+            f'<div class="mjp-muted" style="margin-top:4px;">{target_company["name"]} 인재상: '
+            f'{", ".join(target_company["ideal_talent"])}</div>'
+            '</div>',
+            unsafe_allow_html=True,
+        )
 
         if not st.session_state.cover_letter:
             mascot.speech("encourage",
