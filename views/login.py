@@ -59,8 +59,8 @@ def _provider_disabled(key: str) -> str:
 def render() -> None:
     st.markdown(f"""
     <div style="text-align:center; margin:18px 0 6px;">
-        {brand.logo_html(max_px=96, min_px=68)}
-        <div style="font-size:28px; font-weight:800; color:{TEXT}; margin-top:18px;
+        {brand.logo_html(max_px=104, min_px=76, detail="mark")}
+        <div style="font-size:28px; font-weight:800; color:{TEXT}; margin-top:16px;
                     letter-spacing:-0.03em;">로그인</div>
         <div style="color:{MUTED}; font-size:14px; margin-top:8px;">
             진단 결과와 찜한 기업을 다음에 다시 볼 수 있어요.

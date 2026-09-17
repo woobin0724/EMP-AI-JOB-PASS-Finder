@@ -19,10 +19,15 @@ from ui.theme import CARD_BORDER, GREEN, MUTED, TEXT
 
 def render() -> None:
     # ---------- 히어로 ----------
+    # 로고 → 소속 → 대회 배지 → 서비스명 → 설명 순서의 세로 락업.
+    # 엠블럼 하단 아크가 이미 EMPLOYMENT MEISTER PARTNER 를 말하고 있으므로,
+    # 바로 아래 줄에서 같은 문구를 반복하지 않고 소속 정보를 넣는다.
+    # (레터스페이싱 처리는 원본 로고의 아크 타이포에서 가져왔다)
     st.markdown(f"""
     <div class="mjp-hero">
-        {brand.logo_html(max_px=190, min_px=112)}
-        <div style="margin-top:26px;">
+        {brand.logo_html(max_px=196, min_px=118, detail="full")}
+        <div class="mjp-hero-team">전북기계공업고등학교 · 팀 E.M.P</div>
+        <div style="margin-top:18px;">
             <span class="mjp-hero-kicker">제4회 NAVER OGQ마켓 AI Competition 본선 진출</span>
         </div>
         <h1 class="mjp-hero-title">{brand.SERVICE_NAME}</h1>

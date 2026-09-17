@@ -16,7 +16,11 @@ ui/theme.py
    이 규칙이 여러 파일에 흩어지면 한 화면만 깨져도 원인을 못 찾는다.
 """
 
+import base64
+
 import streamlit as st
+
+from ui.emblem import circuit_pattern_svg
 
 # ============================================================
 # 디자인 토큰 (config.toml 의 [theme] 값과 일치시킬 것)
@@ -32,6 +36,21 @@ GOLD = "#FBBF24"
 PURPLE = "#8B5CF6"
 RED = "#F87171"
 BLUE = "#3B82F6"
+
+# ------------------------------------------------------------
+# 브랜드 컬러 램프 — 팀 로고에서 추출
+# ------------------------------------------------------------
+# 원본 로고의 짙은 네이비 잉크를 다크 배경에서 읽히도록 밝기를 뒤집은 값이다.
+# ui/emblem.py 의 엠블럼, ui/brand.py 의 로고 블렌딩, 아래 CSS 가 모두 이
+# 세 값을 공유하므로 로고·엠블럼·UI가 한 벌로 붙는다.
+BRAND_LIGHT = "#A8CEF5"   # 시안 하이라이트
+BRAND = "#4C8FE0"         # 일렉트릭 블루 (로고 회로선)
+BRAND_DEEP = "#2B6BC4"    # 딥 블루
+
+# ▣ 색의 역할을 분리한다
+#   브랜드 블루 = 정체성 (로고 · 내비 · 히어로 · 카드 호버)
+#   그린        = 상태 시맨틱 전용 (LIVE 배지 · 합격 안정권 · 성공 메시지)
+#   그린을 장식으로도 쓰면 "초록 = 좋음"이라는 신호가 희석된다.
 
 BADGE_COLORS = {"live": GREEN, "backup": GOLD, "ink": BG, "muted": MUTED}
 
@@ -49,6 +68,13 @@ MOBILE_BREAKPOINT = 768
 
 def inject_css() -> None:
     """전역 스타일을 주입한다. app.py 부팅 시 단 한 번만 호출한다."""
+    # 회로 패턴을 base64 data URI 로 인라인한다.
+    # utf8 data URI 로 넣으면 SVG 안의 '#' 색상값이 URL 프래그먼트로 잘려
+    # 패턴이 통째로 사라진다 — base64 가 이스케이프 사고가 없다.
+    circuit_b64 = base64.b64encode(
+        circuit_pattern_svg(BRAND, 0.9).encode("utf-8")
+    ).decode("ascii")
+
     st.markdown(f"""
 <style>
 /* ===== 0. 기본 바탕 ===== */
@@ -125,10 +151,20 @@ div[data-testid="stToolbar"] {{ right: 0.4rem; }}
     transform: translateX(-50%);
     width: 620px; height: 420px; pointer-events: none; z-index: 0;
     background: radial-gradient(circle at 50% 35%,
-        rgba(59,130,246,0.20) 0%,
-        rgba(139,92,246,0.12) 38%,
+        rgba(76,143,224,0.22) 0%,
+        rgba(43,107,196,0.12) 38%,
         rgba(10,14,23,0) 70%);
     filter: blur(6px);
+}}
+/* 로고의 PCB 회로 모티프를 배경에 아주 옅게 깐다.
+   불투명도 0.05 — '있는 줄 모르지만 없으면 허전한' 수준으로만 둔다. */
+.mjp-hero::after {{
+    content: ""; position: absolute; inset: -30px 0 0; z-index: 0;
+    pointer-events: none; opacity: 0.05;
+    background-image: url("data:image/svg+xml;base64,{circuit_b64}");
+    background-size: 220px 220px;
+    -webkit-mask-image: radial-gradient(ellipse at 50% 30%, #000 0%, transparent 72%);
+    mask-image: radial-gradient(ellipse at 50% 30%, #000 0%, transparent 72%);
 }}
 .mjp-hero > * {{ position: relative; z-index: 1; }}
 
@@ -145,9 +181,14 @@ div[data-testid="stToolbar"] {{ right: 0.4rem; }}
 }}
 .mjp-hero-kicker {{
     display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: 0.08em;
-    color: {GREEN}; border: 1px solid rgba(52,211,153,0.35);
-    background: rgba(52,211,153,0.08);
+    color: {BRAND_LIGHT}; border: 1px solid rgba(76,143,224,0.38);
+    background: rgba(76,143,224,0.10);
     padding: 5px 14px; border-radius: 999px; text-transform: uppercase;
+}}
+/* 로고 하단 레터스페이싱을 타이포 요소로 가져온 서브라인 */
+.mjp-hero-team {{
+    font-size: 11.5px; font-weight: 700; color: {BRAND};
+    letter-spacing: 0.14em; margin-top: 14px;
 }}
 
 /* ===== 3. 기능 카드 (메인 허브) ===== */
@@ -157,7 +198,7 @@ div[data-testid="stToolbar"] {{ right: 0.4rem; }}
     padding: 22px 20px 18px; height: 100%;
     transition: border-color .18s ease, transform .18s ease;
 }}
-.mjp-feature:hover {{ border-color: {GREEN}; transform: translateY(-2px); }}
+.mjp-feature:hover {{ border-color: {BRAND}; transform: translateY(-2px); }}
 .mjp-feature-icon {{ font-size: 30px; line-height: 1; }}
 .mjp-feature-title {{ font-size: 17px; font-weight: 800; color: {TEXT}; margin-top: 12px; }}
 .mjp-feature-desc {{ font-size: 13px; color: {MUTED}; margin-top: 8px; line-height: 1.62; min-height: 62px; }}
@@ -169,13 +210,24 @@ div[data-testid="stToolbar"] {{ right: 0.4rem; }}
 }}
 .mjp-brand {{ display: flex; align-items: center; gap: 10px; }}
 .mjp-brand-mark {{
-    width: 34px; height: 34px; border-radius: 9px; flex: none;
-    background: linear-gradient(135deg, {BLUE}, {PURPLE});
+    width: 36px; height: 36px; flex: none;
     display: flex; align-items: center; justify-content: center;
-    font-weight: 800; font-size: 13px; color: #fff;
 }}
+.mjp-brand-mark svg {{ width: 100%; height: 100%; display: block; }}
+
+/* ===== 로고 ===== */
+.mjp-logo {{
+    height: auto; max-width: 100%; display: block; margin: 0 auto;
+    /* 엠블럼 링 바깥으로 번지는 발광. 로고가 배경 위에 '떠 있지' 않고
+       배경에서 빛나는 것처럼 보이게 하는 장치다. */
+    filter: drop-shadow(0 0 22px rgba(76,143,224,0.28));
+}}
+.mjp-logo-svg svg {{ width: 100%; height: 100%; display: block; }}
 .mjp-brand-name {{ font-size: 15px; font-weight: 800; color: {TEXT}; line-height: 1.2; }}
-.mjp-brand-sub {{ font-size: 11px; color: {MUTED}; }}
+.mjp-brand-sub {{
+    font-size: 10px; font-weight: 700; color: {BRAND};
+    letter-spacing: 0.17em;   /* 원본 로고 하단 아크 타이포에서 가져온 자간 */
+}}
 .mjp-userchip {{ text-align: right; padding-top: 6px; overflow-wrap: anywhere; }}
 .mjp-userchip-name {{ color: {TEXT}; font-size: 13px; font-weight: 700; }}
 
@@ -185,7 +237,7 @@ div[data-testid="stToolbar"] {{ right: 0.4rem; }}
     min-height: 44px;              /* 터치 타깃 최소 44px (애플 HIG 권장) */
     transition: border-color .15s ease;
 }}
-.stButton > button:hover {{ border-color: {GREEN}; }}
+.stButton > button:hover {{ border-color: {BRAND}; }}
 div[data-testid="stTextInput"] input,
 div[data-testid="stNumberInput"] input,
 div[data-testid="stTextArea"] textarea {{

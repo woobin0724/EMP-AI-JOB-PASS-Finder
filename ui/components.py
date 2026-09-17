@@ -10,6 +10,8 @@ from core import session as ss
 from data import ogq_assets as ogq
 from services import auth as auth_svc
 from services import fallback as fb
+from ui.brand import SERVICE_NAME, TEAM_FULL
+from ui.emblem import emblem_svg
 from ui.theme import BG, CARD_BORDER, GREEN, MUTED, TEXT
 
 
@@ -55,12 +57,14 @@ def topbar(active: str | None = None) -> None:
 
     bcol, ucol = st.columns([2.4, 1])
     with bcol:
+        # 브랜드 마크는 그라데이션 사각형이 아니라 로고를 벡터로 재구성한 엠블럼이다.
+        # 36px 에서는 회로선·아크텍스트가 뭉개지므로 compact 레벨을 쓴다.
         st.markdown(f"""
         <div class="mjp-brand" style="padding-top:4px;">
-            <div class="mjp-brand-mark">EMP</div>
+            <div class="mjp-brand-mark">{emblem_svg(36, detail="compact", uid="navmark")}</div>
             <div>
-                <div class="mjp-brand-name">AI Job Pass Finder</div>
-                <div class="mjp-brand-sub">마이스터고 취업 성공 올인원 패스파인더</div>
+                <div class="mjp-brand-name">{SERVICE_NAME}</div>
+                <div class="mjp-brand-sub">{TEAM_FULL}</div>
             </div>
         </div>
         """, unsafe_allow_html=True)
