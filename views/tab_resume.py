@@ -17,21 +17,22 @@ from services.llm import (
     clear_cover_letter_cache, cost_guard_caption, current_variation,
     generate_cover_letter_cached, next_variation, reset_variation,
 )
-from ui.components import back_to_hub, section_title, show_sticker, topbar
+from ui import mascot
+from ui.components import back_to_hub, section_title, topbar
 from ui.theme import BG, BLUE, CARD_BORDER, GREEN, MUTED
 
 
 def render() -> None:
     topbar(active=ss.PAGE_RESUME)
     back_to_hub()
-    section_title("📄 합격 이력서 & 자소서",
+    section_title("합격 이력서 & 자소서", icon_name="file", sub=
                   "내 스펙과 목표 기업의 인재상을 엮어 자기소개서 초안을 생성합니다.")
 
     left, right = st.columns([1, 1.3])
 
     with left:
         st.markdown('<div class="mjp-card">', unsafe_allow_html=True)
-        st.markdown("#### 👤 나의 프로필 & 스토리 연동 기입")
+        st.markdown("#### 나의 프로필 & 스토리 연동 기입")
 
         name = st.text_input("학생 이름",
                              value=st.session_state.student_name or ss.display_name(),
@@ -63,7 +64,7 @@ def render() -> None:
         story = st.text_area("고교 생활 이야기 (선택)", height=80,
                              placeholder="동아리·자격증 준비 과정 등")
 
-        st.markdown("###### ✍️ 문체와 분량")
+        st.markdown("###### 문체와 분량")
         ocol1, ocol2 = st.columns(2)
         with ocol1:
             tone = st.radio("문체", list(TONE_OPTIONS.keys()), horizontal=True,
@@ -84,15 +85,15 @@ def render() -> None:
             st.session_state["_cl_input_sig"] = input_signature
             reset_variation()
 
-        gen_clicked = st.button("✨ 스펙 맞춤형 자기소개서 자동 완성", type="primary",
+        gen_clicked = st.button("스펙 맞춤형 자기소개서 자동 완성", type="primary",
                                 use_container_width=True)
-        regen_clicked = st.button("🔄 다시 생성하기 (다른 구성으로)",
+        regen_clicked = st.button("다시 생성하기 (다른 구성으로)",
                                   use_container_width=True,
                                   help="같은 재료로 서사 구성을 바꿔 새 초안을 만듭니다. "
                                        "캐시를 우회해 새로 생성합니다.")
 
-        with st.expander("⚙️ 고급"):
-            if st.button("♻️ 캐시 전체 비우기", use_container_width=True):
+        with st.expander("고급"):
+            if st.button("캐시 전체 비우기", use_container_width=True):
                 clear_cover_letter_cache()
                 reset_variation()
                 st.toast("캐시를 비웠습니다. 다음 생성은 API를 새로 호출합니다.")
@@ -128,11 +129,11 @@ def render() -> None:
 
         badges = ""
         if st.session_state.cover_letter_source == "ai":
-            badges += f'<span class="mjp-badge" style="background:{GREEN}; color:{BG};">🤖 AI 생성</span> '
+            badges += f'<span class="mjp-badge" style="background:{GREEN}; color:{BG};">AI 생성</span> '
         elif st.session_state.cover_letter_source == "template":
-            badges += f'<span class="mjp-badge" style="background:{CARD_BORDER}; color:{MUTED};">📐 템플릿 생성</span> '
+            badges += f'<span class="mjp-badge" style="background:{CARD_BORDER}; color:{MUTED};">템플릿 생성</span> '
         if st.session_state.cover_letter_cached:
-            badges += f'<span class="mjp-badge" style="background:{BLUE}; color:#fff;">⚡ 캐시 응답 · API 호출 0회</span> '
+            badges += f'<span class="mjp-badge" style="background:{BLUE}; color:#fff;">캐시 응답 · API 호출 0회</span> '
         opts = st.session_state.get("cover_letter_options")
         if opts:
             badges += (f'<span class="mjp-badge" style="background:{CARD_BORDER}; color:{MUTED};">'
@@ -148,19 +149,18 @@ def render() -> None:
         """, unsafe_allow_html=True)
 
         if not st.session_state.cover_letter:
-            icol1, icol2 = st.columns([1, 2])
-            with icol1:
-                show_sticker("encourage", width=130)
-            with icol2:
-                st.info("왼쪽에서 정보를 입력하고 '스펙 맞춤형 자기소개서 자동 완성'을 눌러주세요.")
+            mascot.speech("encourage",
+                          "왼쪽에서 정보를 입력하고 <b>'스펙 맞춤형 자기소개서 자동 완성'</b>을 "
+                          "눌러주세요. 에피소드를 적으면 글이 확 달라져요!",
+                          tone="brand", size=88)
         else:
             st.text_area("자기소개서 초안", value=st.session_state.cover_letter, height=380,
                          label_visibility="collapsed")
-            st.download_button("📥 자소서 통합 다운로드 (.txt)", data=st.session_state.cover_letter,
+            st.download_button("자소서 통합 다운로드 (.txt)", data=st.session_state.cover_letter,
                                file_name="자기소개서_초안.txt", mime="text/plain",
                                use_container_width=True)
             opts = st.session_state.get("cover_letter_options")
             if opts:
-                st.caption(f"📐 이번 초안의 구성: {angle_for(opts['variation'])}")
+                st.caption(f"이번 초안의 구성: {angle_for(opts['variation'])}")
                 st.caption("마음에 들지 않으면 '다시 생성하기'를 누르세요. "
                            "같은 재료로 다른 구성의 초안이 나옵니다.")

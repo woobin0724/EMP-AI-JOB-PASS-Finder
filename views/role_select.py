@@ -15,17 +15,18 @@ import streamlit as st
 
 from core import session as ss
 from services import store
+from ui.icons import icon
 from ui.theme import BLUE, CARD_BORDER, GREEN, MUTED, PURPLE, TEXT
 
 ROLES = [
     {
-        "key": "student", "icon": "🎓", "title": "학생이에요",
+        "key": "student", "icon": "cap", "title": "학생이에요",
         "color": GREEN,
         "desc": "내 스펙을 진단하고, 목표 기업을 찾고, 자소서를 만들어요.",
         "bullets": ["100점 만점 합격 지수 진단", "관심 기업 찜하기 & 기록", "커리어 로드맵 스탬프 모으기"],
     },
     {
-        "key": "teacher", "icon": "🧑‍🏫", "title": "선생님이에요",
+        "key": "teacher", "icon": "users", "title": "선생님이에요",
         "color": PURPLE,
         "desc": "우리 반을 만들고 학생들의 취업 준비 현황을 한눈에 봐요.",
         "bullets": ["우리 반 개설 & 반 코드 발급", "학생별 목표 기업 · 진행 단계 확인", "반 평균 매칭 점수 모니터링"],
@@ -55,7 +56,7 @@ def render() -> None:
             )
             st.markdown(f"""
             <div class="mjp-feature" style="border-color:{role['color']}33;">
-                <div style="font-size:40px; line-height:1;">{role['icon']}</div>
+                <div style="line-height:1;">{icon(role["icon"], size=38, color=role["color"], stroke=1.7)}</div>
                 <div style="font-size:21px; font-weight:800; color:{role['color']}; margin-top:14px;">
                     {role['title']}
                 </div>
@@ -67,7 +68,7 @@ def render() -> None:
             </div>
             """, unsafe_allow_html=True)
 
-            if st.button(f"{role['icon']} {role['title']} 선택", key=f"role_{role['key']}",
+            if st.button(f"{role['title']} 선택", key=f"role_{role['key']}",
                          type="primary", use_container_width=True):
                 _choose(role["key"])
 

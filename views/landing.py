@@ -13,8 +13,8 @@ views/landing.py
 import streamlit as st
 
 from core import session as ss
-from ui import brand
-from ui.theme import CARD_BORDER, GREEN, MUTED, TEXT
+from ui import brand, icons, mascot
+from ui.theme import BRAND, CARD_BORDER, GREEN, MUTED, TEXT
 
 
 def render() -> None:
@@ -43,7 +43,7 @@ def render() -> None:
     # 1단으로 접히면서 버튼이 화면 폭을 꽉 채운다.
     left, center, right = st.columns([1, 1.15, 1])
     with center:
-        if st.button("🚀 시작하기", type="primary", use_container_width=True, key="landing_cta"):
+        if st.button("시작하기", type="primary", use_container_width=True, key="landing_cta"):
             ss.goto(ss.PAGE_LOGIN)
         st.markdown(
             f'<div style="text-align:center; color:{MUTED}; font-size:12.5px; margin-top:10px;">'
@@ -51,17 +51,31 @@ def render() -> None:
             unsafe_allow_html=True,
         )
 
+    # [Phase 4] 마스코트가 반겨주는 자리. 히어로의 엠블럼은 '로고', 이쪽은 '캐릭터'다.
+    m_html = mascot.html("welcome", size=104)
+    if m_html:
+        st.markdown(f"""
+        <div style="display:flex; align-items:center; justify-content:center;
+                    gap:14px; margin-top:30px; flex-wrap:wrap;">
+            {m_html}
+            <div style="color:{MUTED}; font-size:14px; line-height:1.6; max-width:280px;">
+                안녕하세요! 저는 여러분의 취업 준비를 함께할 <b style="color:{TEXT};">마스코트</b>예요.<br>
+                진단부터 자소서까지 옆에서 응원할게요.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
     st.markdown("<div style='height:38px;'></div>", unsafe_allow_html=True)
 
     # ---------- 3가지 가치 제안 ----------
     points = [
-        ("📊", "100점 만점 합격 지수",
+        ("chart", "100점 만점 합격 지수",
          "5등급 성취평가제를 정량 환산하고 자격증 인정 비율까지 계산합니다. "
          "AI 호출 없는 로컬 연산이라 입력하는 즉시 점수가 바뀝니다."),
-        ("🔄", "6대 포털 통합 검색",
+        ("package", "6대 포털 통합 검색",
          "고용24·잡알리오·강소기업 포털을 동시에 호출합니다. "
          "한 소스가 죽어도 백업 데이터로 즉시 전환돼 화면이 멈추지 않습니다."),
-        ("🎨", "OGQ 캐릭터 성장 스탬프",
+        ("sparkle", "OGQ 캐릭터 성장 스탬프",
          "점수와 로드맵 단계에 맞춰 캐릭터가 반응합니다. "
          "낮은 점수를 받은 학생이 화면을 닫지 않게 만드는 장치입니다."),
     ]
@@ -70,7 +84,7 @@ def render() -> None:
         with col:
             st.markdown(f"""
             <div class="mjp-feature">
-                <div class="mjp-feature-icon">{icon}</div>
+                <div class="mjp-feature-icon">{icons.icon(icon, size=28, color=BRAND, stroke=1.7)}</div>
                 <div class="mjp-feature-title">{title}</div>
                 <div class="mjp-feature-desc">{desc}</div>
             </div>

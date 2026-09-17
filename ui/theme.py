@@ -355,6 +355,19 @@ def score_bar(label: str, value: float, maximum: int) -> str:
 
 
 def render_stars(rating: float) -> str:
-    """별점 HTML."""
+    """
+    별점 HTML.
+
+    ★☆ 문자 대신 SVG 로 그린다. 문자 별은 폰트에 따라 굵기·크기가 달라지고
+    안드로이드 일부 기기에서는 이모지 폰트로 렌더링돼 주황색 별이 튀어나온다.
+    """
+    from ui.icons import icon
+
     full = int(rating)
-    return f'<span class="mjp-star">{"★" * full}{"☆" * (5 - full)}</span> ({rating:.1f})'
+    stars = "".join(
+        icon("star", size=13, color=GOLD, filled=(i < full), stroke=1.6)
+        for i in range(5)
+    )
+    return (f'<span style="display:inline-flex; align-items:center; gap:1px; '
+            f'vertical-align:-0.16em;">{stars}</span>'
+            f'<span style="color:{MUTED}; font-size:12px; margin-left:5px;">{rating:.1f}</span>')

@@ -12,6 +12,7 @@ from services import auth as auth_svc
 from services import fallback as fb
 from ui.brand import SERVICE_NAME, TEAM_FULL
 from ui.emblem import emblem_svg
+from ui.icons import icon
 from ui.theme import BG, CARD_BORDER, GREEN, MUTED, TEXT
 
 
@@ -20,20 +21,22 @@ from ui.theme import BG, CARD_BORDER, GREEN, MUTED, TEXT
 # ------------------------------------------------------------
 def show_sticker(key: str, width: int = 130, caption: str | None = None) -> None:
     """
-    OGQ 스티커를 렌더링한다. 이미지가 없으면 이모지로 자동 대체된다.
-    (원본 app.py 의 show_sticker 를 그대로 이관 — 이미지 부재로 앱이 죽지 않게 하는 방어)
+    [하위 호환] 예전 스티커 호출부를 마스코트로 넘긴다.
+
+    Phase 4 에서 감정 표현은 ui/mascot.py 로 일원화됐다. 이 함수는 남아 있는
+    호출부가 깨지지 않도록 두되, 실제 렌더링은 마스코트가 담당한다.
+    이모지 폴백은 없앴다 — 이모지를 걷어내는 것이 이번 작업의 목표이고,
+    깨진 그림보다 여백이 낫다.
     """
-    src = ogq.sticker(key)
-    if src:
-        try:
-            st.image(src, width=width, caption=caption)
-            return
-        except Exception:
-            pass
-    st.markdown(
-        f'<div style="font-size:{int(width * 0.42)}px; text-align:center;">{ogq.emoji(key)}</div>',
-        unsafe_allow_html=True,
-    )
+    from ui import mascot
+
+    slot_alias = {"hello": "welcome", "clap": "celebrate", "success": "celebrate",
+                  "stamp": "stamp", "sheet": "cheer"}
+    markup = mascot.html(slot_alias.get(key, key), size=width)
+    if markup:
+        st.markdown(
+            f'<div style="display:flex; justify-content:center;">{markup}</div>',
+            unsafe_allow_html=True)
     if caption:
         st.caption(caption)
 
@@ -109,7 +112,7 @@ def back_to_hub(label: str = "← 메인 허브로") -> None:
 # ------------------------------------------------------------
 def settings_expander() -> None:
     """외부 API 키 입력. 사이드바를 없앴으므로 본문 expander 로 내렸다."""
-    with st.expander("⚙️ 데이터 연동 설정 (선택)", expanded=False):
+    with st.expander("데이터 연동 설정 (선택)", expanded=False):
         st.session_state["qnet_key"] = st.text_input(
             "Q-Net / 공공데이터포털 서비스키", type="password",
             value=st.session_state.get("qnet_key") or auth_svc.safe_secret("QNET_API_KEY"),
@@ -121,18 +124,28 @@ def settings_expander() -> None:
             key="worknet_key_widget",
         )
         st.caption("키가 없어도 앱은 백업 마스터 데이터로 100% 동작합니다.")
-        st.caption(f"📦 내장 백업: {fb.backup_summary()}")
+        st.caption(f"내장 백업: {fb.backup_summary()}")
 
 
 def disclaimer(text: str) -> None:
     st.markdown(f'<div class="mjp-disclaimer">{text}</div>', unsafe_allow_html=True)
 
 
-def section_title(title: str, sub: str = "") -> None:
-    """화면 상단 제목 블록 — 큰 타이포 + 여백 (참고 디자인 톤)."""
+def section_title(title: str, sub: str = "", icon_name: str = "") -> None:
+    """
+    화면 상단 제목 블록 — 큰 타이포 + 여백 (참고 디자인 톤).
+
+    icon_name 을 주면 제목 왼쪽에 라인 아이콘이 붙는다. 이모지 대신 쓰는 자리라
+    색은 브랜드 블루로 고정해 마스코트(컬러풀)와 톤이 겹치지 않게 했다.
+    """
+    from ui.theme import BRAND
+    mark = (f'<span style="flex:none; display:inline-flex; padding-top:3px;">'
+            f'{icon(icon_name, size=26, color=BRAND, stroke=1.8)}</span>') if icon_name else ""
     st.markdown(f"""
     <div style="margin:4px 0 18px;">
-        <div class="mjp-section-title">{title}</div>
+        <div style="display:flex; align-items:flex-start; gap:12px;">
+            {mark}<div class="mjp-section-title">{title}</div>
+        </div>
         {f'<div class="mjp-section-sub">{sub}</div>' if sub else ''}
     </div>
     """, unsafe_allow_html=True)

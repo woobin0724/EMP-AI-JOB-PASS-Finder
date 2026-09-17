@@ -15,17 +15,19 @@ from data.company_showcase import COMPANY_BY_ID
 from data.roadmap import MILESTONES
 from services import activity
 from services import store
-from ui.components import back_to_hub, grid_columns, section_title, show_sticker, topbar
+from ui import mascot
+from ui.components import back_to_hub, grid_columns, section_title, topbar
+from ui.icons import icon
 from ui.theme import BRAND, BRAND_LIGHT, CARD_BORDER, GOLD, GREEN, MUTED, PURPLE, RED, TEXT
 
 _PROVIDER_LABEL = {"kakao": "카카오", "naver": "네이버", "google": "Google", "guest": "게스트모드"}
-_ROLE_LABEL = {"student": "🎓 학생", "teacher": "🧑‍🏫 선생님"}
+_ROLE_LABEL = {"student": "학생", "teacher": "선생님"}
 
 
 def render() -> None:
     topbar(active=ss.PAGE_MYPAGE)
     back_to_hub()
-    section_title("👤 마이페이지", "계정 정보와 활동 기록을 확인합니다.")
+    section_title("마이페이지", "계정 정보와 활동 기록을 확인합니다.", icon_name="user")
 
     uid = ss.user_id()
     saved = store.get_user(uid) or {}
@@ -36,8 +38,8 @@ def render() -> None:
         <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
             <div style="width:62px; height:62px; border-radius:50%; flex:none;
                         background:linear-gradient(135deg,#3B82F6,#8B5CF6);
-                        display:flex; align-items:center; justify-content:center;
-                        font-size:26px;">👤</div>
+                        display:flex; align-items:center; justify-content:center;">
+                        {icon("user", size=28, color="#fff", stroke=1.8)}</div>
             <div style="flex:1; min-width:180px;">
                 <div style="font-size:20px; font-weight:800; color:{TEXT};">{ss.display_name()}</div>
                 <div class="mjp-muted" style="margin-top:5px;">
@@ -57,7 +59,7 @@ def render() -> None:
         code = st.session_state.get("resume_code") or uid.replace("guest_", "")
         st.markdown(f"""
         <div class="mjp-card" style="border-color:{GOLD};">
-            <div style="font-weight:800; color:{TEXT};">🔑 이어하기 코드</div>
+            <div style="font-weight:800; color:{TEXT}; display:flex; align-items:center; gap:8px;">{icon("key", size=17, color=GOLD)} 이어하기 코드</div>
             <div style="color:{GOLD}; font-size:26px; font-weight:800;
                         letter-spacing:0.2em; margin:8px 0 6px;">{code}</div>
             <div class="mjp-muted">
@@ -73,9 +75,10 @@ def render() -> None:
     # ---------- [Phase 3] 나의 활동 기록 ----------
     st.markdown(f'<div style="height:1px;background:{CARD_BORDER};margin:18px 0;"></div>',
                 unsafe_allow_html=True)
-    st.markdown("#### 📌 나의 활동 기록")
+    st.markdown("#### 나의 활동 기록")
 
-    tabs = st.tabs(["📈 매칭 점수", "🗺 로드맵", "♥ 찜한 기업", "👀 조사한 기업"])
+    # st.tabs 라벨도 텍스트 전용이다 (SVG 불가) → 이모지를 빼고 단어만 남긴다
+    tabs = st.tabs(["매칭 점수", "로드맵", "찜한 기업", "조사한 기업"])
     with tabs[0]:
         _score_section(saved)
     with tabs[1]:
@@ -88,21 +91,21 @@ def render() -> None:
     # ---------- 계정 관리 ----------
     st.markdown(f'<div style="height:1px;background:{CARD_BORDER};margin:18px 0;"></div>',
                 unsafe_allow_html=True)
-    st.markdown("#### ⚙️ 계정 관리")
+    st.markdown("#### 계정 관리")
 
     mcol1, mcol2 = st.columns(2)
     with mcol1:
-        if st.button("🔄 역할 다시 선택하기", use_container_width=True, key="mypage_role"):
+        if st.button("역할 다시 선택하기", use_container_width=True, key="mypage_role"):
             st.session_state["role"] = None
             if uid:
                 store.set_role(uid, "")   # 저장소에서도 비워 재선택을 강제한다
             ss.goto(ss.PAGE_ROLE)
     with mcol2:
-        if st.button("🚪 로그아웃", use_container_width=True, key="mypage_logout"):
+        if st.button("로그아웃", use_container_width=True, key="mypage_logout"):
             ss.logout()
 
-    st.caption(f"📦 저장소 현황: {store.store_summary()}")
-    st.caption("ℹ️ Streamlit Community Cloud는 재배포·슬립 해제 시 파일시스템이 초기화됩니다. "
+    st.caption(f"저장소 현황: {store.store_summary()}")
+    st.caption("Streamlit Community Cloud는 재배포·슬립 해제 시 파일시스템이 초기화됩니다. "
                "장기 보관이 필요하면 외부 DB 연동이 필요합니다 "
                "(services/store.py 의 `_read_all` / `_write_all` 두 함수만 교체하면 됩니다).")
 
@@ -120,7 +123,7 @@ def _class_section(saved: dict) -> None:
     """
     st.markdown(f'<div style="height:1px;background:{CARD_BORDER};margin:18px 0;"></div>',
                 unsafe_allow_html=True)
-    st.markdown("#### 🏫 반 정보")
+    st.markdown("#### 반 정보")
 
     uid = ss.user_id()
 
@@ -129,7 +132,7 @@ def _class_section(saved: dict) -> None:
         klass = store.teacher_class(uid)
         if not klass:
             st.info("아직 우리 반을 만들지 않으셨어요.")
-            if st.button("🏫 우리 반 만들기", type="primary", key="mypage_make_class"):
+            if st.button("우리 반 만들기", type="primary", key="mypage_make_class"):
                 ss.goto(ss.PAGE_CLASS_SETUP)
             return
 
@@ -145,7 +148,7 @@ def _class_section(saved: dict) -> None:
         st.caption("반 코드 (눌러서 복사)")
         st.code(klass["class_code"], language=None)
 
-        if st.button("📊 우리 반 현황 보기", type="primary", use_container_width=True,
+        if st.button("우리 반 현황 보기", type="primary", use_container_width=True,
                      key="mypage_board"):
             ss.goto(ss.PAGE_CLASS_BOARD)
         return
@@ -183,7 +186,7 @@ def _class_section(saved: dict) -> None:
         </div>
     </div>
     """, unsafe_allow_html=True)
-    if st.button("🏫 반 코드 입력하기", use_container_width=True, key="mypage_join_class"):
+    if st.button("반 코드 입력하기", use_container_width=True, key="mypage_join_class"):
         ss.goto(ss.PAGE_CLASS_JOIN)
 
 
@@ -191,11 +194,11 @@ def _class_section(saved: dict) -> None:
 # [Phase 3] 활동 기록 섹션
 # ============================================================
 
-def _empty(icon: str, title: str, desc: str, button: str, page: str, key: str) -> None:
+def _empty(slot: str, title: str, desc: str, button: str, page: str, key: str) -> None:
     """빈 상태 공통 렌더러 — '아무것도 없음'이 아니라 '다음에 뭘 하면 되는지'를 보여준다."""
     c1, c2 = st.columns([1, 2.6])
     with c1:
-        show_sticker(icon, width=120)
+        st.markdown(mascot.html(slot, size=104), unsafe_allow_html=True)
     with c2:
         st.markdown(f"""
         <div style="padding-top:8px;">
@@ -223,7 +226,7 @@ def _score_section(saved: dict) -> None:
         _empty("thinking", "아직 진단 기록이 없어요",
                "스펙 진단에서 내신·자격증을 입력하면 점수가 여기에 쌓입니다. "
                "진단할 때마다 기록되니 점수가 어떻게 오르는지 볼 수 있어요.",
-               "📊 스펙 진단 하러 가기", ss.PAGE_SPEC, "mypage_go_spec")
+               "스펙 진단 하러 가기", ss.PAGE_SPEC, "mypage_go_spec")
         return
 
     latest, delta = activity.score_delta(saved)
@@ -370,10 +373,10 @@ def _roadmap_section() -> None:
         with col:
             checked = bool(milestones.get(key))
             color = GREEN if checked else CARD_BORDER
-            mark = "✅" if checked else "⬜"
+            mark = icon("check-circle", size=20, color=GREEN) if checked else icon("clipboard", size=20, color=MUTED)
             st.markdown(f"""
             <div class="mjp-card" style="border-color:{color};">
-                <div style="font-size:20px;">{mark}</div>
+                <div style="line-height:1;">{mark}</div>
                 <div style="font-weight:800; color:{TEXT if checked else MUTED};
                             margin-top:8px;">{label}</div>
                 <div class="mjp-muted" style="margin-top:6px; line-height:1.5;">{desc}</div>
@@ -381,10 +384,10 @@ def _roadmap_section() -> None:
             """, unsafe_allow_html=True)
 
     if done == total:
-        st.success("세 단계를 모두 완료했습니다. 이제 실제 지원서를 넣을 준비가 끝났어요 🎉")
+        st.success("세 단계를 모두 완료했습니다. 이제 실제 지원서를 넣을 준비가 끝났어요.")
     else:
         st.caption("단계 체크는 '채용 대비 가이드 & 커리큘럼' 화면에서 할 수 있습니다.")
-        if st.button("🛠 로드맵 이어서 하기", key="mypage_go_guide"):
+        if st.button("로드맵 이어서 하기", key="mypage_go_guide"):
             ss.goto(ss.PAGE_GUIDE)
 
 
@@ -396,9 +399,9 @@ def _bookmark_section(saved: dict) -> None:
 
     if not marks:
         _empty("encourage", "아직 찜한 기업이 없어요",
-               "기업 탐색기에서 마음에 드는 기업의 ♡ 를 누르면 여기에 모입니다. "
+               "기업 탐색기에서 마음에 드는 기업의 '찜하기'를 누르면 여기에 모입니다. "
                "나중에 자소서를 쓸 때 바로 꺼내 쓸 수 있어요.",
-               "🔍 기업 탐색하러 가기", ss.PAGE_EXPLORE, "mypage_go_explore")
+               "기업 탐색하러 가기", ss.PAGE_EXPLORE, "mypage_go_explore")
         return
 
     st.caption(f"찜한 기업 {len(marks)}곳")
@@ -420,8 +423,8 @@ def _bookmark_section(saved: dict) -> None:
             with st.container(key=f"mjp_row_fav_{cid}"):
                 f1, f2, f3 = st.columns([0.8, 1, 1])
                 with f1:
-                    if st.button("♥", key=f"unfav_{cid}", use_container_width=True,
-                                 type="primary", help="찜 해제"):
+                    if st.button("찜 해제", key=f"unfav_{cid}", use_container_width=True,
+                                 type="primary"):
                         activity.toggle_bookmark(cid)
                         st.rerun()
                 with f2:
@@ -429,7 +432,7 @@ def _bookmark_section(saved: dict) -> None:
                         st.session_state.selected_company_id = cid
                         ss.goto(ss.PAGE_GUIDE)
                 with f3:
-                    if st.button("자소서 📄", key=f"myfav_resume_{cid}", use_container_width=True):
+                    if st.button("자소서", key=f"myfav_resume_{cid}", use_container_width=True):
                         st.session_state.selected_company_id = cid
                         ss.goto(ss.PAGE_RESUME)
 
@@ -444,14 +447,14 @@ def _viewed_section(saved: dict) -> None:
         _empty("thinking", "아직 열어본 기업이 없어요",
                "'채용 대비 가이드'에서 기업을 선택하면 열람 이력이 여기에 쌓입니다. "
                "어떤 기업을 조사했는지 되짚어볼 때 쓰세요.",
-               "🛠 기업 가이드 보러 가기", ss.PAGE_GUIDE, "mypage_go_guide2")
+               "기업 가이드 보러 가기", ss.PAGE_GUIDE, "mypage_go_guide2")
         return
 
     st.caption(f"최근 열어본 기업 {len(viewed)}곳 · 최신순")
 
     for item in viewed:
         company = COMPANY_BY_ID[item["company_id"]]
-        marked = "♥" if activity.is_bookmarked(company["id"]) else ""
+        marked = icon("heart", size=14, color=RED, filled=True) if activity.is_bookmarked(company["id"]) else ""
         st.markdown(f"""
         <div class="mjp-card" style="padding:12px 16px; display:flex; align-items:center;
                     gap:12px; flex-wrap:wrap;">

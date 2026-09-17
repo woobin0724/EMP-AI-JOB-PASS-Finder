@@ -38,7 +38,7 @@ import streamlit as st
 PROVIDERS = {
     "kakao": {
         "label": "카카오로 시작하기",
-        "icon": "💬",
+        "icon": "kakao",
         "bg": "#FEE500", "fg": "#191600", "border": "#FEE500",
         "authorize_url": "https://kauth.kakao.com/oauth/authorize",
         "token_url": "https://kauth.kakao.com/oauth/token",
@@ -50,7 +50,7 @@ PROVIDERS = {
     },
     "naver": {
         "label": "네이버로 시작하기",
-        "icon": "🟩",
+        "icon": "naver",
         "bg": "#03C75A", "fg": "#FFFFFF", "border": "#03C75A",
         "authorize_url": "https://nid.naver.com/oauth2.0/authorize",
         "token_url": "https://nid.naver.com/oauth2.0/token",
@@ -62,7 +62,7 @@ PROVIDERS = {
     },
     "google": {
         "label": "Google로 시작하기",
-        "icon": "🔵",
+        "icon": "google",
         "bg": "#FFFFFF", "fg": "#1F2328", "border": "#FFFFFF",
         "authorize_url": "https://accounts.google.com/o/oauth2/v2/auth",
         "token_url": "https://oauth2.googleapis.com/token",
@@ -335,7 +335,7 @@ def status_table() -> list[dict]:
     for key, spec in PROVIDERS.items():
         rows.append({
             "제공자": spec["label"].replace("로 시작하기", "").replace(" 시작하기", ""),
-            "상태": "✅ 연동됨" if is_configured(key) else "🔒 키 미등록",
+            "상태": "연동됨" if is_configured(key) else "키 미등록",
             "필요한 secrets 키": (
                 f"{spec['secret_prefix']}_CLIENT_ID"
                 + (f", {spec['secret_prefix']}_CLIENT_SECRET" if spec["secret_required"] else "")

@@ -19,14 +19,21 @@ from services import activity
 from data.departments import (
     DEPARTMENT_LIST, get_category, get_employment_rate, get_majors_for_department,
 )
-from ui.components import back_to_hub, section_title, show_sticker, topbar
+from ui import mascot
+from ui.components import back_to_hub, section_title, topbar
 from ui.theme import BG, BLUE, CARD_BORDER, GREEN, GOLD, MUTED, RED, TEXT, render_stars, score_bar
+
+
+# 점수 구간 → 마스코트 감정 슬롯
+# 숫자만 보여주는 진단은 낮은 점수를 받은 학생을 밀어낸다. 같은 48점이라도
+# 위로하는 캐릭터가 옆에 있으면 다음 화면으로 넘어갈 확률이 달라진다.
+_MASCOT_BY_SCORE = {"success": "celebrate", "cheer": "cheer", "comfort": "comfort"}
 
 
 def render() -> None:
     topbar(active=ss.PAGE_SPEC)
     back_to_hub()
-    section_title("📊 스펙 진단 & 추천",
+    section_title("스펙 진단 & 추천", icon_name="chart", sub=
                   "내신·자격증·전공 적합성·인재상을 100점 만점으로 환산합니다. "
                   "이 연산은 AI API 호출 없이 로컬에서만 수행되므로 입력 즉시 갱신됩니다.")
 
@@ -41,7 +48,7 @@ def render() -> None:
     # ------------------------------------------------------------
     with left:
         st.markdown('<div class="mjp-card">', unsafe_allow_html=True)
-        st.markdown("#### 📝 내 현재 스펙 정보 기입")
+        st.markdown("#### 내 현재 스펙 정보 기입")
 
         dept = st.selectbox("학과/계열 (하이파이브 분류 기준)", DEPARTMENT_LIST,
                             index=DEPARTMENT_LIST.index(st.session_state.dept),
@@ -125,7 +132,9 @@ def render() -> None:
 
         sc1, sc2 = st.columns([1, 1.4])
         with sc1:
-            show_sticker(sticker_key, width=150)
+            # [Phase 4] 점수 구간에 따라 마스코트 감정이 바뀐다
+            st.markdown(mascot.html(_MASCOT_BY_SCORE[sticker_key], size=142),
+                        unsafe_allow_html=True)
         with sc2:
             st.markdown(score_bar("내신 성취도", result["grade_score"], 30), unsafe_allow_html=True)
             st.markdown(score_bar("자격증 가산점", result["cert_score"], 40), unsafe_allow_html=True)
@@ -133,15 +142,15 @@ def render() -> None:
             st.markdown(score_bar("인재상 일치도", result["talent_score"], 10), unsafe_allow_html=True)
 
         if result["cert_details"]:
-            with st.expander("🔎 자격증 인정 비율 상세 보기", expanded=False):
+            with st.expander("자격증 인정 비율 상세 보기", expanded=False):
                 for d in result["cert_details"]:
-                    icon = "✅" if d["ratio"] == 1.0 else ("🟡" if d["ratio"] > 0 else "⬜")
+                    mark = "●" if d["ratio"] == 1.0 else ("◐" if d["ratio"] > 0 else "○")
                     extra = f" ← 보유: {d['matched_by']}" if d["matched_by"] and d["ratio"] < 1.0 else ""
-                    st.markdown(f"{icon} **{d['cert']}** · {d['status']}{extra}")
+                    st.markdown(f"{mark} **{d['cert']}** · {d['status']}{extra}")
                 st.caption("정확히 일치 100% · 직무 유사 자격증 70% 인정 → 평균 인정비율 × 40점")
 
         for tip in result["tips"]:
-            st.info(f"🤖 {tip}")
+            st.info(tip)
 
     st.divider()
 
@@ -166,7 +175,7 @@ def render() -> None:
 
     with gcol2:
         st.markdown('<div class="mjp-card">', unsafe_allow_html=True)
-        st.markdown("🎯 **매칭 기업 탐색 (실시간 반영)**")
+        st.markdown("**매칭 기업 탐색 (실시간 반영)**")
         size_pick = st.radio("기업 규모", COMPANY_SIZE_TAGS[1:], horizontal=True,
                              key="match_size", label_visibility="collapsed")
         matched = [c for c in COMPANY_SHOWCASE

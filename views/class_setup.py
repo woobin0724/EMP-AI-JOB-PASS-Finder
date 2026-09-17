@@ -29,7 +29,7 @@ def render() -> None:
         return
 
     back_to_hub()
-    section_title("🏫 우리 반 만들기",
+    section_title("우리 반 만들기", icon_name="school", sub=
                   "반을 만들면 6자리 반 코드가 발급됩니다. "
                   "학생들이 그 코드를 입력하면 우리 반 현황에서 진행 상황을 볼 수 있어요.")
 
@@ -47,7 +47,7 @@ def render() -> None:
 
         st.markdown('</div>', unsafe_allow_html=True)
 
-        if st.button("✅ 우리 반 만들고 코드 받기", type="primary",
+        if st.button("우리 반 만들고 코드 받기", type="primary",
                      use_container_width=True, key="cls_create"):
             _create(school, grade, class_no)
 
@@ -92,7 +92,7 @@ def _create(school: str, grade: str, class_no: str) -> None:
 
 def _render_existing(klass: dict) -> None:
     """이미 반을 만든 선생님에게는 코드와 현황 진입구를 보여준다."""
-    section_title("🏫 우리 반", store.class_label(klass))
+    section_title("우리 반", store.class_label(klass), icon_name="school")
 
     students = store.class_students(klass["class_code"])
 
@@ -130,7 +130,7 @@ def _render_existing(klass: dict) -> None:
         </div>
         """, unsafe_allow_html=True)
 
-    if st.button("📊 우리 반 현황 보기", type="primary", use_container_width=True,
+    if st.button("우리 반 현황 보기", type="primary", use_container_width=True,
                  key="cls_to_board"):
         ss.goto(ss.PAGE_CLASS_BOARD)
     if st.button("← 메인 허브로", use_container_width=True, key="cls_to_hub"):

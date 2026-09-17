@@ -16,8 +16,10 @@ import streamlit as st
 from core import session as ss
 from services import fallback as fb
 from services import store
-from ui.components import grid_columns, section_title, settings_expander, show_sticker, topbar
-from ui.theme import BADGE_COLORS, CARD_BORDER, GOLD, GREEN, MUTED, PURPLE, TEXT
+from ui.components import grid_columns, section_title, settings_expander, topbar
+from ui.icons import icon
+from ui import mascot
+from ui.theme import BADGE_COLORS, BRAND, CARD_BORDER, GOLD, GREEN, MUTED, PURPLE, TEXT
 
 
 def render() -> None:
@@ -27,18 +29,23 @@ def render() -> None:
     is_teacher = st.session_state.get("role") == "teacher"
 
     # ---------- 인사 ----------
-    greet_col, sticker_col = st.columns([3, 1])
-    with greet_col:
-        section_title(
-            f"{name} 님, 오늘도 한 걸음 더.",
-            "아래에서 시작할 기능을 선택하세요. 언제든 상단 메뉴로 다른 기능으로 이동할 수 있어요."
-            if not is_teacher else
-            "선생님 화면입니다. 우리 반 현황은 마이페이지에서 확인할 수 있어요.",
+    # [Phase 4] 로그인 직후 1회만 마스코트가 반겨준다.
+    # 매번 띄우면 반가움이 아니라 소음이 된다.
+    if st.session_state.pop("_just_logged_in", False):
+        mascot.speech(
+            "welcome",
+            f"<b>{name} 님, 환영합니다!</b><br>"
+            "여기서 진단하고, 기업을 찾고, 자소서까지 한 번에 만들 수 있어요. "
+            "무엇부터 해볼까요?",
+            tone="brand", size=96,
         )
-    with sticker_col:
-        # 키를 부여해 ui/theme.py 의 모바일 미디어쿼리에서 통째로 숨길 수 있게 한다
-        with st.container(key="mjp_hub_sticker"):
-            show_sticker("hello", width=110)
+
+    section_title(
+        f"{name} 님, 오늘도 한 걸음 더.",
+        "아래에서 시작할 기능을 선택하세요. 언제든 상단 메뉴로 다른 기능으로 이동할 수 있어요."
+        if not is_teacher else
+        "선생님 화면입니다. 우리 반 현황은 상단 '우리 반'에서 확인할 수 있어요.",
+    )
 
     # ---------- 게스트 이어하기 코드 ----------
     if ss.provider() == "guest" and st.session_state.get("resume_code"):
@@ -46,7 +53,7 @@ def render() -> None:
         st.markdown(f"""
         <div class="mjp-card" style="border-color:{GOLD}; display:flex; align-items:center;
                     gap:14px; flex-wrap:wrap;">
-            <div style="font-size:22px;">🔑</div>
+            <div style="flex:none;">{icon("key", size=20, color=GOLD)}</div>
             <div style="flex:1; min-width:200px;">
                 <div style="font-weight:800; color:{TEXT};">이어하기 코드 · <span style="color:{GOLD};
                      letter-spacing:0.14em; font-size:19px;">{code}</span></div>
@@ -72,7 +79,7 @@ def render() -> None:
         with col:
             st.markdown(f"""
             <div class="mjp-feature">
-                <div class="mjp-feature-icon">{feature['icon']}</div>
+                <div class="mjp-feature-icon">{icon(feature['icon'], size=30, color=BRAND, stroke=1.7)}</div>
                 <div class="mjp-feature-title">{feature['title']}</div>
                 <div class="mjp-feature-desc">{feature['desc']}</div>
             </div>
@@ -91,7 +98,7 @@ def render() -> None:
         with sub_cols[0]:
             st.markdown(f"""
             <div class="mjp-card" style="border-left:3px solid {GOLD};">
-                <div style="font-weight:800; color:{TEXT};">🏫 우리 반 현황</div>
+                <div style="font-weight:800; color:{TEXT}; display:flex; align-items:center; gap:8px;">{icon("school", size=17, color=GOLD)} 우리 반 현황</div>
                 <div class="mjp-muted" style="margin-top:6px;">
                     학생별 목표 기업·진행 단계·매칭 점수를 한눈에 봅니다.
                 </div>
@@ -104,7 +111,7 @@ def render() -> None:
     with sub1:
         st.markdown(f"""
         <div class="mjp-card" style="border-left:3px solid {PURPLE};">
-            <div style="font-weight:800; color:{TEXT};">👤 마이페이지</div>
+            <div style="font-weight:800; color:{TEXT}; display:flex; align-items:center; gap:8px;">{icon("user", size=17, color=PURPLE)} 마이페이지</div>
             <div class="mjp-muted" style="margin-top:6px;">
                 찜한 기업, 열람 이력, 매칭 점수 히스토리를 모아봅니다.
             </div>
@@ -116,7 +123,7 @@ def render() -> None:
     with sub2:
         st.markdown(f"""
         <div class="mjp-card" style="border-left:3px solid {GREEN};">
-            <div style="font-weight:800; color:{TEXT};">🚀 향후 로드맵</div>
+            <div style="font-weight:800; color:{TEXT}; display:flex; align-items:center; gap:8px;">{icon("route", size=17, color=GREEN)} 향후 로드맵</div>
             <div class="mjp-muted" style="margin-top:6px;">
                 지금 만들지 '않은' 기능과 그 판단 기준을 공개합니다.
             </div>
@@ -150,7 +157,7 @@ def _class_strip(is_teacher: bool) -> None:
             st.markdown(f"""
             <div class="mjp-card" style="border-left:3px solid {GOLD}; display:flex;
                         align-items:center; gap:14px; flex-wrap:wrap;">
-                <div style="font-size:20px;">🏫</div>
+                <div style="flex:none;">{icon("school", size=20, color=GOLD)}</div>
                 <div style="flex:1; min-width:200px;">
                     <div style="font-weight:800; color:{TEXT};">{store.class_label(klass)}
                         · 반 코드 <span style="color:{GOLD}; letter-spacing:0.12em;">{klass['class_code']}</span></div>
@@ -159,7 +166,7 @@ def _class_strip(is_teacher: bool) -> None:
             </div>
             """, unsafe_allow_html=True)
         else:
-            st.info("🏫 아직 우리 반을 만들지 않으셨어요. 반을 만들면 학생들의 진행 상황을 볼 수 있습니다.")
+            st.info("아직 우리 반을 만들지 않으셨어요. 반을 만들면 학생들의 진행 상황을 볼 수 있습니다.")
             if st.button("우리 반 만들기", key="hub_make_class"):
                 ss.goto(ss.PAGE_CLASS_SETUP)
         return
@@ -170,14 +177,14 @@ def _class_strip(is_teacher: bool) -> None:
     if code:
         klass = store.get_class(code)
         st.markdown(
-            f'<div class="mjp-muted" style="margin:2px 0 12px;">🏫 소속 반 · '
+            f'<div class="mjp-muted" style="margin:2px 0 12px;">소속 반 · '
             f'<b style="color:{TEXT};">{store.class_label(klass) or code}</b></div>',
             unsafe_allow_html=True,
         )
     elif not user.get("class_skipped"):
         ccol1, ccol2 = st.columns([3, 1])
         with ccol1:
-            st.caption("🏫 선생님께 반 코드를 받았다면 등록해보세요. (선택 사항)")
+            st.caption("선생님께 반 코드를 받았다면 등록해보세요. (선택 사항)")
         with ccol2:
             if st.button("반 등록", key="hub_join_class", use_container_width=True):
                 ss.goto(ss.PAGE_CLASS_JOIN)

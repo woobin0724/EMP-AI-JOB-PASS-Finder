@@ -15,18 +15,20 @@ from data.company_showcase import COMPANY_CATEGORIES, COMPANY_SHOWCASE
 from services import activity
 from services import fallback as fb
 from services.strong_sme_api import PRIORITY_DEPARTMENTS, prioritize_by_department
-from ui.components import back_to_hub, disclaimer, grid_columns, section_title, show_sticker, topbar
-from ui.theme import BADGE_COLORS, BG, GREEN, TEXT, render_stars
+from ui import mascot
+from ui.components import back_to_hub, disclaimer, grid_columns, section_title, topbar
+from ui.icons import icon
+from ui.theme import BADGE_COLORS, BG, GREEN, RED, TEXT, render_stars
 
 
 def render() -> None:
     topbar(active=ss.PAGE_EXPLORE)
     back_to_hub()
-    section_title("🔍 실시간 기업 탐색기",
+    section_title("실시간 기업 탐색기", icon_name="search", sub=
                   "공공·민간 채용 포털을 동시에 호출합니다. 응답하지 않는 소스는 "
                   "즉시 백업 마스터 데이터로 전환되어 화면이 비지 않습니다.")
 
-    disclaimer("🧪 기업 카드(별점·복지 등)는 예시(모의) 데이터입니다. "
+    disclaimer("기업 카드(별점·복지 등)는 예시(모의) 데이터입니다. "
                "하단 '실시간 채용공고'는 실제 API 연동을 시도하고, 실패 시 백업 데이터로 전환됩니다.")
 
     tracker = st.session_state.tracker
@@ -34,7 +36,7 @@ def render() -> None:
     # ------------------------------------------------------------
     # 기업 카드 데이터베이스
     # ------------------------------------------------------------
-    st.markdown("#### 🏢 전국 주요 계열 연계 Meister 모의 채용 기업 데이터베이스")
+    st.markdown("#### 전국 주요 계열 연계 Meister 모의 채용 기업 데이터베이스")
 
     cat = st.radio("분야", COMPANY_CATEGORIES, horizontal=True, label_visibility="collapsed")
     shown = COMPANY_SHOWCASE if cat == "전체" else [c for c in COMPANY_SHOWCASE if c["category"] == cat]
@@ -45,7 +47,10 @@ def render() -> None:
             st.markdown(f"""
             <div class="mjp-card">
                 <span class="mjp-tag">{c['size_tag']} · {c['field_tag']}</span>
-                <span class="mjp-star" style="float:right;">{render_stars(c['overall_rating'])}</span>
+                <span style="float:right; display:inline-flex; align-items:center; gap:6px;">
+                    {render_stars(c['overall_rating'])}
+                    {icon("heart", size=15, color=RED, filled=True) if activity.is_bookmarked(c["id"]) else ""}
+                </span>
                 <div style="font-size:19px; font-weight:800; margin-top:8px;">{c['name']}</div>
                 <div class="mjp-muted" style="margin-bottom:8px;">{c['description']}</div>
                 <div class="mjp-muted">인재상<br><b style="color:{TEXT};">{', '.join(c['ideal_talent'])}</b></div>
@@ -59,9 +64,10 @@ def render() -> None:
                 bc1, bc2, bc3 = st.columns([0.7, 1.2, 1.2])
                 with bc1:
                     marked = activity.is_bookmarked(c["id"])
-                    if st.button("♥" if marked else "♡",
+                    # Streamlit 버튼은 SVG 를 못 넣는다 → 상태는 위 카드의 하트 아이콘이,
+                    # 동작은 이 텍스트 버튼이 담당한다.
+                    if st.button("찜 해제" if marked else "찜하기",
                                  key=f"fav_{c['id']}", use_container_width=True,
-                                 help="찜 해제" if marked else "이 기업 찜하기",
                                  type="primary" if marked else "secondary"):
                         activity.toggle_bookmark(c["id"])
                         st.rerun()
@@ -70,7 +76,7 @@ def render() -> None:
                         st.session_state.selected_company_id = c["id"]
                         ss.goto(ss.PAGE_GUIDE)
                 with bc3:
-                    if st.button("자소서 📄", key=f"resume_{c['id']}", use_container_width=True):
+                    if st.button("자소서", key=f"resume_{c['id']}", use_container_width=True):
                         st.session_state.selected_company_id = c["id"]
                         ss.goto(ss.PAGE_RESUME)
 
@@ -79,7 +85,7 @@ def render() -> None:
     # ------------------------------------------------------------
     # 실시간 통합 검색
     # ------------------------------------------------------------
-    st.markdown("#### 🔄 실시간 채용 공고 통합 검색 (고용24 + 잡알리오 + 강소기업)")
+    st.markdown("#### 실시간 채용 공고 통합 검색 (고용24 + 잡알리오 + 강소기업)")
     st.caption("세 소스를 동시에 호출하고, 응답하지 않는 소스는 즉시 백업 마스터 데이터로 대체합니다. "
                "기계·전기·제조·IT 전공 연관 강소기업 공고는 상단에 우선 노출됩니다.")
 
@@ -88,7 +94,7 @@ def render() -> None:
     type_pick = st.selectbox("기업 유형",
                              ["전체", "대기업", "중견기업", "중소기업", "스타트업", "공기업", "강소기업"])
 
-    if st.button("📡 지금 불러오기", type="primary"):
+    if st.button("지금 불러오기", type="primary"):
         with st.spinner("고용24·잡알리오·강소기업 포털 호출 중... 실패 시 백업 데이터로 자동 전환됩니다."):
             worknet_df, _ = fb.fetch_jobs_safe(
                 st.session_state.get("worknet_key", ""), kw, tracker=tracker)
@@ -106,22 +112,22 @@ def render() -> None:
     if st.session_state.live_jobs is not None:
         st.markdown(fb.badge_html(tracker, BADGE_COLORS), unsafe_allow_html=True)
         for name, err in tracker.errors():
-            st.caption(f"⚠️ {name}: {err} → 백업 데이터로 전환됨")
+            st.caption(f"{name}: {err} → 백업 데이터로 전환됨")
 
         records = st.session_state.live_jobs
         if type_pick != "전체":
             records = [r for r in records if r.get("company_type") == type_pick]
 
         if not records:
-            st.warning("🔍 검색 결과가 없습니다. 다른 키워드나 기업 유형으로 다시 시도해보세요.")
-            show_sticker("thinking", width=120)
+            st.warning("검색 결과가 없습니다. 다른 키워드나 기업 유형으로 다시 시도해보세요.")
+            st.markdown(mascot.html("thinking", size=110), unsafe_allow_html=True)
         else:
             st.caption(f"검색 결과 {len(records)}건")
             for r in records:
                 certs_list = r.get("required_certs") or []
                 cert_str = ", ".join(certs_list) if certs_list else "정보 없음"
                 priority_badge = (
-                    f' <span class="mjp-tag" style="background:{GREEN}; color:{BG};">⭐ 전공 우선매칭</span>'
+                    f' <span class="mjp-tag" style="background:{GREEN}; color:{BG};">전공 우선매칭</span>'
                     if r.get("company_type") == "강소기업" and r.get("department") in PRIORITY_DEPARTMENTS
                     else ""
                 )
@@ -134,4 +140,4 @@ def render() -> None:
                 </div>
                 """, unsafe_allow_html=True)
                 if r.get("ai_tip"):
-                    st.info(f"🤖 {r['ai_tip']}")
+                    st.info(r["ai_tip"])

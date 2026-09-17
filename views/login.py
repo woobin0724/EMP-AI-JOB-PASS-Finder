@@ -23,6 +23,7 @@ from core import session as ss
 from services import auth as auth_svc
 from services import store
 from ui import brand
+from ui.icons import brand_symbol
 from ui.theme import CARD, CARD_BORDER, GREEN, MUTED, TEXT
 
 
@@ -37,7 +38,7 @@ def _provider_anchor(key: str) -> str:
         background:{spec['bg']}; color:{spec['fg']};
         border:1px solid {spec['border']}; border-radius:12px;
         font-size:15px; font-weight:700; text-decoration:none;">
-        <span style="font-size:17px;">{spec['icon']}</span>{spec['label']}
+        {brand_symbol(spec['icon'], size=19, color=spec['fg'])}{spec['label']}
     </a>"""
 
 
@@ -51,8 +52,8 @@ def _provider_disabled(key: str) -> str:
         background:{CARD}; color:{MUTED};
         border:1px dashed {CARD_BORDER}; border-radius:12px;
         font-size:15px; font-weight:700; cursor:not-allowed;">
-        <span style="font-size:16px; opacity:.5;">{spec['icon']}</span>
-        {spec['label']}<span style="font-size:12px; font-weight:600;">· 🔒 준비중</span>
+        <span style="opacity:.45;">{brand_symbol(spec['icon'], size=17, color=MUTED)}</span>
+        {spec['label']}<span style="font-size:12px; font-weight:600;">· 준비중</span>
     </div>"""
 
 
@@ -96,7 +97,7 @@ def render() -> None:
             "이름 또는 닉네임", key="guest_nickname",
             placeholder="예: 김우빈", label_visibility="collapsed",
         )
-        if st.button("👤 게스트모드로 바로 시작하기", type="primary",
+        if st.button("게스트모드로 바로 시작하기", type="primary",
                      use_container_width=True, key="guest_login_btn"):
             user = auth_svc.guest_login(nickname)
             ss.login(user)
@@ -109,7 +110,7 @@ def render() -> None:
         )
 
         # ---------- 이어하기 ----------
-        with st.expander("🔁 이어하기 코드가 있어요"):
+        with st.expander("이어하기 코드가 있어요"):
             code = st.text_input("이어하기 코드 (6자리)", key="resume_code_input",
                                  placeholder="예: K7M2QX", max_chars=10)
             if st.button("코드로 이어하기", use_container_width=True, key="resume_btn"):
@@ -141,7 +142,7 @@ def _setup_panel() -> None:
     같은 화면에서 설명한다.
     """
     ready = auth_svc.configured_providers()
-    label = ("✅ 소셜 로그인 연동 현황 — "
+    label = ("소셜 로그인 연동 현황 — "
              + (f"{len(ready)}개 제공자 활성화" if ready else "현재 게스트모드로 동작 중"))
 
     with st.expander(label, expanded=False):
@@ -149,11 +150,11 @@ def _setup_panel() -> None:
             "소셜 로그인은 **코드가 아니라 각 플랫폼의 앱 등록·검수 절차**가 병목입니다. "
             "그래서 OAuth2 인가 코드 흐름(`services/auth.py`)을 전부 구현해 두고, "
             "`st.secrets` 에 키가 있는지로 **런타임에 자동 전환**되도록 했습니다. "
-            "키만 등록하면 코드 수정 없이 아래 상태가 ✅ 로 바뀝니다."
+            "키만 등록하면 코드 수정 없이 아래 상태가 '연동됨'으로 바뀝니다."
         )
         st.table(auth_svc.status_table())
         st.caption(
-            f"🔑 현재 등록된 Redirect URI: `{auth_svc.redirect_uri()}` — "
+            f"현재 등록된 Redirect URI: `{auth_svc.redirect_uri()}` — "
             "각 개발자 콘솔에 **문자 단위로 동일하게** 등록되어야 합니다. "
             "배포 URL이 확정되면 `secrets.toml` 의 `OAUTH_REDIRECT_URI` 만 바꾸면 됩니다."
         )

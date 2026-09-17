@@ -22,6 +22,8 @@ AI Job Pass Finder — 전북기계공업고등학교 E.M.P 팀
        views/            화면별 렌더링 모듈
 """
 
+import os
+
 import streamlit as st
 
 # ------------------------------------------------------------
@@ -29,7 +31,9 @@ import streamlit as st
 # ------------------------------------------------------------
 st.set_page_config(
     page_title="AI Job Pass Finder",
-    page_icon="🧭",
+    # 파비콘은 브라우저 탭에 뜨는 것이라 화면 안 UI 가 아니다.
+    # assets/favicon.png 를 넣으면 그것을 쓰고, 없으면 기본 문자를 쓴다.
+    page_icon="assets/favicon.png" if os.path.exists("assets/favicon.png") else "🧭",
     layout="wide",
     # 모바일(QR 접속)에서 사이드바 햄버거를 누르게 만들지 않기 위해,
     # 내비게이션을 전부 본문 상단으로 올리고 사이드바는 접어둔다.

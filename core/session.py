@@ -63,22 +63,22 @@ ALL_PAGES = PUBLIC_PAGES | {PAGE_ROLE} | FEATURE_PAGES
 # 메인 허브에 카드로 노출할 4대 핵심 기능 (+ 부록 탭)
 FEATURES = [
     {
-        "key": PAGE_SPEC, "icon": "📊", "title": "스펙 진단 & 추천", "nav": "스펙 진단",
+        "key": PAGE_SPEC, "icon": "chart", "title": "스펙 진단 & 추천", "nav": "스펙 진단",
         "desc": "내신·자격증·인재상을 100점 만점으로 환산해 합격 가능성을 즉시 계산합니다. "
                 "AI 호출 없이 로컬 연산이라 슬라이더를 움직이는 즉시 갱신됩니다.",
     },
     {
-        "key": PAGE_EXPLORE, "icon": "🔍", "title": "실시간 기업 탐색기", "nav": "기업 탐색",
+        "key": PAGE_EXPLORE, "icon": "search", "title": "실시간 기업 탐색기", "nav": "기업 탐색",
         "desc": "고용24·잡알리오·강소기업 포털을 한 번에 검색합니다. "
                 "응답하지 않는 소스는 즉시 백업 데이터로 전환돼 화면이 멈추지 않습니다.",
     },
     {
-        "key": PAGE_GUIDE, "icon": "🛠", "title": "채용 대비 가이드 & 커리큘럼", "nav": "가이드",
+        "key": PAGE_GUIDE, "icon": "wrench", "title": "채용 대비 가이드 & 커리큘럼", "nav": "가이드",
         "desc": "목표 기업별 면접 기출·필기 키워드·4주 커리큘럼을 제공하고, "
                 "커리어 로드맵 3단계를 스탬프로 관리합니다.",
     },
     {
-        "key": PAGE_RESUME, "icon": "📄", "title": "합격 이력서 & 자소서", "nav": "자소서",
+        "key": PAGE_RESUME, "icon": "file", "title": "합격 이력서 & 자소서", "nav": "자소서",
         "desc": "내 스펙과 기업 인재상을 엮어 자기소개서 초안을 생성합니다. "
                 "동일 입력은 캐시로 응답해 API 과금을 막습니다.",
     },
@@ -225,6 +225,7 @@ def login(user: dict) -> None:
     }
     st.session_state["resume_code"] = user.get("resume_code", "")
     st.session_state["login_error"] = ""
+    st.session_state["_just_logged_in"] = True   # [Phase 4] 마스코트 환영 연출 1회
 
     # 이전 사용자의 찜 캐시·디바운스 기록이 남아 있으면 남의 데이터를 보게 된다.
     # (같은 브라우저 세션에서 이어하기 코드로 계정을 바꾸는 경우가 실제로 있다.)
@@ -313,9 +314,13 @@ def nav_items() -> list[tuple[str, str]]:
     라벨은 FEATURES 의 짧은 nav 값을 쓴다. 긴 제목을 그대로 쓰면
     좁은 컬럼에서 말줄임표로 잘려 무슨 메뉴인지 알 수 없게 된다.
     """
-    items = [(f["key"], f"{f['icon']} {f.get('nav', f['title'])}") for f in FEATURES]
+    # ▣ Streamlit 제약: st.button 라벨은 순수 텍스트만 렌더링한다.
+    #   SVG 를 넣을 수 없으므로 내비는 **텍스트 전용**으로 간다.
+    #   이모지를 남기면 OS 마다 다른 그림이 뜨고 톤도 어긋나므로 지웠다.
+    #   (참고 디자인의 상단 내비도 텍스트 전용이라 오히려 톤이 맞는다.)
+    items = [(f["key"], f.get("nav", f["title"])) for f in FEATURES]
     if is_teacher():
-        items.append((PAGE_CLASS_BOARD, "🏫 우리 반"))
-    items.append((PAGE_NEXT, "🚀 로드맵"))
-    items.append((PAGE_MYPAGE, "👤 마이페이지"))
+        items.append((PAGE_CLASS_BOARD, "우리 반"))
+    items.append((PAGE_NEXT, "로드맵"))
+    items.append((PAGE_MYPAGE, "마이페이지"))
     return items

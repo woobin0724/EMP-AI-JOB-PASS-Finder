@@ -20,7 +20,7 @@ from ui.theme import BRAND, CARD_BORDER, GREEN, MUTED, TEXT
 
 def render() -> None:
     topbar(active=ss.PAGE_CLASS_JOIN)
-    section_title("🏫 반 등록",
+    section_title("반 등록", icon_name="school", sub=
                   "선생님께 반 코드를 받았다면 입력해주세요. "
                   "없어도 괜찮습니다 — 모든 기능을 그대로 쓸 수 있어요.")
 
@@ -45,7 +45,7 @@ def render() -> None:
         code = st.text_input("반 코드", key="join_code", max_chars=10,
                              placeholder="예: K7M2QX", label_visibility="collapsed")
 
-        if st.button("✅ 우리 반에 등록하기", type="primary",
+        if st.button("우리 반에 등록하기", type="primary",
                      use_container_width=True, key="join_submit"):
             _join(code)
 
@@ -57,7 +57,7 @@ def render() -> None:
         </div>
         """, unsafe_allow_html=True)
 
-        if st.button("👤 혼자 사용할게요", use_container_width=True, key="join_skip"):
+        if st.button("혼자 사용할게요", use_container_width=True, key="join_skip"):
             store.skip_class(ss.user_id())
             ss.goto(ss.PAGE_HUB)
 
@@ -86,7 +86,7 @@ def _render_joined(code: str) -> None:
 
     message = st.session_state.pop("_class_joined_msg", "")
     if message:
-        st.success(f"🎉 {message}")
+        st.success(message)
         st.balloons()
 
     st.markdown(f"""
@@ -100,7 +100,7 @@ def _render_joined(code: str) -> None:
     </div>
     """, unsafe_allow_html=True)
 
-    if st.button("🚀 기능 선택하러 가기", type="primary", use_container_width=True,
+    if st.button("기능 선택하러 가기", type="primary", use_container_width=True,
                  key="joined_hub"):
         ss.goto(ss.PAGE_HUB)
 

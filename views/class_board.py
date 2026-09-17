@@ -23,7 +23,8 @@ from core import session as ss
 from data.roadmap import MILESTONES
 from services import store
 from services.activity import student_summary
-from ui.components import back_to_hub, grid_columns, section_title, show_sticker, topbar
+from ui import mascot
+from ui.components import back_to_hub, grid_columns, section_title, topbar
 from ui.theme import BRAND, CARD_BORDER, GOLD, GREEN, MUTED, RED, TEXT
 
 
@@ -36,7 +37,7 @@ def render() -> None:
         _render_no_class()
         return
 
-    section_title("🏫 우리 반 현황", store.class_label(klass))
+    section_title("우리 반 현황", store.class_label(klass), icon_name="school")
 
     students = store.class_students(klass["class_code"])
     rows = [student_summary(u) for u in students]
@@ -81,13 +82,13 @@ def _render_code_strip(klass: dict, count: int) -> None:
 # 빈 상태
 # ------------------------------------------------------------
 def _render_no_class() -> None:
-    section_title("🏫 우리 반 현황", "아직 반을 만들지 않으셨어요.")
+    section_title("우리 반 현황", "아직 반을 만들지 않으셨어요.", icon_name="school")
     c1, c2 = st.columns([1, 2.4])
     with c1:
-        show_sticker("thinking", width=140)
+        st.markdown(mascot.html("thinking", size=120), unsafe_allow_html=True)
     with c2:
         st.info("반을 만들면 6자리 코드가 발급되고, 학생들이 그 코드로 등록할 수 있습니다.")
-        if st.button("🏫 우리 반 만들러 가기", type="primary", key="board_to_setup"):
+        if st.button("우리 반 만들러 가기", type="primary", key="board_to_setup"):
             ss.goto(ss.PAGE_CLASS_SETUP)
 
 
@@ -95,7 +96,7 @@ def _render_empty_class(klass: dict) -> None:
     st.markdown("")
     c1, c2 = st.columns([1, 2.4])
     with c1:
-        show_sticker("hello", width=150)
+        st.markdown(mascot.html("welcome", size=126), unsafe_allow_html=True)
     with c2:
         st.info(f"아직 등록한 학생이 없습니다. 반 코드 **{klass['class_code']}** 를 "
                 f"학생들에게 알려주세요.")
@@ -141,7 +142,7 @@ def _render_summary(rows: list[dict]) -> None:
 # 학생 목록
 # ------------------------------------------------------------
 def _render_table(rows: list[dict]) -> None:
-    st.markdown("##### 📋 학생별 진행 현황")
+    st.markdown("##### 학생별 진행 현황")
 
     view = st.radio("보기", ["표로 보기", "카드로 보기"], horizontal=True,
                     label_visibility="collapsed", key="board_view")
@@ -227,10 +228,10 @@ def _render_attention(rows: list[dict]) -> None:
     stalled = [r for r in rows if r["active"] and r["stage_done"] == 0]
 
     if not (not_started or low_score or stalled):
-        st.success("모든 학생이 진단을 시작했고, 점수 보완이 시급한 학생도 없습니다. 👏")
+        st.success("모든 학생이 진단을 시작했고, 점수 보완이 시급한 학생도 없습니다.")
         return
 
-    st.markdown("##### 🔔 먼저 챙겨보면 좋을 학생")
+    st.markdown("##### 먼저 챙겨보면 좋을 학생")
     acols = st.columns(3)
     groups = [
         ("아직 시작 안 함", not_started, MUTED, "접속은 했지만 진단을 한 번도 하지 않았습니다."),
