@@ -64,6 +64,9 @@ def render() -> None:
         </div>
         """, unsafe_allow_html=True)
 
+    # ---------- [Phase 2] 반 정보 ----------
+    _class_section(saved)
+
     # ---------- 활동 기록 (Phase 3 예정) ----------
     st.markdown(f'<div style="height:1px;background:{CARD_BORDER};margin:18px 0;"></div>',
                 unsafe_allow_html=True)
@@ -108,3 +111,83 @@ def render() -> None:
     st.caption("ℹ️ Streamlit Community Cloud는 재배포·슬립 해제 시 파일시스템이 초기화됩니다. "
                "장기 보관이 필요하면 외부 DB 연동이 필요합니다 "
                "(services/store.py 의 `_read_all` / `_write_all` 두 함수만 교체하면 됩니다).")
+
+
+# ------------------------------------------------------------
+# [Phase 2] 반 정보
+# ------------------------------------------------------------
+def _class_section(saved: dict) -> None:
+    """
+    학생: 소속 반 표시 + 미등록 시 등록 진입구
+    선생님: 담당 반 + 코드 + 대시보드 진입구
+
+    반 등록은 선택 기능이므로, 미등록 학생에게도 경고가 아니라
+    '원하면 하세요' 톤으로만 안내한다.
+    """
+    st.markdown(f'<div style="height:1px;background:{CARD_BORDER};margin:18px 0;"></div>',
+                unsafe_allow_html=True)
+    st.markdown("#### 🏫 반 정보")
+
+    uid = ss.user_id()
+
+    # ---- 선생님 ----
+    if ss.is_teacher():
+        klass = store.teacher_class(uid)
+        if not klass:
+            st.info("아직 우리 반을 만들지 않으셨어요.")
+            if st.button("🏫 우리 반 만들기", type="primary", key="mypage_make_class"):
+                ss.goto(ss.PAGE_CLASS_SETUP)
+            return
+
+        count = len(store.class_students(klass["class_code"]))
+        st.markdown(f"""
+        <div class="mjp-card" style="border-color:{GOLD};">
+            <div style="font-size:18px; font-weight:800; color:{TEXT};">
+                {store.class_label(klass)}</div>
+            <div class="mjp-muted" style="margin-top:6px;">등록 학생 {count}명 ·
+                개설일 {klass.get('created_at', '')[:10]}</div>
+        </div>
+        """, unsafe_allow_html=True)
+        st.caption("반 코드 (눌러서 복사)")
+        st.code(klass["class_code"], language=None)
+
+        if st.button("📊 우리 반 현황 보기", type="primary", use_container_width=True,
+                     key="mypage_board"):
+            ss.goto(ss.PAGE_CLASS_BOARD)
+        return
+
+    # ---- 학생 ----
+    code = saved.get("class_code")
+    if code:
+        klass = store.get_class(code)
+        st.markdown(f"""
+        <div class="mjp-card" style="border-color:{GREEN};">
+            <span class="mjp-badge" style="background:{GREEN}; color:#0A0E17;">등록됨</span>
+            <div style="font-size:17px; font-weight:800; color:{TEXT}; margin-top:10px;">
+                {store.class_label(klass) or code}</div>
+            <div class="mjp-muted" style="margin-top:4px;">반 코드 {code}</div>
+            <div class="mjp-muted" style="margin-top:8px; line-height:1.55;">
+                진단 결과와 로드맵 진행 상황이 선생님의 '우리 반 현황'에 표시됩니다.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        with st.expander("반에서 나가기"):
+            st.caption("나가면 이후 활동은 선생님 화면에 표시되지 않습니다. "
+                       "이미 기록된 내 데이터는 마이페이지에 그대로 남습니다.")
+            if st.button("반에서 나가기", use_container_width=True, key="mypage_leave"):
+                store.leave_class(uid)
+                ss.set_class_code(None)
+                st.rerun()
+        return
+
+    st.markdown(f"""
+    <div class="mjp-card" style="border-style:dashed;">
+        <div style="font-weight:800; color:{TEXT};">소속된 반이 없습니다</div>
+        <div class="mjp-muted" style="margin-top:6px; line-height:1.6;">
+            반 등록은 <b>선택</b>이에요. 등록하지 않아도 모든 기능을 그대로 쓸 수 있습니다.
+            선생님께 반 코드를 받았다면 아래에서 등록해보세요.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    if st.button("🏫 반 코드 입력하기", use_container_width=True, key="mypage_join_class"):
+        ss.goto(ss.PAGE_CLASS_JOIN)

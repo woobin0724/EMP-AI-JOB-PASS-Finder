@@ -15,6 +15,7 @@ from core.matching import calc_spec_score
 from data import ogq_assets as ogq
 from data.certifications import get_bonus_points
 from data.company_showcase import COMPANY_SHOWCASE, COMPANY_SIZE_TAGS
+from services import activity
 from data.departments import (
     DEPARTMENT_LIST, get_category, get_employment_rate, get_majors_for_department,
 )
@@ -93,6 +94,11 @@ def render() -> None:
         company=target_company, strength_keywords=strengths,
     )
     st.session_state.last_spec_result = result
+
+    # [Phase 2] 선생님 대시보드에 쓰일 진단 기록.
+    # services/activity.py 가 직전 값과 비교해 실제로 바뀐 경우에만 저장하므로,
+    # 슬라이더를 드래그해도 디스크 쓰기가 폭주하지 않는다.
+    activity.record_spec(result, dept, grade, target_company)
 
     sticker_key = ogq.sticker_key_for_score(result["final_score"])
     verdict, verdict_msg = ogq.SCORE_STICKER_MESSAGES[sticker_key]

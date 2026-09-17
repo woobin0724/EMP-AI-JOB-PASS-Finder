@@ -40,7 +40,7 @@ from core import session as ss                      # noqa: E402
 from services import auth as auth_svc               # noqa: E402
 from ui.theme import inject_css                     # noqa: E402
 from views import (                                 # noqa: E402
-    hub, landing, login, mypage, role_select,
+    class_board, class_join, class_setup, hub, landing, login, mypage, role_select,
     tab_explore, tab_guide, tab_next, tab_resume, tab_spec,
 )
 
@@ -79,6 +79,9 @@ ROUTES = {
     ss.PAGE_ROLE: role_select.render,
     ss.PAGE_HUB: hub.render,
     ss.PAGE_MYPAGE: mypage.render,
+    ss.PAGE_CLASS_SETUP: class_setup.render,
+    ss.PAGE_CLASS_JOIN: class_join.render,
+    ss.PAGE_CLASS_BOARD: class_board.render,
     ss.PAGE_SPEC: tab_spec.render,
     ss.PAGE_EXPLORE: tab_explore.render,
     ss.PAGE_GUIDE: tab_guide.render,

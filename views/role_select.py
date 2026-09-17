@@ -80,9 +80,22 @@ def render() -> None:
 
 
 def _choose(role: str) -> None:
-    """역할을 세션과 저장소에 동시에 기록하고 허브로 보낸다."""
+    """
+    역할을 세션과 저장소에 기록하고 역할에 맞는 다음 화면으로 보낸다.
+
+      선생님 → 우리 반 개설 (반 코드를 받아야 학생을 모을 수 있다)
+      학생   → 반 코드 입력 (건너뛸 수 있음 · 반 등록은 선택)
+
+    둘 다 '나중에 하기'로 빠져나갈 수 있어서, 어느 쪽도 허브 진입을 막지 않는다.
+    """
     st.session_state["role"] = role
     uid = ss.user_id()
     if uid:
         store.set_role(uid, role)
-    ss.goto(ss.PAGE_HUB)
+
+    if role == "teacher":
+        ss.goto(ss.PAGE_CLASS_SETUP)
+    elif uid and store.needs_class_prompt(uid):
+        ss.goto(ss.PAGE_CLASS_JOIN)
+    else:
+        ss.goto(ss.PAGE_HUB)

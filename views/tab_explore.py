@@ -14,7 +14,7 @@ from core.matching import filter_results
 from data.company_showcase import COMPANY_CATEGORIES, COMPANY_SHOWCASE
 from services import fallback as fb
 from services.strong_sme_api import PRIORITY_DEPARTMENTS, prioritize_by_department
-from ui.components import back_to_hub, disclaimer, section_title, show_sticker, topbar
+from ui.components import back_to_hub, disclaimer, grid_columns, section_title, show_sticker, topbar
 from ui.theme import BADGE_COLORS, BG, GREEN, TEXT, render_stars
 
 
@@ -38,9 +38,9 @@ def render() -> None:
     cat = st.radio("분야", COMPANY_CATEGORIES, horizontal=True, label_visibility="collapsed")
     shown = COMPANY_SHOWCASE if cat == "전체" else [c for c in COMPANY_SHOWCASE if c["category"] == cat]
 
-    cols = st.columns(3)
-    for i, c in enumerate(shown):
-        with cols[i % 3]:
+    # 행 단위 컬럼 — 모바일 1단 전환 시 기업 순서 보존
+    for col, c in zip(grid_columns(len(shown), 3), shown):
+        with col:
             st.markdown(f"""
             <div class="mjp-card">
                 <span class="mjp-tag">{c['size_tag']} · {c['field_tag']}</span>

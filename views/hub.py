@@ -15,7 +15,8 @@ import streamlit as st
 
 from core import session as ss
 from services import fallback as fb
-from ui.components import section_title, settings_expander, show_sticker, topbar
+from services import store
+from ui.components import grid_columns, section_title, settings_expander, show_sticker, topbar
 from ui.theme import BADGE_COLORS, CARD_BORDER, GOLD, GREEN, MUTED, PURPLE, TEXT
 
 
@@ -56,6 +57,9 @@ def render() -> None:
         </div>
         """, unsafe_allow_html=True)
 
+    # ---------- [Phase 2] 반 관련 안내 ----------
+    _class_strip(is_teacher)
+
     # ---------- 데이터 출처 배지 ----------
     st.markdown(fb.badge_html(st.session_state.tracker, BADGE_COLORS), unsafe_allow_html=True)
 
@@ -64,9 +68,8 @@ def render() -> None:
                 f'letter-spacing:0.08em; margin:22px 0 12px;">핵심 기능</div>',
                 unsafe_allow_html=True)
 
-    cols = st.columns(2)
-    for i, feature in enumerate(ss.FEATURES):
-        with cols[i % 2]:
+    for col, feature in zip(grid_columns(len(ss.FEATURES), 2), ss.FEATURES):
+        with col:
             st.markdown(f"""
             <div class="mjp-feature">
                 <div class="mjp-feature-icon">{feature['icon']}</div>
@@ -83,7 +86,21 @@ def render() -> None:
     st.markdown(f'<div style="height:1px;background:{CARD_BORDER};margin:14px 0 18px;"></div>',
                 unsafe_allow_html=True)
 
-    sub1, sub2 = st.columns(2)
+    sub_cols = st.columns(3 if is_teacher else 2)
+    if is_teacher:
+        with sub_cols[0]:
+            st.markdown(f"""
+            <div class="mjp-card" style="border-left:3px solid {GOLD};">
+                <div style="font-weight:800; color:{TEXT};">🏫 우리 반 현황</div>
+                <div class="mjp-muted" style="margin-top:6px;">
+                    학생별 목표 기업·진행 단계·매칭 점수를 한눈에 봅니다.
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            if st.button("우리 반 열기", key="hub_class_board", use_container_width=True):
+                ss.goto(ss.PAGE_CLASS_BOARD)
+
+    sub1, sub2 = (sub_cols[1], sub_cols[2]) if is_teacher else (sub_cols[0], sub_cols[1])
     with sub1:
         st.markdown(f"""
         <div class="mjp-card" style="border-left:3px solid {PURPLE};">
@@ -109,3 +126,58 @@ def render() -> None:
             ss.goto(ss.PAGE_NEXT)
 
     settings_expander()
+
+
+# ------------------------------------------------------------
+# [Phase 2] 반 상태 안내 스트립
+# ------------------------------------------------------------
+def _class_strip(is_teacher: bool) -> None:
+    """
+    허브 상단의 반 관련 한 줄 안내.
+
+    선생님: 반이 없으면 개설 유도 / 있으면 코드와 학생 수
+    학생  : 소속 반 표시. 미등록이면 '코드 받았으면 등록하세요' 정도로만 권하고
+            강요하지 않는다 (반 등록은 선택 기능이다).
+    """
+    uid = ss.user_id()
+    if not uid:
+        return
+
+    if is_teacher:
+        klass = store.teacher_class(uid)
+        if klass:
+            count = len(store.class_students(klass["class_code"]))
+            st.markdown(f"""
+            <div class="mjp-card" style="border-left:3px solid {GOLD}; display:flex;
+                        align-items:center; gap:14px; flex-wrap:wrap;">
+                <div style="font-size:20px;">🏫</div>
+                <div style="flex:1; min-width:200px;">
+                    <div style="font-weight:800; color:{TEXT};">{store.class_label(klass)}
+                        · 반 코드 <span style="color:{GOLD}; letter-spacing:0.12em;">{klass['class_code']}</span></div>
+                    <div class="mjp-muted" style="margin-top:4px;">등록 학생 {count}명</div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.info("🏫 아직 우리 반을 만들지 않으셨어요. 반을 만들면 학생들의 진행 상황을 볼 수 있습니다.")
+            if st.button("우리 반 만들기", key="hub_make_class"):
+                ss.goto(ss.PAGE_CLASS_SETUP)
+        return
+
+    # --- 학생 ---
+    user = store.get_user(uid) or {}
+    code = user.get("class_code")
+    if code:
+        klass = store.get_class(code)
+        st.markdown(
+            f'<div class="mjp-muted" style="margin:2px 0 12px;">🏫 소속 반 · '
+            f'<b style="color:{TEXT};">{store.class_label(klass) or code}</b></div>',
+            unsafe_allow_html=True,
+        )
+    elif not user.get("class_skipped"):
+        ccol1, ccol2 = st.columns([3, 1])
+        with ccol1:
+            st.caption("🏫 선생님께 반 코드를 받았다면 등록해보세요. (선택 사항)")
+        with ccol2:
+            if st.button("반 등록", key="hub_join_class", use_container_width=True):
+                ss.goto(ss.PAGE_CLASS_JOIN)

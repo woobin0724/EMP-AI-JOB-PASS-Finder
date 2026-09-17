@@ -77,14 +77,13 @@ def topbar(active: str | None = None) -> None:
         """, unsafe_allow_html=True)
 
     # --- 기능 메뉴 (모바일에서도 가로 유지) ---
+    # 항목 수는 역할에 따라 달라진다(선생님은 '우리 반'이 추가되어 7개).
+    # 컬럼 수를 항목 수에 맞춰야 빈 칸이 생기거나 줄이 넘치지 않는다.
     with st.container(key="mjp_navbar"):
-        cols = st.columns(6)
-        items = [(f["key"], f"{f['icon']} {f['title'].split(' & ')[0]}") for f in ss.FEATURES]
-        items.append((ss.PAGE_NEXT, "🚀 향후 로드맵"))
-        items.append((ss.PAGE_MYPAGE, "👤 마이페이지"))
-
-        for i, (key, label) in enumerate(items):
-            with cols[i % 6]:
+        items = ss.nav_items()
+        cols = st.columns(len(items))
+        for col, (key, label) in zip(cols, items):
+            with col:
                 is_active = (active == key)
                 if st.button(label, key=f"nav_{key}", use_container_width=True,
                              type="primary" if is_active else "secondary"):
@@ -141,3 +140,33 @@ def section_title(title: str, sub: str = "") -> None:
 
 def pill(text: str, color: str = GREEN) -> str:
     return f'<span class="mjp-badge" style="background:{color}; color:{BG};">{text}</span>'
+
+
+# ------------------------------------------------------------
+# 그리드 — 모바일 1단 전환 시 순서 보존
+# ------------------------------------------------------------
+def grid_columns(total: int, per_row: int) -> list:
+    """
+    카드 목록용 컬럼을 **행 단위로** 만들어 반환한다.
+
+    ▣ 왜 필요한가 (모바일에서 실제로 깨졌던 부분)
+       흔한 패턴인
+           cols = st.columns(2)
+           for i, item in enumerate(items):
+               with cols[i % 2]: ...
+       은 컬럼 2개를 만들어 놓고 항목을 번갈아 넣는다. 데스크톱에서는
+       문제없지만, 모바일에서 컬럼이 1단으로 접히면 **컬럼 통째로** 쌓이므로
+       0→2→4→1→3 순서가 된다. 학생 명단이나 기능 카드의 순서가 뒤섞인다.
+
+       행마다 st.columns() 를 새로 만들면 [0,1] [2,3] [4] 로 묶이므로
+       1단으로 접혀도 0→1→2→3→4 순서가 그대로 보존된다.
+
+    반환값: 항목 순서와 1:1 대응하는 컬럼 리스트
+    """
+    columns = []
+    for start in range(0, total, per_row):
+        row = st.columns(per_row)
+        for offset in range(per_row):
+            if start + offset < total:
+                columns.append(row[offset])
+    return columns

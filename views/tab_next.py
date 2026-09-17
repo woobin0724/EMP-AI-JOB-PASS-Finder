@@ -15,7 +15,7 @@ import streamlit as st
 from core import session as ss
 from data import ogq_assets as ogq
 from services import auth as auth_svc
-from ui.components import back_to_hub, section_title, show_sticker, topbar
+from ui.components import back_to_hub, grid_columns, section_title, show_sticker, topbar
 from ui.theme import GREEN, MUTED, PURPLE, TEXT
 
 
@@ -81,9 +81,9 @@ def render() -> None:
     with tcol2:
         show_sticker("thanks", width=150)
 
-    ccols = st.columns(2)
-    for i, f in enumerate(_cut_features()):
-        with ccols[i % 2]:
+    cut = _cut_features()
+    for col, f in zip(grid_columns(len(cut), 2), cut):
+        with col:
             st.markdown(f"""
             <div class="mjp-later" style="border-left-color:{f['status_color']};">
                 <div style="display:flex; align-items:center; gap:10px;">

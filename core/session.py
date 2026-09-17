@@ -38,6 +38,11 @@ PAGE_ROLE = "role"
 PAGE_HUB = "hub"
 PAGE_MYPAGE = "mypage"
 
+# [Phase 2] 반 등록
+PAGE_CLASS_SETUP = "class_setup"   # 선생님 — 우리 반 개설
+PAGE_CLASS_JOIN = "class_join"     # 학생 — 반 코드 입력 (선택)
+PAGE_CLASS_BOARD = "class_board"   # 선생님 — 우리 반 현황 대시보드
+
 PAGE_SPEC = "spec"
 PAGE_EXPLORE = "explore"
 PAGE_GUIDE = "guide"
@@ -48,29 +53,32 @@ PAGE_NEXT = "next"
 PUBLIC_PAGES = {PAGE_LANDING, PAGE_LOGIN}
 
 # 역할 선택을 마쳐야 들어갈 수 있는 화면
-FEATURE_PAGES = {PAGE_HUB, PAGE_MYPAGE, PAGE_SPEC, PAGE_EXPLORE, PAGE_GUIDE, PAGE_RESUME, PAGE_NEXT}
+FEATURE_PAGES = {
+    PAGE_HUB, PAGE_MYPAGE, PAGE_SPEC, PAGE_EXPLORE, PAGE_GUIDE, PAGE_RESUME, PAGE_NEXT,
+    PAGE_CLASS_SETUP, PAGE_CLASS_JOIN, PAGE_CLASS_BOARD,
+}
 
 ALL_PAGES = PUBLIC_PAGES | {PAGE_ROLE} | FEATURE_PAGES
 
 # 메인 허브에 카드로 노출할 4대 핵심 기능 (+ 부록 탭)
 FEATURES = [
     {
-        "key": PAGE_SPEC, "icon": "📊", "title": "스펙 진단 & 추천",
+        "key": PAGE_SPEC, "icon": "📊", "title": "스펙 진단 & 추천", "nav": "스펙 진단",
         "desc": "내신·자격증·인재상을 100점 만점으로 환산해 합격 가능성을 즉시 계산합니다. "
                 "AI 호출 없이 로컬 연산이라 슬라이더를 움직이는 즉시 갱신됩니다.",
     },
     {
-        "key": PAGE_EXPLORE, "icon": "🔍", "title": "실시간 기업 탐색기",
+        "key": PAGE_EXPLORE, "icon": "🔍", "title": "실시간 기업 탐색기", "nav": "기업 탐색",
         "desc": "고용24·잡알리오·강소기업 포털을 한 번에 검색합니다. "
                 "응답하지 않는 소스는 즉시 백업 데이터로 전환돼 화면이 멈추지 않습니다.",
     },
     {
-        "key": PAGE_GUIDE, "icon": "🛠", "title": "채용 대비 가이드 & 커리큘럼",
+        "key": PAGE_GUIDE, "icon": "🛠", "title": "채용 대비 가이드 & 커리큘럼", "nav": "가이드",
         "desc": "목표 기업별 면접 기출·필기 키워드·4주 커리큘럼을 제공하고, "
                 "커리어 로드맵 3단계를 스탬프로 관리합니다.",
     },
     {
-        "key": PAGE_RESUME, "icon": "📄", "title": "합격 이력서 & 자소서",
+        "key": PAGE_RESUME, "icon": "📄", "title": "합격 이력서 & 자소서", "nav": "자소서",
         "desc": "내 스펙과 기업 인재상을 엮어 자기소개서 초안을 생성합니다. "
                 "동일 입력은 캐시로 응답해 API 과금을 막습니다.",
     },
@@ -86,6 +94,7 @@ def _defaults() -> dict:
         "page": PAGE_LANDING,
         "auth": None,            # {"user_id","provider","display_name","email"}
         "role": None,            # "student" | "teacher"
+        "class_code": None,      # 소속 반(학생) / 담당 반(선생님)
         "resume_code": "",       # 게스트 이어하기 코드
         "login_error": "",
 
@@ -144,6 +153,7 @@ def _hydrate_from_url() -> None:
                 "email": user.get("email", ""),
             }
             st.session_state["role"] = user.get("role")
+            st.session_state["class_code"] = user.get("class_code")
             if not st.session_state["student_name"]:
                 st.session_state["student_name"] = user.get("display_name", "")
 
@@ -223,6 +233,7 @@ def login(user: dict) -> None:
     )
 
     st.session_state["role"] = saved.get("role")
+    st.session_state["class_code"] = saved.get("class_code")
     if not st.session_state["student_name"]:
         st.session_state["student_name"] = saved.get("display_name", "")
 
@@ -267,3 +278,38 @@ def guard() -> None:
 
     if not st.session_state.get("role") and page != PAGE_ROLE:
         st.session_state["page"] = PAGE_ROLE
+
+
+# ------------------------------------------------------------
+# [Phase 2] 반(학급) 상태
+# ------------------------------------------------------------
+def is_teacher() -> bool:
+    return st.session_state.get("role") == "teacher"
+
+
+def is_student() -> bool:
+    return st.session_state.get("role") == "student"
+
+
+def class_code() -> str | None:
+    return st.session_state.get("class_code")
+
+
+def set_class_code(code: str | None) -> None:
+    st.session_state["class_code"] = code
+
+
+def nav_items() -> list[tuple[str, str]]:
+    """
+    상단 내비에 올릴 (화면키, 라벨) 목록.
+
+    역할에 따라 달라진다 — 선생님에게는 '우리 반'이 추가된다.
+    라벨은 FEATURES 의 짧은 nav 값을 쓴다. 긴 제목을 그대로 쓰면
+    좁은 컬럼에서 말줄임표로 잘려 무슨 메뉴인지 알 수 없게 된다.
+    """
+    items = [(f["key"], f"{f['icon']} {f.get('nav', f['title'])}") for f in FEATURES]
+    if is_teacher():
+        items.append((PAGE_CLASS_BOARD, "🏫 우리 반"))
+    items.append((PAGE_NEXT, "🚀 로드맵"))
+    items.append((PAGE_MYPAGE, "👤 마이페이지"))
+    return items

@@ -112,6 +112,30 @@ def get_user(user_id: str) -> dict | None:
     return _read_all()["users"].get(user_id)
 
 
+def _default_user(user_id: str) -> dict:
+    """
+    사용자 레코드의 표준 형태.
+    upsert_user 뿐 아니라 create_class / join_class 에서도 이걸 쓴다.
+    (예전에는 각자 최소 dict 를 만들어서, 반에 먼저 등록된 사용자는
+     bookmarks·score_history 같은 키가 통째로 빠진 채 저장됐다.)
+    """
+    return {
+        "user_id": user_id,
+        "provider": "guest",
+        "display_name": "",
+        "email": "",
+        "role": None,           # "student" | "teacher" | None
+        "class_code": None,     # 학생: 소속 반 / 선생님: 담당 반
+        "class_skipped": False, # 반 등록을 건너뛴 학생 (다시 묻지 않기 위함)
+        "created_at": _now(),
+        "profile": {},          # 학과·내신·목표기업 스냅샷 (선생님 대시보드용)
+        "bookmarks": [],        # 찜한 기업
+        "viewed": [],           # 열람 이력
+        "score_history": [],    # 매칭 점수 히스토리
+        "milestones": {},       # 로드맵 진행 단계
+    }
+
+
 def upsert_user(user_id: str, **fields) -> dict:
     """
     사용자를 생성하거나 갱신한다.
@@ -121,19 +145,11 @@ def upsert_user(user_id: str, **fields) -> dict:
     user = doc["users"].get(user_id)
 
     if user is None:
-        user = {
-            "user_id": user_id,
-            "provider": "guest",
-            "display_name": "",
-            "email": "",
-            "role": None,          # "student" | "teacher" | None
-            "class_code": None,    # 학생: 소속 반 / 선생님: 담당 반
-            "created_at": _now(),
-            "bookmarks": [],       # Phase 3 — 찜한 기업
-            "viewed": [],          # Phase 3 — 열람 이력
-            "score_history": [],   # Phase 3 — 매칭 점수 히스토리
-            "milestones": {},      # Phase 4 — 로드맵 진행 단계
-        }
+        user = _default_user(user_id)
+    else:
+        # 구버전 레코드에 새로 생긴 키를 채워 넣는다
+        for key, value in _default_user(user_id).items():
+            user.setdefault(key, value)
 
     user.update({k: v for k, v in fields.items() if v is not None})
     user["last_seen_at"] = _now()
@@ -183,7 +199,7 @@ def create_class(teacher_id: str, school: str, grade: str, class_no: str) -> dic
     }
     doc["classes"][code] = klass
 
-    teacher = doc["users"].get(teacher_id) or {"user_id": teacher_id}
+    teacher = doc["users"].get(teacher_id) or _default_user(teacher_id)
     teacher["role"] = "teacher"
     teacher["class_code"] = code
     teacher["last_seen_at"] = _now()
@@ -216,7 +232,7 @@ def join_class(user_id: str, class_code: str) -> tuple[bool, str]:
     if user_id not in klass["students"]:
         klass["students"].append(user_id)
 
-    student = doc["users"].get(user_id) or {"user_id": user_id}
+    student = doc["users"].get(user_id) or _default_user(user_id)
     student["role"] = "student"
     student["class_code"] = code
     student["last_seen_at"] = _now()
@@ -323,3 +339,61 @@ def store_summary() -> str:
 
 def store_exists() -> bool:
     return os.path.exists(STORE_PATH)
+
+
+# ------------------------------------------------------------
+# [Phase 2] 반 등록 보조
+# ------------------------------------------------------------
+def skip_class(user_id: str) -> None:
+    """
+    학생이 '혼자 사용할게요'를 선택한 경우.
+
+    반 등록은 **선택**이다. 반 코드가 없는 학생(혼자 준비하는 학생, 시연 중인
+    심사위원)이 코드 입력 화면에 갇히면 게스트모드로 모든 기능을 쓸 수 있다는
+    약속이 깨진다. 그래서 건너뛴 사실을 영속 저장해 다시 묻지 않는다.
+    """
+    _mutate_user(user_id, lambda u: u.update({"class_skipped": True}))
+
+
+def needs_class_prompt(user_id: str) -> bool:
+    """반 코드 입력 화면을 보여줘야 하는 학생인가 (아직 소속도 없고 건너뛰지도 않음)."""
+    user = get_user(user_id)
+    if not user or user.get("role") != "student":
+        return False
+    return not user.get("class_code") and not user.get("class_skipped")
+
+
+def leave_class(user_id: str) -> bool:
+    """학생을 현재 반에서 탈퇴시킨다 (반을 잘못 입력한 경우)."""
+    doc = _read_all()
+    user = doc["users"].get(user_id)
+    if not user or not user.get("class_code"):
+        return False
+
+    klass = doc["classes"].get(user["class_code"])
+    if klass and user_id in klass.get("students", []):
+        klass["students"].remove(user_id)
+
+    user["class_code"] = None
+    user["class_skipped"] = True   # 탈퇴 후 다시 묻지 않는다
+    user["last_seen_at"] = _now()
+    doc["users"][user_id] = user
+    _write_all(doc)
+    return True
+
+
+def teacher_class(teacher_id: str) -> dict | None:
+    """선생님이 담당하는 반. 없으면 None."""
+    doc = _read_all()
+    for klass in doc["classes"].values():
+        if klass.get("teacher_id") == teacher_id:
+            return klass
+    return None
+
+
+def class_label(klass: dict | None) -> str:
+    """'전북기계공고 3학년 2반' 형태의 표시 문자열."""
+    if not klass:
+        return ""
+    parts = [klass.get("school", ""), klass.get("grade", ""), klass.get("class_no", "")]
+    return " ".join(p for p in parts if p)

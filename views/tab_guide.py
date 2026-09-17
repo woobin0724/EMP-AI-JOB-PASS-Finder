@@ -15,6 +15,7 @@ from core import session as ss
 from core.catalog import completed_milestones
 from data.company_showcase import COMPANY_BY_ID, COMPANY_SHOWCASE
 from data.roadmap import MILESTONES, stage_label
+from services import activity
 from services.curriculum import generate_curriculum
 from services.pdf_report import build_success_report_pdf
 from ui.components import back_to_hub, disclaimer, section_title, show_sticker, topbar
@@ -39,6 +40,9 @@ def render() -> None:
                              index=list(names.keys()).index(default_name))
     c = COMPANY_BY_ID[names[pick_name]]
     st.session_state.selected_company_id = c["id"]
+
+    # [Phase 3] 열람 이력 — 같은 기업은 최근 1건으로 합쳐진다
+    activity.record_company_view(c)
 
     _roadmap(c)
     st.divider()
@@ -71,6 +75,10 @@ def _roadmap(company: dict) -> None:
                     f'<div style="height:126px; border:1px dashed {CARD_BORDER}; border-radius:12px;'
                     f'display:flex; align-items:center; justify-content:center; color:{MUTED};'
                     f'font-size:12px;">스탬프 자리</div>', unsafe_allow_html=True)
+
+    # [Phase 2] 로드맵 진행 단계 저장 — 체크박스 3개를 모두 반영한 뒤 한 번만 호출한다.
+    # 루프 안에서 부르면 한 번의 rerun 에 세 번 저장하게 된다.
+    activity.record_milestones(st.session_state.milestones)
 
     if done == len(MILESTONES):
         fin1, fin2 = st.columns([1, 3])
