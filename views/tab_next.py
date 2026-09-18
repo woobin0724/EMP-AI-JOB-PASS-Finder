@@ -84,12 +84,12 @@ def _feature_card(f: dict) -> None:
         <div style="display:flex; align-items:center; gap:10px;">
             <div style="flex:none;">{icon(f["icon"], size=22, color=f["status_color"], stroke=1.8)}</div>
             <div>
-                <div style="font-size:16px; font-weight:800; color:{TEXT};">{f['title']}</div>
+                <div style="font-size:var(--mjp-body); font-weight:800; color:{TEXT};">{f['title']}</div>
                 <span class="mjp-badge" style="background:{f['status_color']}; color:#0A0E17;">{f['when']}</span>
             </div>
         </div>
         <div class="mjp-muted" style="margin-top:12px; line-height:1.6;">{f['why']}</div>
-        <div style="margin-top:10px; font-size:12px; color:{GREEN};">▸ {f['trigger']}</div>
+        <div style="margin-top:10px; font-size:var(--mjp-caption); color:{GREEN};">▸ {f['trigger']}</div>
     </div>
     """)
 

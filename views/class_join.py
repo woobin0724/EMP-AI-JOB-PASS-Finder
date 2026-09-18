@@ -52,7 +52,7 @@ def render() -> None:
         st.markdown(f"""
         <div style="display:flex; align-items:center; gap:12px; margin:16px 0 12px;">
             <div style="flex:1; height:1px; background:{CARD_BORDER};"></div>
-            <div style="color:{MUTED}; font-size:12px;">또는</div>
+            <div style="color:{MUTED}; font-size:var(--mjp-caption);">또는</div>
             <div style="flex:1; height:1px; background:{CARD_BORDER};"></div>
         </div>
         """, unsafe_allow_html=True)
@@ -62,7 +62,7 @@ def render() -> None:
             ss.goto(ss.PAGE_HUB)
 
         st.markdown(
-            f'<div style="color:{MUTED}; font-size:12px; margin-top:8px; line-height:1.65;">'
+            f'<div style="color:{MUTED}; font-size:var(--mjp-caption); margin-top:8px; line-height:1.65;">'
             f'반 등록을 하지 않아도 진단·기업 탐색·자소서 생성까지 모든 기능이 똑같이 동작합니다. '
             f'나중에 코드를 받으면 <b style="color:{TEXT};">마이페이지</b>에서 등록할 수 있어요.</div>',
             unsafe_allow_html=True,
@@ -92,7 +92,7 @@ def _render_joined(code: str) -> None:
     st.markdown(f"""
     <div class="mjp-card" style="border-color:{GREEN};">
         <span class="mjp-badge" style="background:{GREEN}; color:#0A0E17;">등록 완료</span>
-        <div style="font-size:21px; font-weight:800; color:{TEXT}; margin-top:12px;">{label}</div>
+        <div style="font-size:var(--mjp-h2); font-weight:800; color:{TEXT}; margin-top:12px;">{label}</div>
         <div class="mjp-muted" style="margin-top:6px;">반 코드 {code}</div>
         <div class="mjp-muted" style="margin-top:10px; line-height:1.6;">
             이제 진단 결과와 로드맵 진행 상황이 선생님의 '우리 반 현황'에 표시됩니다.

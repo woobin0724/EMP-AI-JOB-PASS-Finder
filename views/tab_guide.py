@@ -91,14 +91,14 @@ def _roadmap(company: dict) -> None:
                     f'{mascot.html(MILESTONE_MASCOT.get(key, "celebrate"), size=112)}</div>',
                     unsafe_allow_html=True)
                 st.markdown(
-                    f'<div style="text-align:center; color:{GREEN}; font-size:12.5px; '
+                    f'<div style="text-align:center; color:{GREEN}; font-size:var(--mjp-caption); '
                     f'font-weight:700; margin-top:6px;">{MILESTONE_CHEER[key]}</div>',
                     unsafe_allow_html=True)
             else:
                 st.markdown(
                     f'<div style="height:126px; border:1px dashed {CARD_BORDER}; border-radius:12px;'
                     f'display:flex; align-items:center; justify-content:center; color:{MUTED};'
-                    f'font-size:12px;">달성하면 마스코트가 축하해요</div>', unsafe_allow_html=True)
+                    f'font-size:var(--mjp-caption);">달성하면 마스코트가 축하해요</div>', unsafe_allow_html=True)
 
     # [Phase 2] 로드맵 진행 단계 저장 — 체크박스 3개를 모두 반영한 뒤 한 번만 호출한다.
     # 루프 안에서 부르면 한 번의 rerun 에 세 번 저장하게 된다.
@@ -125,7 +125,7 @@ def _company_detail(c: dict) -> None:
     st.markdown(f"""
     <div class="mjp-card">
         <span class="mjp-tag">{c['size_tag']} · {c['field_tag']} 타깃</span>
-        <div style="font-size:24px; font-weight:800; margin-top:8px;">{c['name']}</div>
+        <div style="font-size:var(--mjp-h1); font-weight:800; margin-top:8px;">{c['name']}</div>
         <div class="mjp-muted">{c['description']} · 고졸 채용 종합 만족도 예시 {render_stars(c['overall_rating'])}</div>
         <div class="mjp-muted" style="margin-top:6px;">인재상: <b style="color:{TEXT};">{', '.join(c['ideal_talent'])}</b>
         &nbsp;|&nbsp; 예시 합격자 평균 스펙: 내신 {c['avg_applicant_grade']}등급 · 자격증 {c['avg_applicant_certs']}개</div>

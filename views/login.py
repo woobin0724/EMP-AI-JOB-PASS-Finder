@@ -37,7 +37,7 @@ def _provider_anchor(key: str) -> str:
         width:100%; min-height:50px; margin-bottom:10px;
         background:{spec['bg']}; color:{spec['fg']};
         border:1px solid {spec['border']}; border-radius:12px;
-        font-size:15px; font-weight:700; text-decoration:none;">
+        font-size:var(--mjp-body); font-weight:700; text-decoration:none;">
         {brand_symbol(spec['icon'], size=19, color=spec['fg'])}{spec['label']}
     </a>"""
 
@@ -51,9 +51,9 @@ def _provider_disabled(key: str) -> str:
         width:100%; min-height:50px; margin-bottom:10px;
         background:{CARD}; color:{MUTED};
         border:1px dashed {CARD_BORDER}; border-radius:12px;
-        font-size:15px; font-weight:700; cursor:not-allowed;">
+        font-size:var(--mjp-body); font-weight:700; cursor:not-allowed;">
         <span style="opacity:.45;">{brand_symbol(spec['icon'], size=17, color=MUTED)}</span>
-        {spec['label']}<span style="font-size:12px; font-weight:600;">· 준비중</span>
+        {spec['label']}<span style="font-size:var(--mjp-caption); font-weight:600;">· 준비중</span>
     </div>"""
 
 
@@ -61,9 +61,9 @@ def render() -> None:
     st.markdown(f"""
     <div style="text-align:center; margin:18px 0 6px;">
         {brand.logo_html(max_px=104, min_px=76, detail="mark")}
-        <div style="font-size:28px; font-weight:800; color:{TEXT}; margin-top:16px;
+        <div style="font-size:var(--mjp-h1); font-weight:800; color:{TEXT}; margin-top:16px;
                     letter-spacing:-0.03em;">로그인</div>
-        <div style="color:{MUTED}; font-size:14px; margin-top:8px;">
+        <div style="color:{MUTED}; font-size:var(--mjp-small); margin-top:8px;">
             진단 결과와 찜한 기업을 다음에 다시 볼 수 있어요.
         </div>
     </div>
@@ -76,22 +76,6 @@ def render() -> None:
             st.error(st.session_state["login_error"])
             st.session_state["login_error"] = ""
 
-        # ---------- 소셜 로그인 ----------
-        for key in ("kakao", "naver", "google"):
-            if auth_svc.is_configured(key):
-                st.markdown(_provider_anchor(key), unsafe_allow_html=True)
-            else:
-                st.markdown(_provider_disabled(key), unsafe_allow_html=True)
-
-        # ---------- 구분선 ----------
-        st.markdown(f"""
-        <div style="display:flex; align-items:center; gap:12px; margin:18px 0 14px;">
-            <div style="flex:1; height:1px; background:{CARD_BORDER};"></div>
-            <div style="color:{MUTED}; font-size:12px;">또는</div>
-            <div style="flex:1; height:1px; background:{CARD_BORDER};"></div>
-        </div>
-        """, unsafe_allow_html=True)
-
         # ---------- 게스트모드 ----------
         nickname = st.text_input(
             "이름 또는 닉네임", key="guest_nickname",
@@ -103,11 +87,25 @@ def render() -> None:
             ss.login(user)
 
         st.markdown(
-            f'<div style="color:{MUTED}; font-size:12px; margin-top:6px; line-height:1.65;">'
+            f'<div style="color:{MUTED}; font-size:var(--mjp-caption); margin-top:6px; line-height:1.65;">'
             f'게스트로 시작하면 <b style="color:{GREEN};">이어하기 코드</b>가 발급됩니다. '
             f'다음에 그 코드를 입력하면 저장된 기록을 그대로 이어서 볼 수 있어요.</div>',
             unsafe_allow_html=True,
         )
+
+        # ---------- 소셜 로그인 ----------
+        # ▣ 왜 아래로 내렸나
+        #   세 제공자 모두 키 미등록이면 '준비중' 버튼이다. 동작하지 않는
+        #   버튼 3개가 실제로 동작하는 게스트 시작 위에 있으면, 첫 화면
+        #   인상이 '안 되는 앱'이 된다. 키가 등록된 제공자가 하나라도 있으면
+        #   펼친 상태로, 전부 준비중이면 접어서 보여준다.
+        any_ready = any(auth_svc.is_configured(k) for k in ("kakao", "naver", "google"))
+        with st.expander("소셜 계정으로 로그인", expanded=any_ready):
+            for key in ("kakao", "naver", "google"):
+                if auth_svc.is_configured(key):
+                    st.markdown(_provider_anchor(key), unsafe_allow_html=True)
+                else:
+                    st.markdown(_provider_disabled(key), unsafe_allow_html=True)
 
         # ---------- 이어하기 ----------
         with st.expander("이어하기 코드가 있어요"):

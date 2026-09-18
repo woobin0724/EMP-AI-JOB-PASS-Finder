@@ -61,13 +61,13 @@ def _render_code_strip(klass: dict, count: int) -> None:
     <div class="mjp-card" style="display:flex; align-items:center; gap:18px; flex-wrap:wrap;">
         <div>
             <div class="mjp-muted">반 코드</div>
-            <div style="color:{GOLD}; font-size:26px; font-weight:800;
+            <div style="color:{GOLD}; font-size:var(--mjp-h1); font-weight:800;
                         letter-spacing:0.2em;">{klass['class_code']}</div>
         </div>
         <div style="width:1px; height:40px; background:{CARD_BORDER};"></div>
         <div>
             <div class="mjp-muted">등록 학생</div>
-            <div style="color:{TEXT}; font-size:26px; font-weight:800;">{count}명</div>
+            <div style="color:{TEXT}; font-size:var(--mjp-h1); font-weight:800;">{count}명</div>
         </div>
         <div style="flex:1; min-width:180px;">
             <div class="mjp-muted" style="line-height:1.6;">
@@ -132,8 +132,8 @@ def _render_summary(rows: list[dict]) -> None:
             st.markdown(f"""
             <div class="mjp-card" style="text-align:center;">
                 <div class="mjp-muted">{label}</div>
-                <div style="font-size:28px; font-weight:800; color:{color}; margin:6px 0 4px;">{value}</div>
-                <div class="mjp-muted" style="font-size:11.5px;">{sub}</div>
+                <div style="font-size:var(--mjp-h1); font-weight:800; color:{color}; margin:6px 0 4px;">{value}</div>
+                <div class="mjp-muted" style="font-size:11px;">{sub}</div>
             </div>
             """, unsafe_allow_html=True)
 
@@ -191,19 +191,19 @@ def _render_cards(rows: list[dict]) -> None:
             <div class="mjp-card">
                 <div style="display:flex; align-items:center; gap:12px;">
                     <div style="flex:1;">
-                        <div style="font-size:17px; font-weight:800; color:{TEXT};">{r['name']}</div>
+                        <div style="font-size:var(--mjp-body); font-weight:800; color:{TEXT};">{r['name']}</div>
                         <div class="mjp-muted">{r['dept']}
                             {f" · 내신 {r['grade']}등급" if r['grade'] is not None else ""}</div>
                     </div>
                     <div style="text-align:right;">
-                        <div style="font-size:20px; font-weight:800; color:{color};">{score_text}</div>
+                        <div style="font-size:var(--mjp-h2); font-weight:800; color:{color};">{score_text}</div>
                         <div class="mjp-muted" style="font-size:11px;">{r['scored_at']}</div>
                     </div>
                 </div>
                 <div class="mjp-muted" style="margin-top:10px;">목표 기업
                     <b style="color:{TEXT};">{r['target']}</b></div>
                 <div style="margin-top:10px;">
-                    <div style="display:flex; justify-content:space-between; font-size:11.5px;
+                    <div style="display:flex; justify-content:space-between; font-size:11px;
                                 color:{MUTED}; margin-bottom:4px;">
                         <span>{r['stage']}</span><span>{r['stage_done']}/{len(MILESTONES)}</span>
                     </div>
@@ -247,6 +247,6 @@ def _render_attention(rows: list[dict]) -> None:
                 <div style="font-weight:800; color:{TEXT};">{title}
                     <span style="color:{color};">{len(group)}명</span></div>
                 <div class="mjp-muted" style="margin-top:6px; line-height:1.55;">{desc}</div>
-                <div style="color:{TEXT}; font-size:13px; margin-top:8px;">{names}{more}</div>
+                <div style="color:{TEXT}; font-size:var(--mjp-caption); margin-top:8px;">{names}{more}</div>
             </div>
             """, unsafe_allow_html=True)

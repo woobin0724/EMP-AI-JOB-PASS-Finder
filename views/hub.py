@@ -47,31 +47,8 @@ def render() -> None:
         "선생님 화면입니다. 우리 반 현황은 상단 '우리 반'에서 확인할 수 있어요.",
     )
 
-    # ---------- 게스트 이어하기 코드 ----------
-    if ss.provider() == "guest" and st.session_state.get("resume_code"):
-        code = st.session_state["resume_code"]
-        st.markdown(f"""
-        <div class="mjp-card" style="border-color:{GOLD}; display:flex; align-items:center;
-                    gap:14px; flex-wrap:wrap;">
-            <div style="flex:none;">{icon("key", size=20, color=GOLD)}</div>
-            <div style="flex:1; min-width:200px;">
-                <div style="font-weight:800; color:{TEXT};">이어하기 코드 · <span style="color:{GOLD};
-                     letter-spacing:0.14em; font-size:19px;">{code}</span></div>
-                <div class="mjp-muted" style="margin-top:4px;">
-                    다음에 접속할 때 로그인 화면에서 이 코드를 넣으면 지금 기록을 그대로 이어서 볼 수 있어요.
-                </div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    # ---------- [Phase 2] 반 관련 안내 ----------
-    _class_strip(is_teacher)
-
-    # ---------- 데이터 출처 배지 ----------
-    st.markdown(fb.badge_html(st.session_state.tracker, BADGE_COLORS), unsafe_allow_html=True)
-
     # ---------- 4대 핵심 기능 카드 ----------
-    st.markdown(f'<div style="font-size:13px; font-weight:800; color:{MUTED}; '
+    st.markdown(f'<div style="font-size:var(--mjp-caption); font-weight:800; color:{MUTED}; '
                 f'letter-spacing:0.08em; margin:22px 0 12px;">핵심 기능</div>',
                 unsafe_allow_html=True)
 
@@ -97,7 +74,7 @@ def render() -> None:
     if is_teacher:
         with sub_cols[0]:
             st.markdown(f"""
-            <div class="mjp-card" style="border-left:3px solid {GOLD};">
+            <div class="mjp-card" style="border-left:3px solid {BRAND};">
                 <div style="font-weight:800; color:{TEXT}; display:flex; align-items:center; gap:8px;">{icon("school", size=17, color=GOLD)} 우리 반 현황</div>
                 <div class="mjp-muted" style="margin-top:6px;">
                     학생별 목표 기업·진행 단계·매칭 점수를 한눈에 봅니다.
@@ -110,7 +87,7 @@ def render() -> None:
     sub1, sub2 = (sub_cols[1], sub_cols[2]) if is_teacher else (sub_cols[0], sub_cols[1])
     with sub1:
         st.markdown(f"""
-        <div class="mjp-card" style="border-left:3px solid {PURPLE};">
+        <div class="mjp-card" style="border-left:3px solid {BRAND};">
             <div style="font-weight:800; color:{TEXT}; display:flex; align-items:center; gap:8px;">{icon("user", size=17, color=PURPLE)} 마이페이지</div>
             <div class="mjp-muted" style="margin-top:6px;">
                 찜한 기업, 열람 이력, 매칭 점수 히스토리를 모아봅니다.
@@ -138,6 +115,32 @@ def render() -> None:
 # ------------------------------------------------------------
 # [Phase 2] 반 상태 안내 스트립
 # ------------------------------------------------------------
+    # ---------- 계정·반 안내 (보조) ----------
+    # 학생 대부분이 매번 쓰지는 않는 정보다. 핵심 기능 카드가 첫 화면을
+    # 차지하도록 주 동선 아래로 내렸다.
+    if ss.provider() == "guest" and st.session_state.get("resume_code"):
+        code = st.session_state["resume_code"]
+        st.markdown(f"""
+        <div class="mjp-card" style="border-color:{BRAND}; display:flex; align-items:center;
+                    gap:14px; flex-wrap:wrap;">
+            <div style="flex:none;">{icon("key", size=20, color=BRAND)}</div>
+            <div style="flex:1; min-width:200px;">
+                <div style="font-weight:800; color:{TEXT};">이어하기 코드 · <span style="color:{BRAND};
+                     letter-spacing:0.14em; font-size:var(--mjp-h2);">{code}</span></div>
+                <div class="mjp-muted" style="margin-top:4px;">
+                    다음에 접속할 때 로그인 화면에서 이 코드를 넣으면 지금 기록을 그대로 이어서 볼 수 있어요.
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # 반 등록/현황
+    _class_strip(is_teacher)
+
+    # 데이터 출처 배지
+    st.markdown(fb.badge_html(st.session_state.tracker, BADGE_COLORS), unsafe_allow_html=True)
+
+
 def _class_strip(is_teacher: bool) -> None:
     """
     허브 상단의 반 관련 한 줄 안내.
@@ -155,7 +158,7 @@ def _class_strip(is_teacher: bool) -> None:
         if klass:
             count = len(store.class_students(klass["class_code"]))
             st.markdown(f"""
-            <div class="mjp-card" style="border-left:3px solid {GOLD}; display:flex;
+            <div class="mjp-card" style="border-left:3px solid {BRAND}; display:flex;
                         align-items:center; gap:14px; flex-wrap:wrap;">
                 <div style="flex:none;">{icon("school", size=20, color=GOLD)}</div>
                 <div style="flex:1; min-width:200px;">

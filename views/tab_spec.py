@@ -20,7 +20,7 @@ from data.departments import (
     DEPARTMENT_LIST, get_category, get_employment_rate, get_majors_for_department,
 )
 from ui import mascot
-from ui.components import back_to_hub, section_title, topbar
+from ui.components import back_to_hub, render_html, section_title, topbar
 from ui.theme import BG, BLUE, CARD_BORDER, GREEN, GOLD, MUTED, RED, TEXT, render_stars, score_bar
 
 
@@ -41,14 +41,22 @@ def render() -> None:
     all_cert_names, cert_source = load_cert_names(st.session_state.get("qnet_key", ""))
     tracker.record("Q-Net 자격증", cert_source)
 
-    left, right = st.columns([1.25, 1])
+    # ▣ 배치 의도 — 점수가 항상 첫 화면에 온다
+    #   이 화면의 존재 이유는 '내 점수가 몇 점인가'다. 그런데 점수는 입력값이
+    #   있어야 계산되므로 코드 순서상 뒤에 온다. st.container() 로 화면 위쪽
+    #   자리를 먼저 잡아두고 계산이 끝난 뒤 그 자리에 채우면, 실행 순서는
+    #   그대로 두고 렌더 위치만 위로 올릴 수 있다.
+    #   (이전 배치는 입력 폼이 왼쪽 1.25 · 점수가 오른쪽 1 이라, 모바일에서
+    #    1단으로 접히면 점수가 fold 아래 125px 지점에 있었다.)
+    score_slot = st.container()
 
     # ------------------------------------------------------------
-    # 입력
+    # 입력 — 전체 폭 2열. 한 열에 몰면 세로로 길어져 점수가 밀려난다.
     # ------------------------------------------------------------
-    with left:
-        st.markdown("#### 내 현재 스펙 정보 기입")
+    st.markdown("#### 내 현재 스펙 정보 기입")
+    in_left, in_right = st.columns(2)
 
+    with in_left:
         dept = st.selectbox("학과/계열 (하이파이브 분류 기준)", DEPARTMENT_LIST,
                             index=DEPARTMENT_LIST.index(st.session_state.dept),
                             key="dept_widget")
@@ -63,6 +71,7 @@ def render() -> None:
                           help="환산식: 30 × (5.0 − 등급) ÷ 4.0  |  1.0등급=30점, 2.0등급=22.5점")
         st.session_state.grade = grade
 
+    with in_right:
         dept_certs = certs_for_department(dept)
         cert_options = sorted(set(dept_certs) | set(all_cert_names))
         certs = st.multiselect(
@@ -113,33 +122,30 @@ def render() -> None:
     verdict, verdict_msg = ogq.SCORE_STICKER_MESSAGES[sticker_key]
     ring_color = {"success": GREEN, "cheer": GOLD, "comfort": RED}[sticker_key]
 
-    with right:
-        st.markdown(f"""
-        <div class="mjp-card">
+    # 화면 맨 위에 잡아둔 자리에 점수를 채운다 (배치 의도는 위 주석 참조)
+    with score_slot:
+        render_html(f"""
+        <div class="mjp-scorecard">
             <span class="mjp-badge" style="background:{ring_color}; color:{BG};">SPEC DIAGNOSIS · 실시간</span>
-            <div style="display:flex; align-items:center; gap:16px; margin-top:12px;">
-                <div style="width:104px; height:104px; border-radius:50%; background:{ring_color};
-                            display:flex; flex-direction:column; align-items:center;
-                            justify-content:center; color:{BG}; flex:none;">
-                    <div style="font-size:27px; font-weight:800;">{result['final_score']}점</div>
-                    <div style="font-size:10px;">100점 만점</div>
+            <div class="mjp-scorecard-row">
+                <div class="mjp-scorering" style="background:{ring_color};">
+                    <div class="mjp-scorering-num">{result['final_score']}</div>
+                    <div class="mjp-scorering-cap">100점 만점</div>
                 </div>
-                <div style="flex:1;">
-                    <div style="font-size:17px; font-weight:800; color:{ring_color};">{verdict}</div>
-                    <div class="mjp-muted" style="margin-top:6px; line-height:1.5;">{verdict_msg}</div>
+                <div style="flex:1; min-width:210px;">
+                    <div class="mjp-verdict" style="color:{ring_color};">{verdict}</div>
+                    <div class="mjp-muted" style="margin-top:6px;">{verdict_msg}</div>
                 </div>
             </div>
         </div>
-        """, unsafe_allow_html=True)
+        """)
 
-        sc1, sc2 = st.columns([1, 1.4])
-        with sc1:
-            # [Phase 4] 점수 구간에 따라 마스코트 감정이 바뀐다
-            st.markdown(mascot.html(_MASCOT_BY_SCORE[sticker_key], size=142),
-                        unsafe_allow_html=True)
-        with sc2:
+        # 세부 점수 4개는 점수 바로 아래. 가로 2열로 놓아 세로 길이를 줄인다.
+        bar_l, bar_r = st.columns(2)
+        with bar_l:
             st.markdown(score_bar("내신 성취도", result["grade_score"], 30), unsafe_allow_html=True)
             st.markdown(score_bar("자격증 가산점", result["cert_score"], 40), unsafe_allow_html=True)
+        with bar_r:
             st.markdown(score_bar("전공 적합성", result["fit_score"], 20), unsafe_allow_html=True)
             st.markdown(score_bar("인재상 일치도", result["talent_score"], 10), unsafe_allow_html=True)
 
@@ -151,6 +157,13 @@ def render() -> None:
                     st.markdown(f"{mark} **{d['cert']}** · {d['status']}{extra}")
                 st.caption("정확히 일치 100% · 직무 유사 자격증 70% 인정 → 평균 인정비율 × 40점")
 
+    # 팁과 마스코트는 입력 폼 아래. 점수 블록을 짧게 유지해야 입력까지
+    # 첫 화면에 들어온다.
+    tip_l, tip_r = st.columns([1, 3])
+    with tip_l:
+        st.markdown(mascot.html(_MASCOT_BY_SCORE[sticker_key], size=128),
+                    unsafe_allow_html=True)
+    with tip_r:
         for tip in result["tips"]:
             st.info(tip)
 

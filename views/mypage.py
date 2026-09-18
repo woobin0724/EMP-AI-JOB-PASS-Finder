@@ -41,7 +41,7 @@ def render() -> None:
                         display:flex; align-items:center; justify-content:center;">
                         {icon("user", size=28, color="#fff", stroke=1.8)}</div>
             <div style="flex:1; min-width:180px;">
-                <div style="font-size:20px; font-weight:800; color:{TEXT};">{ss.display_name()}</div>
+                <div style="font-size:var(--mjp-h2); font-weight:800; color:{TEXT};">{ss.display_name()}</div>
                 <div class="mjp-muted" style="margin-top:5px;">
                     {_ROLE_LABEL.get(st.session_state.get('role'), '역할 미선택')}
                     · {_PROVIDER_LABEL.get(ss.provider(), '알 수 없음')}로 로그인
@@ -58,9 +58,9 @@ def render() -> None:
     if ss.provider() == "guest":
         code = st.session_state.get("resume_code") or uid.replace("guest_", "")
         st.markdown(f"""
-        <div class="mjp-card" style="border-color:{GOLD};">
-            <div style="font-weight:800; color:{TEXT}; display:flex; align-items:center; gap:8px;">{icon("key", size=17, color=GOLD)} 이어하기 코드</div>
-            <div style="color:{GOLD}; font-size:26px; font-weight:800;
+        <div class="mjp-card" style="border-color:{BRAND};">
+            <div style="font-weight:800; color:{TEXT}; display:flex; align-items:center; gap:8px;">{icon("key", size=17, color=BRAND)} 이어하기 코드</div>
+            <div style="color:{BRAND}; font-size:var(--mjp-h1); font-weight:800;
                         letter-spacing:0.2em; margin:8px 0 6px;">{code}</div>
             <div class="mjp-muted">
                 다른 기기에서 로그인 화면의 '이어하기 코드가 있어요'에 이 코드를 넣으면
@@ -70,7 +70,6 @@ def render() -> None:
         """, unsafe_allow_html=True)
 
     # ---------- [Phase 2] 반 정보 ----------
-    _class_section(saved)
 
     # ---------- [Phase 3] 나의 활동 기록 ----------
     st.markdown(f'<div style="height:1px;background:{CARD_BORDER};margin:18px 0;"></div>',
@@ -87,6 +86,10 @@ def render() -> None:
         _bookmark_section(saved)
     with tabs[3]:
         _viewed_section(saved)
+
+    # 반 정보는 콘텐츠(활동 기록) 다음. 반 미등록 학생이 대부분이라
+    # 활동 기록보다 위에 있으면 본론이 밀린다.
+    _class_section(saved)
 
     # ---------- 계정 관리 ----------
     st.markdown(f'<div style="height:1px;background:{CARD_BORDER};margin:18px 0;"></div>',
@@ -138,8 +141,8 @@ def _class_section(saved: dict) -> None:
 
         count = len(store.class_students(klass["class_code"]))
         st.markdown(f"""
-        <div class="mjp-card" style="border-color:{GOLD};">
-            <div style="font-size:18px; font-weight:800; color:{TEXT};">
+        <div class="mjp-card" style="border-color:{BRAND};">
+            <div style="font-size:var(--mjp-h2); font-weight:800; color:{TEXT};">
                 {store.class_label(klass)}</div>
             <div class="mjp-muted" style="margin-top:6px;">등록 학생 {count}명 ·
                 개설일 {klass.get('created_at', '')[:10]}</div>
@@ -160,7 +163,7 @@ def _class_section(saved: dict) -> None:
         st.markdown(f"""
         <div class="mjp-card" style="border-color:{GREEN};">
             <span class="mjp-badge" style="background:{GREEN}; color:#0A0E17;">등록됨</span>
-            <div style="font-size:17px; font-weight:800; color:{TEXT}; margin-top:10px;">
+            <div style="font-size:var(--mjp-body); font-weight:800; color:{TEXT}; margin-top:10px;">
                 {store.class_label(klass) or code}</div>
             <div class="mjp-muted" style="margin-top:4px;">반 코드 {code}</div>
             <div class="mjp-muted" style="margin-top:8px; line-height:1.55;">
@@ -202,7 +205,7 @@ def _empty(slot: str, title: str, desc: str, button: str, page: str, key: str) -
     with c2:
         st.markdown(f"""
         <div style="padding-top:8px;">
-            <div style="font-weight:800; color:{TEXT}; font-size:15px;">{title}</div>
+            <div style="font-weight:800; color:{TEXT}; font-size:var(--mjp-body);">{title}</div>
             <div class="mjp-muted" style="margin-top:6px; line-height:1.6;">{desc}</div>
         </div>
         """, unsafe_allow_html=True)
@@ -242,10 +245,10 @@ def _score_section(saved: dict) -> None:
     if delta is None:
         delta_html = f'<div class="mjp-muted">첫 진단 기록</div>'
     elif delta > 0:
-        delta_html = (f'<div style="color:{GREEN}; font-size:13px; font-weight:700;">'
+        delta_html = (f'<div style="color:{GREEN}; font-size:var(--mjp-caption); font-weight:700;">'
                       f'▲ {delta}점 상승</div>')
     elif delta < 0:
-        delta_html = (f'<div style="color:{RED}; font-size:13px; font-weight:700;">'
+        delta_html = (f'<div style="color:{RED}; font-size:var(--mjp-caption); font-weight:700;">'
                       f'▼ {abs(delta)}점 하락</div>')
     else:
         delta_html = f'<div class="mjp-muted">직전과 동일</div>'
@@ -254,14 +257,14 @@ def _score_section(saved: dict) -> None:
     <div class="mjp-card" style="display:flex; align-items:center; gap:22px; flex-wrap:wrap;">
         <div>
             <div class="mjp-muted">최근 매칭 점수</div>
-            <div style="font-size:46px; font-weight:800; color:{tone}; line-height:1.1;">{latest}
-                <span style="font-size:17px; color:{MUTED}; font-weight:700;">/ 100</span></div>
+            <div style="font-size:var(--mjp-display); font-weight:800; color:{tone}; line-height:1.1;">{latest}
+                <span style="font-size:var(--mjp-body); color:{MUTED}; font-weight:700;">/ 100</span></div>
             {delta_html}
         </div>
         <div style="width:1px; height:56px; background:{CARD_BORDER};"></div>
         <div>
             <div class="mjp-muted">판정</div>
-            <div style="font-size:19px; font-weight:800; color:{tone}; margin-top:4px;">{verdict}</div>
+            <div style="font-size:var(--mjp-h2); font-weight:800; color:{tone}; margin-top:4px;">{verdict}</div>
             <div class="mjp-muted" style="margin-top:4px;">기록 {len(series)}회</div>
         </div>
     </div>
@@ -412,7 +415,7 @@ def _bookmark_section(saved: dict) -> None:
             st.markdown(f"""
             <div class="mjp-card">
                 <span class="mjp-tag">{company['size_tag']} · {company['field_tag']}</span>
-                <div style="font-size:17px; font-weight:800; color:{TEXT}; margin-top:8px;">
+                <div style="font-size:var(--mjp-body); font-weight:800; color:{TEXT}; margin-top:8px;">
                     {company['name']}</div>
                 <div class="mjp-muted" style="margin-top:4px;">{company['description']}</div>
                 <div class="mjp-muted" style="margin-top:8px;">인재상

@@ -27,7 +27,7 @@ def render() -> None:
     <div class="mjp-hero">
         {brand.logo_html(max_px=196, min_px=118, detail="full")}
         <div class="mjp-hero-team">전북기계공업고등학교 · 팀 E.M.P</div>
-        <div style="margin-top:18px;">
+        <div style="margin-top:14px;">
             <span class="mjp-hero-kicker">제4회 NAVER OGQ마켓 AI Competition 본선 진출</span>
         </div>
         <h1 class="mjp-hero-title">{brand.SERVICE_NAME}</h1>
@@ -46,26 +46,12 @@ def render() -> None:
         if st.button("시작하기", type="primary", use_container_width=True, key="landing_cta"):
             ss.goto(ss.PAGE_LOGIN)
         st.markdown(
-            f'<div style="text-align:center; color:{MUTED}; font-size:12.5px; margin-top:10px;">'
+            f'<div style="text-align:center; color:{MUTED}; font-size:var(--mjp-caption); margin-top:10px;">'
             f'회원가입 없이 <b style="color:{GREEN};">게스트모드</b>로도 모든 기능을 쓸 수 있어요.</div>',
             unsafe_allow_html=True,
         )
 
-    # [Phase 4] 마스코트가 반겨주는 자리. 히어로의 엠블럼은 '로고', 이쪽은 '캐릭터'다.
-    m_html = mascot.html("welcome", size=104)
-    if m_html:
-        st.markdown(f"""
-        <div style="display:flex; align-items:center; justify-content:center;
-                    gap:14px; margin-top:30px; flex-wrap:wrap;">
-            {m_html}
-            <div style="color:{MUTED}; font-size:14px; line-height:1.6; max-width:280px;">
-                안녕하세요! 저는 여러분의 취업 준비를 함께할 <b style="color:{TEXT};">마스코트</b>예요.<br>
-                진단부터 자소서까지 옆에서 응원할게요.
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    st.markdown("<div style='height:38px;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
 
     # ---------- 3가지 가치 제안 ----------
     points = [
@@ -90,10 +76,26 @@ def render() -> None:
             </div>
             """, unsafe_allow_html=True)
 
+    # [Phase 4] 마스코트 인사. CTA 와 가치 제안 카드를 첫 화면에 붙이기 위해
+    # 카드 아래로 내렸다 — 캐릭터는 인상이지 행동 유도가 아니다.
+    m_html = mascot.html("welcome", size=104)
+    if m_html:
+        st.markdown(f"""
+        <div style="display:flex; align-items:center; justify-content:center;
+                    gap:14px; margin-top:30px; flex-wrap:wrap;">
+            {m_html}
+            <div style="color:{MUTED}; font-size:var(--mjp-small); line-height:1.6; max-width:280px;">
+                안녕하세요! 저는 여러분의 취업 준비를 함께할 <b style="color:{TEXT};">마스코트</b>예요.<br>
+                진단부터 자소서까지 옆에서 응원할게요.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+
     # ---------- 푸터 ----------
     st.markdown(f"""
     <div style="text-align:center; margin-top:44px; padding-top:20px;
-                border-top:1px solid {CARD_BORDER}; color:{MUTED}; font-size:12px; line-height:1.8;">
+                border-top:1px solid {CARD_BORDER}; color:{MUTED}; font-size:var(--mjp-caption); line-height:1.8;">
         {brand.TEAM_NAME} · 김우빈 · 김정수 · 오상명 · 이건희<br>
         기업 별점·복지·선배 리뷰 등 세부 콘텐츠는 팀이 구성한 <b>예시 데이터</b>입니다.
     </div>

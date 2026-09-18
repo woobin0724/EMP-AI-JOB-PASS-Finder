@@ -31,7 +31,12 @@ def render() -> None:
     left, right = st.columns([1, 1.3])
 
     with left:
-        st.markdown("#### 나의 프로필 & 스토리 연동 기입")
+        # ▣ 입력을 세 구획으로 나눈다
+        #   9개 항목이 한 줄로 이어지면 어디까지가 필수인지 알 수 없어
+        #   학생이 첫 칸에서 멈춘다. 필수 / 글을 바꾸는 재료 / 형식 옵션으로
+        #   끊어, 필수만 채워도 생성이 된다는 것이 보이게 한다.
+        st.markdown("#### 나의 프로필")
+        st.caption("이 세 가지만 채워도 초안이 나옵니다.")
 
         name = st.text_input("학생 이름",
                              value=st.session_state.student_name or ss.display_name(),
@@ -48,7 +53,10 @@ def render() -> None:
 
         # ---- [Phase 5] 확장 입력 ----
         # 이름·기업·강점만으로는 모든 학생의 자소서가 같아진다.
-        # 아래 두 칸이 '그 학생만의 글'을 만드는 재료다.
+        # 아래 칸들이 '그 학생만의 글'을 만드는 재료다.
+        st.markdown("#### 글을 바꾸는 재료")
+        st.caption("선택이지만, 하나만 채워도 남들과 다른 자소서가 됩니다.")
+
         episode = st.text_area(
             "관련 경험이나 에피소드 (선택, 있으면 글이 완전히 달라집니다)",
             height=100,
@@ -66,6 +74,7 @@ def render() -> None:
         # 라벨을 숨기면 컨트롤 높이가 눌려 모바일 터치 타깃이 44px 아래로 떨어진다
         # (실측 38px). 모바일에서는 컬럼이 1단으로 접히므로 라벨을 보여주는 편이
         # 공간 손해도 없고 무엇을 고르는지도 분명해진다.
+        st.markdown("#### 형식")
         ocol1, ocol2 = st.columns(2)
         with ocol1:
             tone = st.radio("문체", list(TONE_OPTIONS.keys()), horizontal=True,
@@ -152,7 +161,7 @@ def render() -> None:
             '<div class="mjp-card">'
             f'<span class="mjp-badge" style="background:{CARD_BORDER}; color:{MUTED};">DRAFT SHEET</span> '
             f'{badges}'
-            '<div style="font-size:18px; font-weight:800; margin-top:10px;">'
+            '<div style="font-size:var(--mjp-h2); font-weight:800; margin-top:10px;">'
             '합격 자기소개서 전문 통합 시트</div>'
             f'<div class="mjp-muted" style="margin-top:4px;">{target_company["name"]} 인재상: '
             f'{", ".join(target_company["ideal_talent"])}</div>'

@@ -56,14 +56,14 @@ def render() -> None:
         st.markdown(f"""
         <div class="mjp-card" style="border-left:3px solid {BRAND};">
             <div style="font-weight:800; color:{TEXT};">반을 만들면 이런 걸 볼 수 있어요</div>
-            <ul style="color:{MUTED}; font-size:13px; margin:12px 0 0; padding-left:18px;
+            <ul style="color:{MUTED}; font-size:var(--mjp-caption); margin:12px 0 0; padding-left:18px;
                        line-height:1.75;">
                 <li>학생별 <b style="color:{TEXT};">목표 기업</b></li>
                 <li>커리어 로드맵 <b style="color:{TEXT};">진행 단계</b></li>
                 <li>최근 <b style="color:{TEXT};">매칭 점수</b>와 반 평균</li>
                 <li>아직 시작하지 않은 학생 확인</li>
             </ul>
-            <div style="color:{MUTED}; font-size:12px; margin-top:14px; line-height:1.6;">
+            <div style="color:{MUTED}; font-size:var(--mjp-caption); margin-top:14px; line-height:1.6;">
                 학생이 반 코드를 넣지 않아도 앱은 그대로 쓸 수 있습니다.
                 반 등록은 선생님이 현황을 보기 위한 <b>선택 기능</b>이에요.
             </div>
@@ -95,9 +95,9 @@ def _render_existing(klass: dict) -> None:
     students = store.class_students(klass["class_code"])
 
     st.markdown(f"""
-    <div class="mjp-card" style="border-color:{GOLD};">
+    <div class="mjp-card" style="border-color:{BRAND};">
         <div class="mjp-muted">반 코드</div>
-        <div style="color:{GOLD}; font-size:34px; font-weight:800;
+        <div style="color:{GOLD}; font-size:var(--mjp-display); font-weight:800;
                     letter-spacing:0.22em; margin:6px 0 10px;">{klass['class_code']}</div>
         <div class="mjp-muted" style="line-height:1.6;">
             학생들에게 이 코드를 알려주세요. 학생은 <b style="color:{TEXT};">마이페이지 →
@@ -116,14 +116,14 @@ def _render_existing(klass: dict) -> None:
         st.markdown(f"""
         <div class="mjp-card" style="text-align:center;">
             <div class="mjp-muted">등록된 학생</div>
-            <div style="font-size:30px; font-weight:800; color:{GREEN};">{len(students)}명</div>
+            <div style="font-size:var(--mjp-h1); font-weight:800; color:{GREEN};">{len(students)}명</div>
         </div>
         """, unsafe_allow_html=True)
     with mcol2:
         st.markdown(f"""
         <div class="mjp-card" style="text-align:center;">
             <div class="mjp-muted">개설일</div>
-            <div style="font-size:18px; font-weight:800; color:{TEXT}; margin-top:8px;">
+            <div style="font-size:var(--mjp-h2); font-weight:800; color:{TEXT}; margin-top:8px;">
                 {klass.get('created_at', '')[:10]}</div>
         </div>
         """, unsafe_allow_html=True)

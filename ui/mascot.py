@@ -252,7 +252,7 @@ def speech(slot: str, message: str, tone: str = "brand", size: int = 92) -> None
                 border-left:3px solid {color}; border-radius:14px;
                 padding:14px 18px; margin-bottom:16px; flex-wrap:wrap;">
         <div style="flex:none;">{markup}</div>
-        <div style="flex:1; min-width:180px; color:{TEXT}; font-size:14.5px;
+        <div style="flex:1; min-width:180px; color:{TEXT}; font-size:var(--mjp-small);
                     line-height:1.65;">{message}</div>
     </div>
     """, unsafe_allow_html=True)

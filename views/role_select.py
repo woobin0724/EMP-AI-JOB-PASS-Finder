@@ -37,10 +37,10 @@ ROLES = [
 def render() -> None:
     st.markdown(f"""
     <div style="text-align:center; margin:26px 0 10px;">
-        <div style="font-size:34px; font-weight:800; color:{TEXT}; letter-spacing:-0.03em;">
+        <div style="font-size:var(--mjp-display); font-weight:800; color:{TEXT}; letter-spacing:-0.03em;">
             어떻게 사용하실 건가요?
         </div>
-        <div style="color:{MUTED}; font-size:15px; margin-top:12px; line-height:1.6;">
+        <div style="color:{MUTED}; font-size:var(--mjp-body); margin-top:12px; line-height:1.6;">
             역할에 따라 화면 구성이 달라집니다. 처음 한 번만 선택하면 돼요.
         </div>
     </div>
@@ -57,13 +57,13 @@ def render() -> None:
             st.markdown(f"""
             <div class="mjp-feature" style="border-color:{role['color']}33;">
                 <div style="line-height:1;">{icon(role["icon"], size=38, color=role["color"], stroke=1.7)}</div>
-                <div style="font-size:21px; font-weight:800; color:{role['color']}; margin-top:14px;">
+                <div style="font-size:var(--mjp-h2); font-weight:800; color:{role['color']}; margin-top:14px;">
                     {role['title']}
                 </div>
-                <div style="color:{MUTED}; font-size:13.5px; margin-top:10px; line-height:1.6;">
+                <div style="color:{MUTED}; font-size:var(--mjp-caption); margin-top:10px; line-height:1.6;">
                     {role['desc']}
                 </div>
-                <ul style="color:{MUTED}; font-size:12.5px; margin:14px 0 6px; padding-left:18px;
+                <ul style="color:{MUTED}; font-size:var(--mjp-caption); margin:14px 0 6px; padding-left:18px;
                            line-height:1.55;">{bullets}</ul>
             </div>
             """, unsafe_allow_html=True)
@@ -74,7 +74,7 @@ def render() -> None:
 
     st.markdown(f"""
     <div style="text-align:center; margin-top:28px; padding-top:16px;
-                border-top:1px solid {CARD_BORDER}; color:{MUTED}; font-size:12px;">
+                border-top:1px solid {CARD_BORDER}; color:{MUTED}; font-size:var(--mjp-caption);">
         선택한 역할은 나중에 마이페이지에서 바꿀 수 있어요.
     </div>
     """, unsafe_allow_html=True)

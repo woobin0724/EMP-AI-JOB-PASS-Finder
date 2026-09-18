@@ -83,7 +83,10 @@ def topbar(active: str | None = None) -> None:
     name = ss.display_name()
     role_label = {"student": "학생", "teacher": "선생님"}.get(st.session_state.get("role"), "")
 
-    bcol, ucol = st.columns([2.4, 1])
+    # 브랜드 | 사용자 한 줄. 모바일 1단 강제 규칙에서 예외로 빼야
+    # (theme.py 의 st-key-mjp_brandrow) 좁은 화면에서도 좌우로 남는다.
+    with st.container(key="mjp_brandrow"):
+        bcol, ucol = st.columns([2.4, 1])
     with bcol:
         # 브랜드 마크는 그라데이션 사각형이 아니라 로고를 벡터로 재구성한 엠블럼이다.
         # 36px 에서는 회로선·아크텍스트가 뭉개지므로 compact 레벨을 쓴다.
