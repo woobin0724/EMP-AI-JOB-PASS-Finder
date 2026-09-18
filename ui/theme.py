@@ -123,6 +123,24 @@ html, body, .stApp, .stApp *,
 input, textarea, select, button, [class^="st-"], [class*=" st-"] {{
     font-family: var(--mjp-font) !important;
 }}
+
+/* ▣ 전역 폰트 규칙에서 되돌려야 하는 것들
+   위 규칙은 !important 라 폰트 자체가 글리프인 요소까지 덮어쓴다.
+   Streamlit 의 아이콘은 'keyboard_arrow_right' 같은 리거처 이름을 글자로
+   넣고 아이콘 폰트로 그리는 방식이라, 본문 폰트가 씌워지면 그 이름이
+   화면에 그대로 찍힌다 (expander 화살표 자리에 글자가 겹쳐 보였다).
+   Material Symbols 는 Streamlit 이 로컬로 함께 배포하므로 외부망과 무관하다. */
+[data-testid="stIconMaterial"],
+.material-icons, .material-icons-outlined,
+.material-symbols-rounded, .material-symbols-outlined {{
+    font-family: "Material Symbols Rounded", "Material Icons" !important;
+}}
+/* 코드·수식도 본문 폰트로 덮이면 정렬이 무너진다 */
+code, pre, kbd, samp, .stCode, [data-testid="stCode"] * {{
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace !important;
+}}
+.katex, .katex * {{ font-family: KaTeX_Main, "Times New Roman", serif !important; }}
+
 .stApp {{ font-size: var(--mjp-body); }}
 
 /* ===== 0. 기본 바탕 ===== */
