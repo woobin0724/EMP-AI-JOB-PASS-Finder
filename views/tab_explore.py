@@ -16,7 +16,7 @@ from services import activity
 from services import fallback as fb
 from services.strong_sme_api import PRIORITY_DEPARTMENTS, prioritize_by_department
 from ui import mascot
-from ui.components import back_to_hub, disclaimer, grid_columns, section_title, topbar
+from ui.components import back_to_hub, disclaimer, grid_columns, render_html, section_title, topbar
 from ui.icons import icon
 from ui.theme import BADGE_COLORS, BG, GREEN, RED, TEXT, render_stars
 
@@ -44,12 +44,13 @@ def render() -> None:
     # 행 단위 컬럼 — 모바일 1단 전환 시 기업 순서 보존
     for col, c in zip(grid_columns(len(shown), 3), shown):
         with col:
-            st.markdown(f"""
+            heart = (icon("heart", size=15, color=RED, filled=True)
+                     if activity.is_bookmarked(c["id"]) else "")
+            render_html(f"""
             <div class="mjp-card">
                 <span class="mjp-tag">{c['size_tag']} · {c['field_tag']}</span>
                 <span style="float:right; display:inline-flex; align-items:center; gap:6px;">
-                    {render_stars(c['overall_rating'])}
-                    {icon("heart", size=15, color=RED, filled=True) if activity.is_bookmarked(c["id"]) else ""}
+                    {render_stars(c['overall_rating'])}{heart}
                 </span>
                 <div style="font-size:19px; font-weight:800; margin-top:8px;">{c['name']}</div>
                 <div class="mjp-muted" style="margin-bottom:8px;">{c['description']}</div>
@@ -58,7 +59,7 @@ def render() -> None:
                     <span style="color:{TEXT};">{c['benefit_short']}</span>
                 </div>
             </div>
-            """, unsafe_allow_html=True)
+            """)
             # 버튼 줄은 mjp_row_ 컨테이너로 감싸 모바일에서도 가로로 유지한다
             with st.container(key=f"mjp_row_card_{c['id']}"):
                 bc1, bc2, bc3 = st.columns([0.7, 1.2, 1.2])
@@ -131,13 +132,13 @@ def render() -> None:
                     if r.get("company_type") == "강소기업" and r.get("department") in PRIORITY_DEPARTMENTS
                     else ""
                 )
-                st.markdown(f"""
+                render_html(f"""
                 <div class="mjp-card">
                     <span class="mjp-tag">{r.get('company_type', '')}</span>{priority_badge}
                     <div style="font-size:16px; font-weight:800; margin-top:6px;">{r.get('company', '')}</div>
                     <div class="mjp-muted">{r.get('title', '')} · {r.get('region', '')} {r.get('salary', '')}</div>
                     <div class="mjp-muted" style="margin-top:4px;">필수/우대 자격증: {cert_str}</div>
                 </div>
-                """, unsafe_allow_html=True)
+                """)
                 if r.get("ai_tip"):
                     st.info(r["ai_tip"])

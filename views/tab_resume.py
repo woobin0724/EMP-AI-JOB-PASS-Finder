@@ -15,7 +15,7 @@ from data.company_showcase import COMPANY_BY_ID, COMPANY_SHOWCASE
 from services.coverletter import LENGTH_OPTIONS, TONE_OPTIONS, angle_for, normalize_options
 from services.llm import (
     clear_cover_letter_cache, cost_guard_caption, current_variation,
-    generate_cover_letter_cached, next_variation, reset_variation,
+    generate_cover_letter_cached, last_api_failure, next_variation, reset_variation,
 )
 from ui import mascot
 from ui.components import back_to_hub, section_title, topbar
@@ -126,6 +126,11 @@ def render() -> None:
             st.session_state.cover_letter_cached = cache_hit
             st.session_state.cover_letter_options = normalize_options(gen_options)
             st.session_state.selected_company_id = target_company["id"]
+
+        # 키를 넣었는데도 템플릿이 나왔다면 이유를 드러낸다 (조용한 폴백 방지)
+        api_error = last_api_failure()
+        if api_error and st.session_state.cover_letter_source == "template":
+            st.warning(f"API 키는 있으나 호출에 실패해 템플릿으로 생성했습니다 — {api_error}")
 
         badges = ""
         if st.session_state.cover_letter_source == "ai":

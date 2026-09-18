@@ -17,6 +17,31 @@ from ui.theme import BG, CARD_BORDER, GREEN, MUTED, TEXT
 
 
 # ------------------------------------------------------------
+# HTML 마크업
+# ------------------------------------------------------------
+def render_html(markup: str) -> None:
+    """
+    스타일이 들어간 HTML 조각을 마크다운 해석에 걸리지 않게 렌더링한다.
+
+    st.markdown 은 문자열에 textwrap.dedent 를 걸고 CommonMark 로 파싱한다.
+    이때 두 가지가 HTML 을 망가뜨린다.
+
+    1. 빈 줄: CommonMark 에서 빈 줄은 HTML 블록을 닫는다. f-string 안의
+       조건부 보간이 빈 문자열이 되면 (`{icon(...) if 찜 else ""}`) 그 줄이
+       통째로 빈 줄이 되어 블록이 거기서 끊긴다.
+    2. 4칸 이상 들여쓰기: 블록이 끊긴 뒤의 줄들은 들여쓰기 코드블록으로
+       파싱돼 태그가 화면에 글자 그대로 찍힌다.
+
+    줄 단위로 공백을 털고 빈 줄을 버려 한 줄로 만들면 두 조건이 모두 사라진다.
+    태그 사이 공백은 HTML 에서 의미가 없으므로 결과는 동일하다.
+    """
+    st.markdown(
+        " ".join(line.strip() for line in markup.splitlines() if line.strip()),
+        unsafe_allow_html=True,
+    )
+
+
+# ------------------------------------------------------------
 # OGQ 스티커
 # ------------------------------------------------------------
 def show_sticker(key: str, width: int = 130, caption: str | None = None) -> None:

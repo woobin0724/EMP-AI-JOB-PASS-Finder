@@ -84,6 +84,28 @@ def _profile_fingerprint(profile: dict, company_id: str, options: dict) -> str:
     return hashlib.sha256(blob.encode("utf-8")).hexdigest()
 
 
+# 마지막 API 실패 사유. 키를 넣었는데도 템플릿이 나오는 상황을 화면에서
+# 바로 알 수 있게 한다.
+API_FAILURE_KEY = "_llm_last_api_error"
+
+
+def _record_api_failure(exc: Exception) -> None:
+    try:
+        st.session_state[API_FAILURE_KEY] = f"{type(exc).__name__}: {exc}"[:300]
+    except Exception:
+        pass
+
+
+def last_api_failure() -> str:
+    """키가 있는데도 템플릿으로 내려갔을 때의 마지막 실패 사유 (없으면 빈 문자열)."""
+    if not has_api_key():
+        return ""
+    try:
+        return st.session_state.get(API_FAILURE_KEY, "") or ""
+    except Exception:
+        return ""
+
+
 @st.cache_data(ttl=CACHE_TTL, max_entries=CACHE_MAX_ENTRIES, show_spinner=False)
 def _generate_cached(fingerprint: str, profile_json: str, company_json: str,
                      options_json: str, use_api: bool) -> tuple[str, str]:
@@ -106,9 +128,10 @@ def _generate_cached(fingerprint: str, profile_json: str, company_json: str,
         if api_key:
             try:
                 return _claude_cover_letter(profile, company, api_key, options), "ai"
-            except Exception:
-                # 네트워크 오류·인증 실패·모델 거절 → 조용히 템플릿으로 전환
-                pass
+            except Exception as exc:
+                # 템플릿으로 내려가되, 이유는 남긴다. 조용히 삼키면 키를 넣어둔
+                # 팀이 'AI 가 동작 중'이라고 오해한 채 템플릿 결과를 보게 된다.
+                _record_api_failure(exc)
 
     return _template_cover_letter(profile, company, options), "template"
 

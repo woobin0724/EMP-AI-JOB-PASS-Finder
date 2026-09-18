@@ -84,9 +84,10 @@ async def run(device, vw, vh, mobile):
         await pg.get_by_role("button", name="시작하기").first.click(); await pg.wait_for_timeout(2200)
         await probe(pg, f"{device}_2_login", results)
 
-        await pg.get_by_text("이어하기 코드가 있어요").first.click(); await pg.wait_for_timeout(900)
-        await pg.get_by_placeholder("예: K7M2QX").fill("DEMO01"); await pg.wait_for_timeout(300)
-        await pg.get_by_role("button", name="코드로 이어하기").first.click(); await pg.wait_for_timeout(3200)
+        await pg.get_by_role("button", name="게스트모드로 바로 시작하기").first.click()
+        await pg.wait_for_timeout(3000)
+        await pg.get_by_role("button", name="학생이에요 선택").first.click()
+        await pg.wait_for_timeout(3200)
         await probe(pg, f"{device}_3_hub", results)
 
         for label, key in [("스펙 진단","4_spec"), ("기업 탐색","5_explore"),

@@ -16,9 +16,22 @@ from core import session as ss
 from data import ogq_assets as ogq
 from services import auth as auth_svc
 from ui import mascot
-from ui.components import back_to_hub, grid_columns, section_title, topbar
+from ui.components import back_to_hub, grid_columns, render_html, section_title, topbar
 from ui.icons import icon
 from ui.theme import GREEN, MUTED, PURPLE, TEXT
+
+
+SHIPPED = "구현 완료"
+PLANNED = "준비 중"
+
+
+def _shipped(features: list[dict]) -> list[dict]:
+    return [f for f in features if f["when"] == SHIPPED]
+
+
+def _planned(features: list[dict]) -> list[dict]:
+    """아직 쓸 수 없는 항목. 학생 화면에서는 기본으로 접어 둔다."""
+    return [f for f in features if f["when"] != SHIPPED]
 
 
 def _cut_features() -> list[dict]:
@@ -27,7 +40,7 @@ def _cut_features() -> list[dict]:
     return [
         {
             "icon": "lock", "title": "카카오·네이버·구글 소셜 로그인",
-            "when": "구현 완료" if oauth_ready else "배선 완료 · 키 등록 대기",
+            "when": "구현 완료" if oauth_ready else "준비 중",
             "status_color": GREEN if oauth_ready else "#FBBF24",
             "why": "로그인은 '다시 돌아올 이유'가 있을 때 필요합니다. 찜하기·진행 기록처럼 "
                    "재방문해야 값이 생기는 기능이 들어오면서 로그인이 비로소 필요해졌습니다.",
@@ -47,7 +60,7 @@ def _cut_features() -> list[dict]:
         },
         {
             "icon": "users", "title": "현직자·선배 1:1 전문가 매칭",
-            "when": "Next Release · v1.2",
+            "when": "준비 중",
             "status_color": MUTED,
             "why": "매칭은 학생과 현직자 양쪽이 모두 모여야 성립하는 양면 시장입니다. "
                    "한쪽만 있는 상태로 만들면 빈 채팅방만 남습니다. 대신 지금은 선배 리뷰·"
@@ -56,7 +69,7 @@ def _cut_features() -> list[dict]:
         },
         {
             "icon": "bell", "title": "공고 마감 알림 · 푸시",
-            "when": "Backlog",
+            "when": "준비 중",
             "status_color": MUTED,
             "why": "알림은 사용자가 이미 특정 공고를 '내 것'으로 찜한 뒤에야 의미가 있습니다. "
                    "찜하기가 로그인에 의존하므로 자연스럽게 로그인 다음 순서가 됩니다.",
@@ -65,42 +78,36 @@ def _cut_features() -> list[dict]:
     ]
 
 
+def _feature_card(f: dict) -> None:
+    render_html(f"""
+    <div class="mjp-later" style="border-left-color:{f['status_color']};">
+        <div style="display:flex; align-items:center; gap:10px;">
+            <div style="flex:none;">{icon(f["icon"], size=22, color=f["status_color"], stroke=1.8)}</div>
+            <div>
+                <div style="font-size:16px; font-weight:800; color:{TEXT};">{f['title']}</div>
+                <span class="mjp-badge" style="background:{f['status_color']}; color:#0A0E17;">{f['when']}</span>
+            </div>
+        </div>
+        <div class="mjp-muted" style="margin-top:12px; line-height:1.6;">{f['why']}</div>
+        <div style="margin-top:10px; font-size:12px; color:{GREEN};">▸ {f['trigger']}</div>
+    </div>
+    """)
+
+
 def render() -> None:
     topbar(active=ss.PAGE_NEXT)
     back_to_hub()
 
     tcol1, tcol2 = st.columns([2.4, 1])
     with tcol1:
-        section_title("지금 만들지 '않은' 것들", icon_name="route", sub=
-                      "메신저 앱을 만든다면 <b>채팅은 필수지만 이모티콘은 아닙니다.</b> "
-                      "이모티콘이 나쁜 기능이라서가 아니라, 채팅이 동작하는지 먼저 확인해야 "
-                      "이모티콘을 만들 이유가 생기기 때문입니다.")
-        st.markdown(
-            "저희도 같은 기준으로 잘라냈습니다. 아래 기능들은 **버린 것이 아니라 검증 순서를 "
-            "뒤로 미룬 것**이며, 각각이 어떤 가설을 확인한 뒤에 열릴지 적어두었습니다. "
-            "실제로 가설이 확인된 항목은 '구현 완료'로 표시해두었습니다."
-        )
+        section_title("서비스 로드맵", icon_name="route", sub=
+                      "지금 <b>바로 쓸 수 있는 기능</b>과, 이어서 준비하고 있는 기능을 "
+                      "구분해 적었습니다.")
     with tcol2:
         st.markdown(mascot.html("thanks", size=128), unsafe_allow_html=True)
 
-    cut = _cut_features()
-    for col, f in zip(grid_columns(len(cut), 2), cut):
-        with col:
-            st.markdown(f"""
-            <div class="mjp-later" style="border-left-color:{f['status_color']};">
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <div style="flex:none;">{icon(f["icon"], size=22, color=f["status_color"], stroke=1.8)}</div>
-                    <div>
-                        <div style="font-size:16px; font-weight:800; color:{TEXT};">{f['title']}</div>
-                        <span class="mjp-badge" style="background:{f['status_color']}; color:#0A0E17;">{f['when']}</span>
-                    </div>
-                </div>
-                <div class="mjp-muted" style="margin-top:12px; line-height:1.6;">{f['why']}</div>
-                <div style="margin-top:10px; font-size:12px; color:{GREEN};">▸ {f['trigger']}</div>
-            </div>
-            """, unsafe_allow_html=True)
+    features = _cut_features()
 
-    st.divider()
     st.markdown("### 지금 남긴 것 (현재 범위)")
     kept = [
         ("스펙 진단", "100점 만점 합격 점수 — 서비스의 존재 이유. 이것 하나가 안 되면 나머지는 무의미합니다."),
@@ -115,6 +122,23 @@ def render() -> None:
                 <div style="font-weight:800; color:{TEXT};">{title}</div>
                 <div class="mjp-muted" style="margin-top:8px; line-height:1.55;">{desc}</div>
             </div>""", unsafe_allow_html=True)
+
+    shipped = _shipped(features)
+    if shipped:
+        st.markdown("### 최근 추가된 기능")
+        for col, f in zip(grid_columns(len(shipped), 2), shipped):
+            with col:
+                _feature_card(f)
+
+    # 아직 쓸 수 없는 항목은 접어 둔다. 펼치기 전에는 화면에 나오지 않으므로
+    # 학생이 '미완성 화면'으로 오해하지 않고, 심사·교사용으로는 그대로 남는다.
+    planned = _planned(features)
+    if planned:
+        with st.expander(f"준비 중인 기능 {len(planned)}건 — 왜 아직 만들지 않았는지"):
+            st.caption("아래 기능은 아직 사용할 수 없습니다. 버린 것이 아니라 확인해야 할 "
+                       "가설이 남아 있어 순서를 뒤로 미룬 항목입니다.")
+            for f in planned:
+                _feature_card(f)
 
     st.divider()
     scol1, scol2 = st.columns([1, 2.2])
