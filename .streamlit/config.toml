@@ -1,0 +1,19 @@
+[theme]
+base = "dark"
+# 팀 로고에서 추출한 일렉트릭 블루.
+# 그린(#34D399)은 LIVE 배지·합격 안정권 같은 '상태 표시' 전용으로 분리했다.
+# 브랜드색과 상태색이 같으면 "초록 = 좋음"이라는 신호가 희석된다.
+primaryColor = "#4C8FE0"
+backgroundColor = "#0A0E17"
+secondaryBackgroundColor = "#131826"
+textColor = "#E7EAF0"
+font = "sans serif"
+
+# ※ 이 파일은 반드시 `.streamlit/` 폴더 안에 있어야 합니다.
+#    프로젝트 루트의 config.toml 은 Streamlit이 읽지 않아 테마가 적용되지 않습니다.
+#    (개편 전 이 파일이 루트에 있어서 다크 테마가 무시되고 기본 라이트 테마로
+#     렌더링되고 있었습니다 — primaryColor 가 빨강으로 나오던 원인)
+
+[server]
+# 업로드 한도 등 기본값 유지. 배포 시 Streamlit Cloud 설정이 우선합니다.
+maxUploadSize = 50

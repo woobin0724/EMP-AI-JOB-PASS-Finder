@@ -4,3 +4,9 @@ __pycache__/
 .venv/
 venv/
 .DS_Store
+
+# 사용자 데이터 (로그인/반/활동기록) — 개인정보이므로 커밋하지 않는다
+data/userdata/
+
+# API 키 (OGQ 등) — 절대 커밋하지 않는다
+.env
