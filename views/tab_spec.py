@@ -16,6 +16,7 @@ from data import ogq_assets as ogq
 from data.certifications import get_bonus_points
 from data.company_showcase import COMPANY_SHOWCASE, COMPANY_SIZE_TAGS
 from services import activity
+from services import score_explain
 from data.departments import (
     DEPARTMENT_LIST, get_category, get_employment_rate, get_majors_for_department,
 )
@@ -157,13 +158,41 @@ def render() -> None:
                     st.markdown(f"{mark} **{d['cert']}** · {d['status']}{extra}")
                 st.caption("정확히 일치 100% · 직무 유사 자격증 70% 인정 → 평균 인정비율 × 40점")
 
-    # 팁과 마스코트는 입력 폼 아래. 점수 블록을 짧게 유지해야 입력까지
-    # 첫 화면에 들어온다.
+    # ------------------------------------------------------------
+    # [Phase B] 왜 이 점수인가 — 마스코트가 말로 풀어준다
+    # ------------------------------------------------------------
+    # 점수 계산은 위에서 이미 끝났다(로컬 연산). 여기서는 그 숫자를 재료로
+    # 설명만 만든다. 키가 없으면 규칙 기반 문장으로 내려가므로, 키 없이
+    # 100명이 써도 이 자리가 비지 않는다.
+    explain_profile = {
+        "dept": dept, "grade": grade, "certs": certs, "strengths": strengths,
+    }
+    explanation, explain_source = score_explain.explain(
+        explain_profile, result, target_company)
+
     tip_l, tip_r = st.columns([1, 3])
     with tip_l:
         st.markdown(mascot.html(_MASCOT_BY_SCORE[sticker_key], size=128),
                     unsafe_allow_html=True)
     with tip_r:
+        badge = ("AI 설명" if explain_source == "ai" else "규칙 기반 설명")
+        badge_bg = BLUE if explain_source == "ai" else CARD_BORDER
+        badge_fg = "#fff" if explain_source == "ai" else MUTED
+        render_html(f"""
+        <div class="mjp-card" style="margin-bottom:10px;">
+            <span class="mjp-badge" style="background:{badge_bg}; color:{badge_fg};">{badge}</span>
+            <div style="margin-top:10px; line-height:1.7;">{explanation['explanation']}</div>
+            <div style="margin-top:12px; padding-top:12px; border-top:1px solid {CARD_BORDER};
+                        color:{GREEN}; font-weight:700;">
+                다음 한 걸음 · {explanation['suggestion']}
+            </div>
+        </div>
+        """)
+
+        failure = score_explain.last_failure()
+        if failure and explain_source == "rule":
+            st.warning(f"API 키는 있으나 설명 생성에 실패해 규칙 기반으로 표시했습니다 — {failure}")
+
         for tip in result["tips"]:
             st.info(tip)
 
