@@ -107,6 +107,12 @@ def render() -> None:
         if st.button("로그아웃", use_container_width=True, key="mypage_logout"):
             ss.logout()
 
+    # 팀 전용 진입구. 학생에게도 보이지만 데이터를 넣는 화면이라 숨길 이유는
+    # 없고, 출처 없이 저장되지 않으므로 오염 위험도 낮다.
+    if st.button("기업 데이터 입력 (팀 전용)", use_container_width=True,
+                 key="mypage_admin_data"):
+        ss.goto(ss.PAGE_ADMIN_DATA)
+
     st.caption(f"저장소 현황: {store.store_summary()}")
     st.caption("Streamlit Community Cloud는 재배포·슬립 해제 시 파일시스템이 초기화됩니다. "
                "장기 보관이 필요하면 외부 DB 연동이 필요합니다 "

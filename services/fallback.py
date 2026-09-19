@@ -34,6 +34,9 @@ BACKUP_JSON_PATH = os.path.join(BASE_DIR, "data", "backup_master.json")
 # 상태 상수
 LIVE = "live"
 BACKUP = "backup"
+# 스크래핑을 걷어내고 팀이 직접 조사해 넣은 데이터. 외부 호출이 실패해서
+# 내려온 '백업'과 구분해야 한다 — 백업은 사고지만 큐레이션은 설계다.
+CURATED = "curated"
 
 
 def load_backup_master() -> dict:
@@ -123,6 +126,10 @@ class SourceTracker:
     def all_live(self) -> bool:
         return bool(self.entries) and all(e["source"] == LIVE for e in self.entries.values())
 
+    def has_fallback(self) -> bool:
+        """외부 호출이 실패해 백업으로 내려온 소스가 있는지. 큐레이션은 제외."""
+        return any(e["source"] == BACKUP for e in self.entries.values())
+
     def errors(self) -> list:
         return [(n, e["error"]) for n, e in self.entries.items() if e["error"]]
 
@@ -134,13 +141,13 @@ def safe_call(fn, *args, fallback=None, tracker: SourceTracker | None = None,
     - fn 이 (data, source) 튜플을 반환하면 그대로 사용한다.
     - 그 외 값을 반환하면 "live" 로 간주한다.
     - 어떤 예외가 나도 삼키고 fallback 값 + "backup" 을 반환한다.
-    반환값: (데이터, "live"|"backup")
+    반환값: (데이터, "live"|"backup"|"curated")
     """
     started = time.perf_counter()
     label = name or getattr(fn, "__name__", "external_api")
     try:
         result = fn(*args, **kwargs)
-        if isinstance(result, tuple) and len(result) == 2 and result[1] in (LIVE, BACKUP):
+        if isinstance(result, tuple) and len(result) == 2 and result[1] in (LIVE, BACKUP, CURATED):
             data, source = result
         else:
             data, source = result, LIVE
@@ -201,7 +208,7 @@ def fetch_alio_safe(tracker: SourceTracker | None = None):
     from services.alio_api import fetch_alio_jobs
 
     records, source = safe_call(
-        fetch_alio_jobs, fallback=[], tracker=tracker, name="잡알리오 공기업",
+        fetch_alio_jobs, fallback=[], tracker=tracker, name="공기업 채용",
     )
     return (records or []), source
 
@@ -212,7 +219,7 @@ def fetch_strong_sme_safe(tracker: SourceTracker | None = None):
 
     records, source = safe_call(
         fetch_strong_small_companies, fallback=backup_strong_sme(),
-        tracker=tracker, name="강소기업 포털",
+        tracker=tracker, name="강소기업",
     )
     return (records or backup_strong_sme()), source
 
@@ -244,23 +251,30 @@ def badge_html(tracker: SourceTracker, colors: dict | None = None) -> str:
             f'아직 외부 데이터를 호출하지 않았습니다.</span></div>'
         )
 
+    curated_bg = colors.get("curated", colors.get("muted", "#8A93A6"))
+
     chips = []
     for name, info in tracker.entries.items():
-        is_live = info["source"] == LIVE
-        bg = live_bg if is_live else backup_bg
-        text = "LIVE API" if is_live else "BACKUP DATA"
+        src = info["source"]
+        is_live = src == LIVE
+        if src == CURATED:
+            bg, text, mark = curated_bg, "CURATED", "◆"
+        elif is_live:
+            bg, text, mark = live_bg, "LIVE API", "●"
+        else:
+            bg, text, mark = backup_bg, "BACKUP DATA", "◐"
         ms = f"{info['elapsed_ms']}ms" if info["elapsed_ms"] else ""
         chips.append(
             f'<span style="display:inline-flex;align-items:center;gap:6px;'
             f'background:{bg};color:{ink};font-size:11px;font-weight:800;'
             f'padding:4px 10px;border-radius:999px;margin-right:6px;">'
-            f'{"●" if is_live else "◐"} {text}'
+            f'{mark} {text}'
             f'<span style="font-weight:600;opacity:.75;">{name}{" · " + ms if ms else ""}</span>'
             f'</span>'
         )
 
     note = ""
-    if not tracker.all_live():
+    if tracker.has_fallback():
         note = (
             f'<div style="color:{muted};font-size:11.5px;margin-top:6px;">'
             f'일부 소스가 응답하지 않아 준비된 백업 마스터 데이터로 전환했습니다 '

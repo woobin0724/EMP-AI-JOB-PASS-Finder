@@ -52,7 +52,10 @@ BRAND_DEEP = "#2B6BC4"    # 딥 블루
 #   그린        = 상태 시맨틱 전용 (LIVE 배지 · 합격 안정권 · 성공 메시지)
 #   그린을 장식으로도 쓰면 "초록 = 좋음"이라는 신호가 희석된다.
 
-BADGE_COLORS = {"live": GREEN, "backup": GOLD, "ink": BG, "muted": MUTED}
+# 큐레이션은 장애가 아니라 설계된 상태다 — 경고색(골드)이 아니라
+# 무채색으로 두어 백업(폴백)과 눈으로 구분되게 한다.
+BADGE_COLORS = {"live": GREEN, "backup": GOLD, "curated": MUTED,
+                "ink": BG, "muted": MUTED}
 
 # 브랜드 제공자별 색 (로그인 버튼)
 PROVIDER_COLORS = {
@@ -432,6 +435,19 @@ div[data-testid="stWidgetLabel"] label, label[data-testid="stWidgetLabel"] {{
 /* ===== 6. 모바일 (QR 스캔 접속) ===== */
 @media (max-width: {MOBILE_BREAKPOINT}px) {{
     .block-container {{ padding: 1.1rem 0.85rem 2.4rem; }}
+
+    /* 숫자 입력의 +/- 스테퍼와 파일 업로더 버튼은 Streamlit 이 기본 38~40px 로
+       그린다. 관리자 입력 화면처럼 이 컨트롤이 많은 화면에서 터치 타깃
+       기준(44px)에 걸리므로 여기서 올린다. */
+    div[data-testid="stNumberInput"] button,
+    div[data-testid="stNumberInputStepDown"],
+    div[data-testid="stNumberInputStepUp"] {{
+        min-height: 44px !important; min-width: 44px !important;
+    }}
+    section[data-testid="stFileUploaderDropzone"] button,
+    div[data-testid="stFileUploader"] button {{
+        min-height: 44px !important;
+    }}
 
     /* 상단 브랜드|사용자 줄은 1단 전환에서 제외 — 좁아도 좌우가 맞아야
        헤더로 읽힌다. 세로로 쌓이면 사용자명이 서비스명 바로 밑에 붙는다. */

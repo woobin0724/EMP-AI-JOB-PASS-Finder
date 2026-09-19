@@ -352,3 +352,24 @@ COMPANY_SIZE_TAGS = ["전체", "대기업", "중견기업", "공기업", "강소
 COMPANY_BY_ID = {c["id"]: c for c in COMPANY_SHOWCASE}
 
 assert len(COMPANY_SHOWCASE) == 20, "백업 기업 데이터는 요구사항에 따라 20건이어야 합니다."
+
+
+# ------------------------------------------------------------
+# [Phase A-2] 팀 큐레이션 데이터 병합
+# ------------------------------------------------------------
+def all_companies() -> list:
+    """
+    코드에 박힌 마스터 20건 + 관리자 화면에서 입력한 큐레이션 데이터.
+
+    화면은 이 함수만 쓰면 되므로, 팀이 기업을 추가해도 화면 코드는 그대로다.
+    같은 id 가 있으면 큐레이션 쪽이 이긴다 — 사람이 나중에 확인한 값이
+    더 최신이기 때문이다.
+    """
+    from services.curated import load as _load_curated
+
+    merged = {c["id"]: c for c in COMPANY_SHOWCASE}
+    for row in _load_curated():
+        ident = row.get("id")
+        if ident:
+            merged[ident] = {**merged.get(ident, {}), **row}
+    return list(merged.values())
