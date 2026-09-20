@@ -11,23 +11,38 @@ services/llm.py 호출부가 확장된다.
 import streamlit as st
 
 from core import session as ss
-from data.company_showcase import COMPANY_BY_ID, COMPANY_SHOWCASE
+from core.catalog import all_talent_keywords
+from data.company_showcase import COMPANY_BY_ID, COMPANY_SHOWCASE, all_companies
 from services.coverletter import LENGTH_OPTIONS, TONE_OPTIONS, angle_for, normalize_options
+from services import review as review_svc
 from services.llm import (
     clear_cover_letter_cache, cost_guard_caption, current_variation,
     generate_cover_letter_cached, last_api_failure, next_variation, reset_variation,
 )
 from ui import mascot
-from ui.components import back_to_hub, section_title, topbar
-from ui.theme import BG, BLUE, CARD_BORDER, GREEN, MUTED
+from ui.components import back_to_hub, render_html, section_title, topbar
+from ui.theme import BG, BLUE, BRAND, CARD_BORDER, GOLD, GREEN, MUTED
 
 
 def render() -> None:
     topbar(active=ss.PAGE_RESUME)
     back_to_hub()
     section_title("합격 이력서 & 자소서", icon_name="file", sub=
-                  "내 스펙과 목표 기업의 인재상을 엮어 자기소개서 초안을 생성합니다.")
+                  "스펙으로 <b>새로 쓰거나</b>, 직접 쓴 초안을 <b>첨삭받거나</b>. "
+                  "둘 다 같은 화면에서 합니다.")
 
+    # 생성과 첨삭은 하는 일이 다르다 — 재료로 글을 만드는 것과, 이미 있는
+    # 글을 읽고 고칠 곳을 짚는 것. 탭으로 갈라 서로 섞이지 않게 한다.
+    gen_tab, review_tab = st.tabs(["자소서 생성", "내 초안 첨삭"])
+
+    with review_tab:
+        _render_review()
+
+    with gen_tab:
+        _render_generator()
+
+
+def _render_generator() -> None:
     left, right = st.columns([1, 1.3])
 
     with left:
@@ -185,3 +200,107 @@ def render() -> None:
                 st.caption(f"이번 초안의 구성: {angle_for(opts['variation'])}")
                 st.caption("마음에 들지 않으면 '다시 생성하기'를 누르세요. "
                            "같은 재료로 다른 구성의 초안이 나옵니다.")
+
+
+# ------------------------------------------------------------
+# [Phase D-2] 내 초안 첨삭
+# ------------------------------------------------------------
+def _render_review() -> None:
+    """학생이 직접 쓴 자소서를 읽고 피드백을 준다."""
+    st.markdown("#### 직접 쓴 자소서를 붙여넣으세요")
+    st.caption("잘된 점과 고칠 점을 짚어드립니다. 글을 대신 써주지는 않습니다 — "
+               "학생이 쓴 글이 더 나아지도록 돕는 것이 목적입니다.")
+
+    draft = st.text_area(
+        "자소서 초안", height=260, key="review_draft",
+        placeholder="지금까지 쓴 자소서를 그대로 붙여넣어주세요. "
+                    f"{review_svc.MIN_CHARS}자 이상이면 첨삭할 수 있어요.",
+    )
+
+    rc1, rc2 = st.columns(2)
+    with rc1:
+        # all_companies() 는 큐레이션 JSON 을 읽으므로 한 번만 부른다
+        companies = all_companies()
+        names = ["선택 안 함"] + [c["name"] for c in companies]
+        pick = st.selectbox("지원 기업 (선택)", names, key="review_company")
+        target = None
+        if pick != names[0]:
+            target = next(c for c in companies if c["name"] == pick)
+    with rc2:
+        strengths = st.multiselect(
+            "강점 키워드 (선택)", all_talent_keywords(),
+            default=list(st.session_state.get("strength_keywords") or []),
+            key="review_strengths", placeholder="강점을 골라주세요",
+        )
+
+    st.caption(f"현재 {len(draft.strip())}자")
+
+    if st.button("첨삭 받기", type="primary", use_container_width=True,
+                 key="review_run"):
+        problem = review_svc.validate_draft(draft)
+        if problem:
+            st.error(problem)
+        else:
+            with st.spinner("초안을 읽는 중..."):
+                feedback, source = review_svc.review(draft, target, strengths)
+            st.session_state["review_result"] = feedback
+            st.session_state["review_source"] = source
+
+    feedback = st.session_state.get("review_result")
+    if not feedback:
+        mascot.speech("thinking",
+                      "초안을 붙여넣고 <b>'첨삭 받기'</b>를 눌러주세요. "
+                      "지원 기업까지 고르면 그 기업 인재상에 맞춰 봐드려요.",
+                      tone="brand", size=88)
+        return
+
+    source = st.session_state.get("review_source", "rule")
+    badge = "AI 첨삭" if source == "ai" else "규칙 기반 점검"
+    badge_bg = BLUE if source == "ai" else CARD_BORDER
+    badge_fg = "#fff" if source == "ai" else MUTED
+
+    render_html(f"""
+    <div style="margin-bottom:12px;">
+        <span class="mjp-badge" style="background:{badge_bg}; color:{badge_fg};">{badge}</span>
+    </div>
+    """)
+
+    if source == "rule":
+        st.caption("API 키가 없어 기계가 셀 수 있는 항목만 점검했습니다 — "
+                   "분량·상투어·문장 길이·구체적 근거·인재상 반영 여부.")
+    failure = review_svc.last_failure()
+    if failure and source == "rule":
+        st.warning(f"API 키는 있으나 첨삭에 실패해 규칙 점검으로 표시했습니다 — {failure}")
+
+    if feedback.get("raw"):
+        # 출력 형식이 어긋난 경우 — 통째로 보여주되 버리지는 않는다
+        st.markdown(feedback["raw"])
+        return
+
+    if feedback.get("good"):
+        items = "".join(f"<li style='margin-bottom:8px;'>{g}</li>"
+                        for g in feedback["good"])
+        render_html(f"""
+        <div class="mjp-card" style="border-color:{GREEN};">
+            <div style="font-weight:800; color:{GREEN};">잘된 점</div>
+            <ul style="margin:10px 0 0; padding-left:20px; line-height:1.7;">{items}</ul>
+        </div>
+        """)
+
+    if feedback.get("improve"):
+        items = "".join(f"<li style='margin-bottom:10px;'>{g}</li>"
+                        for g in feedback["improve"])
+        render_html(f"""
+        <div class="mjp-card" style="border-color:{GOLD};">
+            <div style="font-weight:800; color:{GOLD};">이렇게 고쳐보세요</div>
+            <ul style="margin:10px 0 0; padding-left:20px; line-height:1.7;">{items}</ul>
+        </div>
+        """)
+
+    if feedback.get("example"):
+        render_html(f"""
+        <div class="mjp-card" style="border-color:{BRAND};">
+            <div style="font-weight:800; color:{BRAND};">예시 문장</div>
+            <div style="margin-top:10px; line-height:1.7;">{feedback['example']}</div>
+        </div>
+        """)

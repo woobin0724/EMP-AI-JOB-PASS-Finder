@@ -126,7 +126,7 @@ SYSTEM_PROMPT = """너는 마이스터고 3학년 학생의 취업 준비를 돕
 
 
 def _user_prompt(profile: dict, result: dict, company_name: str) -> str:
-    lines = [f"항목별 점수 (획득/배점)"]
+    lines = ["항목별 점수 (획득/배점)"]
     for key, label, full, _ in ITEMS:
         lines.append(f"- {label}: {result.get(key, 0)} / {full}")
     lines.append(f"총점: {result.get('final_score')} / 100")
