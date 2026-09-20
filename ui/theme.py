@@ -246,6 +246,13 @@ div[class*="st-key-mjp_searchbar"] {{
     margin-bottom: var(--mjp-s2);
 }}
 
+/* 탐색기 필터바 — 검색바와 같은 형태로 묶어 '조건을 거는 곳'으로 읽히게 한다 */
+div[class*="st-key-mjp_filterbar"] {{
+    background: {BG_SOFT}; border: 1px solid {CARD_BORDER};
+    border-radius: var(--mjp-radius); padding: 18px 20px 6px;
+    margin-bottom: var(--mjp-s2);
+}}
+
 /* ===== 스펙 진단 점수 배너 =====
    화면 폭 전체를 쓰는 요약 배너. 모바일에서도 첫 화면 안에 들어오도록
    높이를 낮게 잡고, 좁아지면 원과 판정문이 세로로 접힌다. */

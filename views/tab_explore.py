@@ -11,7 +11,8 @@ import streamlit as st
 
 from core import session as ss
 from core.matching import filter_results
-from data.company_showcase import COMPANY_CATEGORIES, COMPANY_SHOWCASE
+from core import company_filter as cf
+from data.company_showcase import all_companies
 from services import activity
 from services import fallback as fb
 from services.strong_sme_api import PRIORITY_DEPARTMENTS, prioritize_by_department
@@ -111,8 +112,64 @@ def render() -> None:
     # ------------------------------------------------------------
     st.markdown("#### 전국 주요 계열 연계 Meister 모의 채용 기업 데이터베이스")
 
-    cat = st.radio("분야", COMPANY_CATEGORIES, horizontal=True, label_visibility="collapsed")
-    shown = COMPANY_SHOWCASE if cat == "전체" else [c for c in COMPANY_SHOWCASE if c["category"] == cat]
+    # ------------------------------------------------------------
+    # [Phase C] 매칭 점수 · 다중 필터 · 추천
+    # ------------------------------------------------------------
+    # 기업 목록은 all_companies() 로 받는다 — 팀이 기업을 추가하면 아래
+    # 정렬·필터·추천이 코드 수정 없이 그대로 확장된다.
+    profile = cf.student_profile(st.session_state)
+    companies = cf.score_all(all_companies(), profile)
+    options = cf.filter_options(companies)
+
+    if not cf.has_spec(profile):
+        st.info("스펙 진단을 먼저 하면 기업마다 **내 매칭 점수**가 붙고, "
+                "점수순 정렬과 추천이 열립니다.")
+
+    with st.container(key="mjp_filterbar"):
+        fc1, fc2 = st.columns([1.2, 1])
+        with fc1:
+            sort_how = st.selectbox("정렬", cf.SORT_OPTIONS, key="explore_sort")
+        with fc2:
+            pick_sizes = st.multiselect("기업 규모", options["sizes"],
+                                        key="explore_sizes",
+                                        placeholder="전체 규모")
+        fc3, fc4 = st.columns(2)
+        with fc3:
+            pick_cats = st.multiselect("전공 계열", options["categories"],
+                                       key="explore_cats",
+                                       placeholder="전체 계열")
+        with fc4:
+            pick_certs = st.multiselect("요구 자격증 (하나라도 해당)", options["certs"],
+                                        key="explore_certs",
+                                        placeholder="자격증 무관")
+
+    # 추천은 필터 이전의 전체 기업 기준이다. 필터를 좁힌 뒤의 상위 4개를
+    # 추천이라 부르면, 필터가 바뀔 때마다 추천이 흔들려 신뢰를 잃는다.
+    top = cf.recommendations(companies)
+    if top:
+        st.markdown("##### 내 스펙에 가장 잘 맞는 기업")
+        for col, c in zip(grid_columns(len(top), 4), top):
+            with col:
+                render_html(f"""
+                <div class="mjp-card" style="border-color:{GREEN};">
+                    <span class="mjp-badge" style="background:{GREEN}; color:{BG};">
+                        매칭 {c['match_score']:.0f}점</span>
+                    <div style="font-size:var(--mjp-body); font-weight:800; margin-top:10px;">{c['name']}</div>
+                    <div class="mjp-muted">{c['size_tag']} · {c['category']}</div>
+                </div>
+                """)
+        st.divider()
+
+    filtered = cf.apply_filters(companies, certs=pick_certs,
+                                categories=pick_cats, sizes=pick_sizes)
+    shown = cf.sort_companies(filtered, sort_how)
+
+    active = [len(pick_sizes), len(pick_cats), len(pick_certs)]
+    if any(active):
+        st.caption(f"필터 적용 — {len(shown)}개 기업 (전체 {len(companies)}개 중)")
+    if not shown:
+        st.warning("조건에 맞는 기업이 없습니다. 필터를 하나씩 풀어보세요.")
+        st.markdown(mascot.html("thinking", size=110), unsafe_allow_html=True)
 
     # 카드 20장을 한 번에 펼치면 모바일에서 화면 8개 분량이 된다.
     # 처음에는 9장만 보여주고 나머지는 눌러서 펼치게 한다.
@@ -128,9 +185,14 @@ def render() -> None:
         with col:
             heart = (icon("heart", size=15, color=RED, filled=True)
                      if activity.is_bookmarked(c["id"]) else "")
+            match_chip = (
+                f'<span class="mjp-badge" style="background:{GREEN}; color:{BG}; '
+                f'margin-left:6px;">매칭 {c["match_score"]:.0f}</span>'
+                if c.get("match_score") is not None else ""
+            )
             render_html(f"""
             <div class="mjp-card">
-                <span class="mjp-tag">{c['size_tag']} · {c['field_tag']}</span>
+                <span class="mjp-tag">{c['size_tag']} · {c['field_tag']}</span>{match_chip}
                 <span style="float:right; display:inline-flex; align-items:center; gap:6px;">
                     {render_stars(c['overall_rating'])}{heart}
                 </span>
@@ -144,7 +206,9 @@ def render() -> None:
             """)
             # 버튼 줄은 mjp_row_ 컨테이너로 감싸 모바일에서도 가로로 유지한다
             with st.container(key=f"mjp_row_card_{c['id']}"):
-                bc1, bc2, bc3 = st.columns([0.7, 1.2, 1.2])
+                # 0.7 로 두면 '찜하기'가 64px 에 갇혀 '찜...' 으로 잘린다.
+                # (scrollWidth 로는 안 잡힌다 — ellipsis 는 폭을 늘리지 않는다)
+                bc1, bc2, bc3 = st.columns([1, 1.15, 1.15])
                 with bc1:
                     marked = activity.is_bookmarked(c["id"])
                     # Streamlit 버튼은 SVG 를 못 넣는다 → 상태는 위 카드의 하트 아이콘이,
