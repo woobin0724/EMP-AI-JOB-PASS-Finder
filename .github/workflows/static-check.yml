@@ -1,0 +1,45 @@
+# 회귀 절차 0단계를 push·PR 마다 자동으로 돌린다.
+#
+# 왜 이것만 CI 에 올리는가
+#   모바일 QA(docs/qa_mobile.py)는 Streamlit 서버를 띄우고 Playwright 로
+#   브라우저를 몰아야 해서 느리고 타이밍에 흔들린다. 반면 정적 검사는 수 초에
+#   끝나고 결과가 항상 같다. CI 는 "빨갛게 뜨면 진짜 문제"여야 신뢰를 얻으므로
+#   결정적인 검사만 올리고, 모바일 QA 는 배포 전 로컬에서 돌린다.
+#   (절차 전체는 docs/MOBILE_QA.md 참고)
+
+name: 정적 검사
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:      # 필요할 때 손으로도 돌릴 수 있게
+
+permissions:
+  contents: read          # 검사만 하므로 읽기면 충분하다
+
+jobs:
+  static-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"   # 코드가 3.10+ 문법(X | Y, tuple[...])을 쓴다
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+
+      - name: 의존성 설치
+        # check_static.py 가 모든 모듈을 실제로 import 하므로 배포 의존성까지
+        # 필요하다. import 시점에 네트워크로 나가는 모듈은 없다.
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: 정적 검사 (문법 · 정의되지 않은 이름 · import)
+        run: python scripts/check_static.py

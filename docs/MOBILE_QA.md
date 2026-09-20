@@ -26,9 +26,17 @@ Streamlit 화면 코드는 **import 가 하나만 빠져도 그 화면이 통째
 미사용 import 까지 FAIL 로 잡으면 경고가 쌓여 아무도 안 보게 되므로 나눠 두었습니다.
 현재 기준선은 **FAIL 0 · WARN 0** 이므로, 경고가 생기면 그 커밋에서 생긴 것입니다.
 
-종료 코드는 통과 0 / 실패 1 이라 CI 나 pre-commit 훅에 그대로 물릴 수 있습니다.
+종료 코드는 통과 0 / 실패 1 입니다.
 
-설치: `pip install pyflakes` (requirements-dev.txt 에 포함)
+**이 단계는 CI 에서 자동으로 돕니다** — `.github/workflows/static-check.yml` 이
+`main` 으로의 push 와 모든 PR 에서 같은 명령을 실행합니다. 손으로 돌리는 것은
+푸시 전에 미리 확인하고 싶을 때입니다.
+
+모바일 QA(1단계)는 CI 에 올리지 않았습니다. Streamlit 서버를 띄우고 브라우저를
+몰아야 해서 느리고 타이밍에 흔들립니다. CI 가 빨갛게 뜨면 진짜 문제여야
+신뢰를 얻으므로, 결정적인 검사만 올리고 모바일 QA 는 배포 전 로컬에서 돕니다.
+
+설치: `pip install -r requirements-dev.txt`
 
 ---
 
