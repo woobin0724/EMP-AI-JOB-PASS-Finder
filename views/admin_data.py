@@ -24,6 +24,7 @@ import streamlit as st
 from data.company_showcase import COMPANY_CATEGORIES
 from services import api_registry as reg
 from services import curated
+from services import storage_backend
 from ui.components import back_to_hub, render_html, section_title, topbar
 from ui.theme import BRAND, MUTED
 
@@ -206,6 +207,22 @@ def render() -> None:
 
     rows = curated.load()
     st.caption(f"현재 큐레이션 {len(rows)}건 · 코드 마스터 20건과 합쳐 화면에 쓰입니다.")
+
+    # 저장소가 휘발성이면 맨 위에서 알린다 — 입력한 데이터가 사라질 수 있다는
+    # 사실을 저장 버튼을 누르기 전에 알아야 한다.
+    store_status = storage_backend.status()
+    if not store_status["durable"]:
+        st.warning(
+            f"현재 저장 위치: **{store_status['name']}** — Streamlit Cloud 는 "
+            "재배포·슬립 해제 시 파일이 초기화됩니다. 아래 '파일 주고받기'에서 "
+            "JSON 을 내려받아 저장소에 커밋하거나, Supabase 를 연결해주세요 "
+            "(docs/STORAGE.md)."
+        )
+    elif store_status["error"]:
+        st.warning(f"{store_status['name']} 연결에 문제가 있어 로컬로 내려갔습니다 — "
+                   f"{store_status['error']}")
+    else:
+        st.success(f"저장 위치: **{store_status['name']}** — 재배포해도 기록이 유지됩니다.")
 
     tabs = st.tabs(["입력·수정", f"목록 ({len(rows)})", "파일 주고받기", "API 연동 현황"])
     with tabs[0]:

@@ -3,43 +3,41 @@
 services/store.py
 [Phase 1~3] 사용자 · 반(학급) · 활동기록 영속 저장소
 
-왜 JSON 인가
-------------
-기존 services/fallback.py 가 data/backup_master.json 하나로 모든 백업
-데이터를 다루는 방식과 **일관성**을 맞췄다. 외부 DB를 붙이면 심사 시연 중
-네트워크가 끊겼을 때 로그인 자체가 불가능해지는데, 그건 fallback.py 가
-그토록 피하려 했던 실패 모드다. 파일 하나면 그런 실패가 없다.
+문서 하나를 통째로 읽고 쓴다
+---------------------------
+사용자·반·활동기록을 dict 하나에 담고, _read_all() / _write_all() 두 함수로만
+주고받는다. 스키마를 잘게 쪼개지 않은 덕에 '어디에 저장하는가'를 바꿔도
+이 파일의 나머지 코드는 그대로다.
 
-▣ 반드시 알아야 할 한계 (Streamlit Community Cloud)
-   Cloud 컨테이너의 파일시스템은 **재배포·슬립 해제 시 초기화**된다.
-   즉 이 JSON 은 "한 세션~며칠" 수준의 영속성이며 영구 저장이 아니다.
-   대회 시연과 교내 사용에는 충분하지만, 실서비스로 가면 backend 만
-   교체하면 되도록 아래처럼 함수 경계를 좁게 설계해 두었다.
-     _read_all() / _write_all()  ← 이 두 함수만 DB 호출로 바꾸면 이관 완료
+▣ 어디에 저장되는가
+   services/storage_backend.py 가 정한다. secrets 에 SUPABASE_URL·SUPABASE_KEY
+   가 있으면 Supabase(Postgres), 없으면 로컬 JSON 파일이다.
+
+   로컬 파일은 Streamlit Community Cloud 에서 **재배포·슬립 해제 시 초기화**된다.
+   즉 "한 세션~며칠" 수준의 영속성이며 영구 저장이 아니다. 실사용으로 가려면
+   Supabase 를 붙여야 한다 — 설정 순서는 docs/STORAGE.md 에 있다.
+   현재 어느 쪽으로 동작 중인지는 store_summary() 가 알려준다.
 
 동시성
 ------
-Streamlit 은 사용자마다 별도 스레드로 스크립트를 재실행한다. 두 명이 동시에
-저장하면 마지막 쓰기가 이기는(last-write-wins) 상황이 생길 수 있어,
-쓰기는 임시파일 + os.replace 로 **원자적**으로 수행한다. 최소한 파일이
-반쯤 쓰이다 깨져서 전체 사용자 데이터가 날아가는 일은 막는다.
+Streamlit 은 사용자마다 별도 스레드로 스크립트를 재실행하므로 동시 쓰기가
+일어난다. 로컬 파일은 임시파일 + os.replace 로 원자적으로 쓰지만 마지막
+쓰기가 이긴다(last-write-wins). Supabase 백엔드는 version 컬럼으로 낙관적
+잠금을 걸고, 충돌하면 최신 문서에 내 변경만 얹어 재시도한다.
+자세한 내용과 한계는 storage_backend.py 와 docs/STORAGE.md 참고.
 """
 
-import json
 import os
 import random
-import tempfile
-import threading
 from datetime import datetime, timezone
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-STORE_DIR = os.path.join(BASE_DIR, "data", "userdata")
-STORE_PATH = os.path.join(STORE_DIR, "store.json")
+from services import storage_backend
+
+# 경로는 백엔드가 소유한다. 다른 모듈이 참조하던 이름이라 여기서도 노출한다.
+STORE_DIR = storage_backend.STORE_DIR
+STORE_PATH = storage_backend.STORE_PATH
 
 SCHEMA_VERSION = 1
-
-# 프로세스 내 동시 쓰기 직렬화
-_LOCK = threading.Lock()
 
 # 반 코드에서 헷갈리는 글자(0/O, 1/I)를 뺀 안전 문자집합.
 # 선생님이 칠판에 적고 학생이 폰으로 옮겨 적는 상황을 가정했다.
@@ -63,43 +61,23 @@ def _empty_doc() -> dict:
 # 저수준 입출력 — 실서비스 이관 시 이 두 함수만 교체하면 된다
 # ------------------------------------------------------------
 def _read_all() -> dict:
-    """저장소 전체를 읽는다. 파일이 없거나 깨져 있어도 예외를 던지지 않는다."""
-    try:
-        with open(STORE_PATH, "r", encoding="utf-8") as f:
-            doc = json.load(f)
-        # 최소 스키마 보정 (수동 편집·구버전 파일 대비)
-        doc.setdefault("users", {})
-        doc.setdefault("classes", {})
-        doc.setdefault("_meta", {"version": SCHEMA_VERSION})
-        return doc
-    except Exception:
-        return _empty_doc()
+    """
+    저장소 전체를 읽는다. 어디서 읽는지는 백엔드가 정한다
+    (services/storage_backend.py — 로컬 파일 또는 Supabase).
+    읽기가 실패해도 예외를 던지지 않고 빈 문서를 돌려준다.
+    """
+    doc = storage_backend.get_backend().read(_empty_doc)
+    # 최소 스키마 보정 (수동 편집·구버전 문서 대비)
+    doc.setdefault("users", {})
+    doc.setdefault("classes", {})
+    doc.setdefault("_meta", {"version": SCHEMA_VERSION})
+    return doc
 
 
 def _write_all(doc: dict) -> bool:
-    """
-    저장소 전체를 원자적으로 쓴다.
-    임시파일에 먼저 쓰고 os.replace 로 교체하므로, 쓰는 도중 프로세스가
-    죽어도 기존 파일이 손상되지 않는다.
-    """
+    """저장소 전체를 쓴다. 원자성·동시성 처리는 백엔드가 맡는다."""
     doc["_meta"] = {"version": SCHEMA_VERSION, "updated_at": _now()}
-    try:
-        os.makedirs(STORE_DIR, exist_ok=True)
-        with _LOCK:
-            fd, tmp_path = tempfile.mkstemp(dir=STORE_DIR, suffix=".tmp")
-            try:
-                with os.fdopen(fd, "w", encoding="utf-8") as f:
-                    json.dump(doc, f, ensure_ascii=False, indent=2)
-                os.replace(tmp_path, STORE_PATH)
-            except Exception:
-                # 임시파일 잔해 정리
-                if os.path.exists(tmp_path):
-                    os.remove(tmp_path)
-                raise
-        return True
-    except Exception:
-        # 저장 실패가 앱을 죽이면 안 된다. 세션 메모리로는 계속 동작한다.
-        return False
+    return storage_backend.get_backend().write(doc)
 
 
 # ------------------------------------------------------------
@@ -333,7 +311,9 @@ def save_profile(user_id: str, **profile) -> None:
 # ------------------------------------------------------------
 def store_summary() -> str:
     doc = _read_all()
-    return f"가입 {len(doc['users'])}명 · 개설된 반 {len(doc['classes'])}개"
+    st_info = storage_backend.status()
+    where = st_info["name"] + ("" if st_info["durable"] else " · 재배포 시 초기화됨")
+    return f"가입 {len(doc['users'])}명 · 개설된 반 {len(doc['classes'])}개 · 저장 위치: {where}"
 
 
 def store_exists() -> bool:
