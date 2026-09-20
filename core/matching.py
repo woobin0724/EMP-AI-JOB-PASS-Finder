@@ -38,7 +38,7 @@ core/matching.py
 import pandas as pd
 
 from services.text_normalize import normalize, build_search_blob
-from data.certifications import CERT_CODE_TO_NAME, is_similar
+from data.certifications import is_similar
 
 # ============================================================
 # 배점 상수 (총합 100점)

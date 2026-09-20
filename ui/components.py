@@ -7,13 +7,12 @@ ui/components.py
 import streamlit as st
 
 from core import session as ss
-from data import ogq_assets as ogq
 from services import auth as auth_svc
 from services import fallback as fb
 from ui.brand import SERVICE_NAME, TEAM_FULL
 from ui.emblem import emblem_svg
 from ui.icons import icon
-from ui.theme import BG, CARD_BORDER, GREEN, MUTED, TEXT
+from ui.theme import BG, CARD_BORDER, GREEN
 
 
 # ------------------------------------------------------------

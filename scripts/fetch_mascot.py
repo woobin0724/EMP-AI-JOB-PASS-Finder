@@ -41,7 +41,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from services.ogq_api import (  # noqa: E402
     MANIFEST_PATH, MASCOT_DIR, OGQError, download_to, fetch_catalog, get_asset,
-    has_api_key, issue_download, key_source, load_api_key, ping,
+    has_api_key, issue_download, key_source, ping,
 )
 
 # ------------------------------------------------------------

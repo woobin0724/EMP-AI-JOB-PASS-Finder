@@ -22,7 +22,7 @@ from data.departments import (
 )
 from ui import mascot
 from ui.components import back_to_hub, render_html, section_title, topbar
-from ui.theme import BG, BLUE, CARD_BORDER, GREEN, GOLD, MUTED, RED, TEXT, render_stars, score_bar
+from ui.theme import BG, BLUE, CARD_BORDER, GREEN, GOLD, MUTED, RED, render_stars, score_bar
 
 
 # 점수 구간 → 마스코트 감정 슬롯

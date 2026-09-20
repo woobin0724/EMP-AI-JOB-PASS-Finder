@@ -16,7 +16,7 @@ import streamlit as st
 from core import session as ss
 from services import store
 from ui.icons import icon
-from ui.theme import BLUE, CARD_BORDER, GREEN, MUTED, PURPLE, TEXT
+from ui.theme import CARD_BORDER, GREEN, MUTED, PURPLE, TEXT
 
 ROLES = [
     {

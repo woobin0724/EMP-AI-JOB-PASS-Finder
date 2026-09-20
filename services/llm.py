@@ -25,8 +25,7 @@ import json
 import streamlit as st
 
 from services.coverletter import (
-    MODEL_NAME, _claude_cover_letter, _template_cover_letter, angle_for,
-    normalize_options,
+    MODEL_NAME, _claude_cover_letter, _template_cover_letter, normalize_options,
 )
 
 # secrets에서 찾을 키 이름 (첫 번째가 표준, 나머지는 하위 호환)

@@ -1,0 +1,10 @@
+# 개발·검증용 의존성. 배포(requirements.txt)에는 필요 없습니다.
+#
+# pyflakes — 정의되지 않은 이름을 소스만 읽고 찾는다.
+# Streamlit 화면은 import 하나만 빠져도 그 화면이 통째로 트레이스백이 되는데,
+# py_compile 은 문법만 보므로 잡지 못한다. 회귀 절차 0단계에서 쓴다.
+#   python3 scripts/check_static.py
+pyflakes>=3.2.0
+
+# 모바일 QA 측정 (docs/qa_mobile.py)
+playwright>=1.45.0

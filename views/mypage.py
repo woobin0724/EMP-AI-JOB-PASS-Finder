@@ -18,7 +18,7 @@ from services import store
 from ui import mascot
 from ui.components import back_to_hub, grid_columns, section_title, topbar
 from ui.icons import icon
-from ui.theme import BRAND, BRAND_LIGHT, CARD_BORDER, GOLD, GREEN, MUTED, PURPLE, RED, TEXT
+from ui.theme import BRAND, BRAND_LIGHT, CARD_BORDER, GOLD, GREEN, MUTED, RED, TEXT
 
 _PROVIDER_LABEL = {"kakao": "카카오", "naver": "네이버", "google": "Google", "guest": "게스트모드"}
 _ROLE_LABEL = {"student": "학생", "teacher": "선생님"}
@@ -249,7 +249,7 @@ def _score_section(saved: dict) -> None:
         tone, verdict = RED, "보완 시급"
 
     if delta is None:
-        delta_html = f'<div class="mjp-muted">첫 진단 기록</div>'
+        delta_html = '<div class="mjp-muted">첫 진단 기록</div>'
     elif delta > 0:
         delta_html = (f'<div style="color:{GREEN}; font-size:var(--mjp-caption); font-weight:700;">'
                       f'▲ {delta}점 상승</div>')
@@ -257,7 +257,7 @@ def _score_section(saved: dict) -> None:
         delta_html = (f'<div style="color:{RED}; font-size:var(--mjp-caption); font-weight:700;">'
                       f'▼ {abs(delta)}점 하락</div>')
     else:
-        delta_html = f'<div class="mjp-muted">직전과 동일</div>'
+        delta_html = '<div class="mjp-muted">직전과 동일</div>'
 
     st.markdown(f"""
     <div class="mjp-card" style="display:flex; align-items:center; gap:22px; flex-wrap:wrap;">

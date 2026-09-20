@@ -21,12 +21,11 @@ import json
 
 import streamlit as st
 
-from core import session as ss
 from data.company_showcase import COMPANY_CATEGORIES
 from services import api_registry as reg
 from services import curated
 from ui.components import back_to_hub, render_html, section_title, topbar
-from ui.theme import BRAND, CARD_BORDER, GREEN, MUTED, TEXT
+from ui.theme import BRAND, MUTED
 
 
 def _widget(key: str, label: str, kind: str, required: bool, value):

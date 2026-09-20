@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Phase 6 모바일 QA — 브라우저에서 실제로 측정한다."""
-import asyncio, json, sys
+import asyncio, json
 from playwright.async_api import async_playwright
 
 URL = "http://localhost:8501/"

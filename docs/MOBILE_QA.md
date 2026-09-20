@@ -1,12 +1,41 @@
-# 모바일 QA 체크리스트
+# 회귀 검증 절차
 
-QR 코드로 스캔해 폰으로 접속했을 때 전체 플로우가 깨지지 않는지 확인하는 항목입니다.
-눈으로 훑는 대신 **브라우저에서 실제로 측정**합니다 — `docs/qa_mobile.py`.
+배포 전에 이 순서대로 돌립니다. 앞 단계가 실패하면 뒤 단계는 의미가 없습니다.
 
 ```bash
-streamlit run app.py --server.port 8501 &      # 앱 실행
-python3 docs/qa_mobile.py                       # 측정 (기본 포트 8501)
+python3 scripts/check_static.py                 # 0단계 — 정적 검사 (수 초)
+streamlit run app.py --server.port 8501 &       # 앱 실행
+python3 docs/qa_mobile.py                       # 1단계 — 모바일 QA 측정
 ```
+
+## 0단계 — 정적 검사 (`scripts/check_static.py`)
+
+Streamlit 화면 코드는 **import 가 하나만 빠져도 그 화면이 통째로 트레이스백**이
+됩니다. 그런데 이건 해당 화면을 실제로 렌더링해봐야 드러나고, `py_compile` 은
+문법만 보므로 잡지 못합니다. 실제로 이 저장소에서 `ui.theme` 의 `GOLD`·`BRAND`,
+`ui.components` 의 `render_html` 을 이렇게 두 번 놓쳤습니다.
+
+`pyflakes` 는 정의되지 않은 이름을 소스만 읽고 찾아줍니다. 브라우저를 띄우는
+1단계보다 훨씬 빠르므로 맨 앞에 둡니다.
+
+| 판정 | 항목 | 이유 |
+|---|---|---|
+| **FAIL** | 문법 오류 · 정의되지 않은 이름 · import 실패 | 런타임에 앱을 깨뜨린다 |
+| WARN | 미사용 import · 빈 f-string | 동작에는 지장 없음 |
+
+미사용 import 까지 FAIL 로 잡으면 경고가 쌓여 아무도 안 보게 되므로 나눠 두었습니다.
+현재 기준선은 **FAIL 0 · WARN 0** 이므로, 경고가 생기면 그 커밋에서 생긴 것입니다.
+
+종료 코드는 통과 0 / 실패 1 이라 CI 나 pre-commit 훅에 그대로 물릴 수 있습니다.
+
+설치: `pip install pyflakes` (requirements-dev.txt 에 포함)
+
+---
+
+## 1단계 — 모바일 QA (`docs/qa_mobile.py`)
+
+QR 코드로 스캔해 폰으로 접속했을 때 전체 플로우가 깨지지 않는지 확인합니다.
+눈으로 훑는 대신 **브라우저에서 실제로 측정**합니다.
 
 9개 화면 × 2개 기기(모바일 390×844 / 데스크톱 1440×950) = 18개 조합을 자동으로 돌며
 아래 항목을 재고, 화면별 스크린샷을 남깁니다.

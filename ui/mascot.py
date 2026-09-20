@@ -232,7 +232,7 @@ def speech(slot: str, message: str, tone: str = "brand", size: int = 92) -> None
 
     tone: brand | success | warn — 말풍선 테두리 색만 달라진다.
     """
-    from ui.theme import BRAND, CARD, CARD_BORDER, GOLD, GREEN, MUTED, TEXT
+    from ui.theme import BRAND, CARD, CARD_BORDER, GOLD, GREEN, TEXT
 
     color = {"brand": BRAND, "success": GREEN, "warn": GOLD}.get(tone, BRAND)
     markup = html(slot, size)
