@@ -7,7 +7,7 @@ views/hub.py
 ----
  · 상단 내비게이션 (ui/components.topbar) — 참고 디자인의 Platform/Docs/Pricing 자리
  · 인사말 + 이어하기 코드 안내
- · 4대 핵심 기능 카드 (클릭 → 기존 탭 화면으로 이동, 탭 내용은 그대로 재사용)
+ · 4대 핵심 기능 공정 순서표 (클릭 → 기존 탭 화면으로 이동)
  · 향후 로드맵 / 마이페이지 보조 진입구
 """
 
@@ -16,10 +16,10 @@ import streamlit as st
 from core import session as ss
 from services import fallback as fb
 from services import store
-from ui.components import grid_columns, section_title, settings_expander, topbar
+from ui.components import render_html, section_title, settings_expander, topbar
 from ui.icons import icon
 from ui import mascot
-from ui.theme import BADGE_COLORS, BRAND, CARD_BORDER, GOLD, GREEN, MUTED, PURPLE, TEXT
+from ui.theme import BADGE_COLORS, BRAND, BRAND_DEEP, TEXT
 
 
 def render() -> None:
@@ -34,9 +34,8 @@ def render() -> None:
     if st.session_state.pop("_just_logged_in", False):
         mascot.speech(
             "welcome",
-            f"<b>{name} 님, 환영합니다!</b><br>"
-            "여기서 진단하고, 기업을 찾고, 자소서까지 한 번에 만들 수 있어요. "
-            "무엇부터 해볼까요?",
+            "처음이라면 <b>1번 스펙 진단</b>부터 해보세요. "
+            "내 점수가 나오면 기업 탐색과 자소서가 그 점수를 바탕으로 움직여요.",
             tone="brand", size=96,
         )
 
@@ -47,67 +46,57 @@ def render() -> None:
         "선생님 화면입니다. 우리 반 현황은 상단 '우리 반'에서 확인할 수 있어요.",
     )
 
-    # ---------- 4대 핵심 기능 카드 ----------
-    st.markdown(f'<div style="font-size:var(--mjp-caption); font-weight:800; color:{MUTED}; '
-                f'letter-spacing:0.08em; margin:22px 0 12px;">핵심 기능</div>',
-                unsafe_allow_html=True)
-
-    for col, feature in zip(grid_columns(len(ss.FEATURES), 2), ss.FEATURES):
-        with col:
-            st.markdown(f"""
-            <div class="mjp-feature">
-                <div class="mjp-feature-icon">{icon(feature['icon'], size=30, color=BRAND, stroke=1.7)}</div>
-                <div class="mjp-feature-title">{feature['title']}</div>
-                <div class="mjp-feature-desc">{feature['desc']}</div>
-            </div>
-            """, unsafe_allow_html=True)
-            if st.button(f"{feature['title']} 시작하기 →", key=f"hub_{feature['key']}",
-                         use_container_width=True):
-                ss.goto(feature["key"])
-            st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
+    # ---------- 공정 순서표 ----------
+    # 네 기능은 실제로 이 순서로 쓰는 게 맞다 (진단 → 탐색 → 대비 → 자소서).
+    # 같은 크기 카드 네 장 대신 번호가 붙은 순서표로 보여줘야 그 순서가 읽힌다.
+    with st.container(key="mjp_steps"):
+        for no, feature in enumerate(ss.FEATURES, start=1):
+            # 첫 줄만 key 를 달리해 구분선(border-top)을 빼준다. Streamlit 은 컨테이너마다
+            # 래퍼를 씌워서 :first-child 로는 잡히지 않는다.
+            step_key = "mjp_step_first" if no == 1 else f"mjp_step_{feature['key']}"
+            with st.container(key=step_key):
+                text_col, btn_col = st.columns([3.2, 1], vertical_alignment="center")
+                with text_col:
+                    render_html(f"""
+                    <div class="mjp-step">
+                        <div class="mjp-step-no">{no}</div>
+                        <div>
+                            <div class="mjp-step-title">{feature['title']}</div>
+                            <div class="mjp-step-desc">{feature['desc']}</div>
+                        </div>
+                    </div>
+                    """)
+                with btn_col:
+                    if st.button(f"{feature.get('nav', feature['title'])} 열기",
+                                 key=f"hub_{feature['key']}", use_container_width=True,
+                                 type="primary" if no == 1 else "secondary"):
+                        ss.goto(feature["key"])
 
     # ---------- 보조 진입구 ----------
-    st.markdown(f'<div style="height:1px;background:{CARD_BORDER};margin:14px 0 18px;"></div>',
-                unsafe_allow_html=True)
-
-    sub_cols = st.columns(3 if is_teacher else 2)
+    # 부록 목록 — 아이콘 + 제목 + 한 줄 설명 + 버튼. 색 띠 장식 없이 괘선으로만 나눈다.
+    st.markdown("#### 부록")
+    extras = []
     if is_teacher:
-        with sub_cols[0]:
-            st.markdown(f"""
-            <div class="mjp-card" style="border-left:3px solid {BRAND};">
-                <div style="font-weight:800; color:{TEXT}; display:flex; align-items:center; gap:8px;">{icon("school", size=17, color=GOLD)} 우리 반 현황</div>
-                <div class="mjp-muted" style="margin-top:6px;">
-                    학생별 목표 기업·진행 단계·매칭 점수를 한눈에 봅니다.
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-            if st.button("우리 반 열기", key="hub_class_board", use_container_width=True):
-                ss.goto(ss.PAGE_CLASS_BOARD)
+        extras.append(("school", "우리 반 현황",
+                       "학생별 목표 기업·진행 단계·매칭 점수를 한눈에 봅니다.",
+                       "우리 반 열기", "hub_class_board", ss.PAGE_CLASS_BOARD))
+    extras.append(("user", "마이페이지",
+                   "찜한 기업, 열람 이력, 매칭 점수 히스토리를 모아봅니다.",
+                   "마이페이지 열기", "hub_mypage", ss.PAGE_MYPAGE))
+    extras.append(("route", "향후 로드맵",
+                   "지금 만들지 '않은' 기능과 그 판단 기준을 공개합니다.",
+                   "로드맵 보기", "hub_next", ss.PAGE_NEXT))
 
-    sub1, sub2 = (sub_cols[1], sub_cols[2]) if is_teacher else (sub_cols[0], sub_cols[1])
-    with sub1:
-        st.markdown(f"""
-        <div class="mjp-card" style="border-left:3px solid {BRAND};">
-            <div style="font-weight:800; color:{TEXT}; display:flex; align-items:center; gap:8px;">{icon("user", size=17, color=PURPLE)} 마이페이지</div>
-            <div class="mjp-muted" style="margin-top:6px;">
-                찜한 기업, 열람 이력, 매칭 점수 히스토리를 모아봅니다.
+    for col, (ic, title, desc, label, key, page) in zip(st.columns(len(extras)), extras):
+        with col:
+            render_html(f"""
+            <div class="mjp-card" style="margin-bottom:8px;">
+                <div style="font-weight:800; color:{TEXT}; display:flex; align-items:center; gap:8px;">{icon(ic, size=17, color=BRAND)} {title}</div>
+                <div class="mjp-muted" style="margin-top:6px;">{desc}</div>
             </div>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("마이페이지 열기", key="hub_mypage", use_container_width=True):
-            ss.goto(ss.PAGE_MYPAGE)
-
-    with sub2:
-        st.markdown(f"""
-        <div class="mjp-card" style="border-left:3px solid {GREEN};">
-            <div style="font-weight:800; color:{TEXT}; display:flex; align-items:center; gap:8px;">{icon("route", size=17, color=GREEN)} 향후 로드맵</div>
-            <div class="mjp-muted" style="margin-top:6px;">
-                지금 만들지 '않은' 기능과 그 판단 기준을 공개합니다.
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("로드맵 보기", key="hub_next", use_container_width=True):
-            ss.goto(ss.PAGE_NEXT)
+            """)
+            if st.button(label, key=key, use_container_width=True):
+                ss.goto(page)
 
     settings_expander()
 
@@ -121,12 +110,11 @@ def render() -> None:
     if ss.provider() == "guest" and st.session_state.get("resume_code"):
         code = st.session_state["resume_code"]
         st.markdown(f"""
-        <div class="mjp-card" style="border-color:{BRAND}; display:flex; align-items:center;
-                    gap:14px; flex-wrap:wrap;">
+        <div class="mjp-card" style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
             <div style="flex:none;">{icon("key", size=20, color=BRAND)}</div>
             <div style="flex:1; min-width:200px;">
-                <div style="font-weight:800; color:{TEXT};">이어하기 코드 · <span style="color:{BRAND};
-                     letter-spacing:0.14em; font-size:var(--mjp-h2);">{code}</span></div>
+                <div style="font-weight:800; color:{TEXT};">이어하기 코드 · <span class="mjp-serial" style="color:{BRAND_DEEP};
+                     font-size:var(--mjp-h2);">{code}</span></div>
                 <div class="mjp-muted" style="margin-top:4px;">
                     다음에 접속할 때 로그인 화면에서 이 코드를 넣으면 지금 기록을 그대로 이어서 볼 수 있어요.
                 </div>
@@ -158,12 +146,11 @@ def _class_strip(is_teacher: bool) -> None:
         if klass:
             count = len(store.class_students(klass["class_code"]))
             st.markdown(f"""
-            <div class="mjp-card" style="border-left:3px solid {BRAND}; display:flex;
-                        align-items:center; gap:14px; flex-wrap:wrap;">
-                <div style="flex:none;">{icon("school", size=20, color=GOLD)}</div>
+            <div class="mjp-card" style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+                <div style="flex:none;">{icon("school", size=20, color=BRAND)}</div>
                 <div style="flex:1; min-width:200px;">
                     <div style="font-weight:800; color:{TEXT};">{store.class_label(klass)}
-                        · 반 코드 <span style="color:{GOLD}; letter-spacing:0.12em;">{klass['class_code']}</span></div>
+                        · 반 코드 <span class="mjp-serial" style="color:{BRAND_DEEP};">{klass['class_code']}</span></div>
                     <div class="mjp-muted" style="margin-top:4px;">등록 학생 {count}명</div>
                 </div>
             </div>

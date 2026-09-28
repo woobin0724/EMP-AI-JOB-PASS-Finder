@@ -15,7 +15,7 @@ import streamlit as st
 from core import session as ss
 from services import store
 from ui.components import section_title, topbar
-from ui.theme import BRAND, CARD_BORDER, GREEN, MUTED, TEXT
+from ui.theme import CARD_BORDER, GREEN, MUTED, TEXT
 
 
 def render() -> None:
@@ -33,7 +33,7 @@ def render() -> None:
 
     with center:
         st.markdown(f"""
-        <div class="mjp-card" style="border-left:3px solid {BRAND};">
+        <div class="mjp-card">
             <div style="font-weight:800; color:{TEXT};">반 코드는 6자리예요</div>
             <div class="mjp-muted" style="margin-top:6px; line-height:1.6;">
                 선생님이 알려준 영문·숫자 6자리를 입력하세요.

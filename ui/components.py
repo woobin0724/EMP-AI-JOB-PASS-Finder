@@ -12,7 +12,7 @@ from services import fallback as fb
 from ui.brand import SERVICE_NAME, TEAM_FULL
 from ui.emblem import emblem_svg
 from ui.icons import icon
-from ui.theme import BG, CARD_BORDER, GREEN
+from ui.theme import CARD, GREEN
 
 
 # ------------------------------------------------------------
@@ -82,29 +82,25 @@ def topbar(active: str | None = None) -> None:
     name = ss.display_name()
     role_label = {"student": "학생", "teacher": "선생님"}.get(st.session_state.get("role"), "")
 
-    # 브랜드 | 사용자 한 줄. 모바일 1단 강제 규칙에서 예외로 빼야
-    # (theme.py 의 st-key-mjp_brandrow) 좁은 화면에서도 좌우로 남는다.
-    with st.container(key="mjp_brandrow"):
-        bcol, ucol = st.columns([2.4, 1])
-    with bcol:
-        # 브랜드 마크는 그라데이션 사각형이 아니라 로고를 벡터로 재구성한 엠블럼이다.
-        # 36px 에서는 회로선·아크텍스트가 뭉개지므로 compact 레벨을 쓴다.
-        st.markdown(f"""
-        <div class="mjp-brand" style="padding-top:4px;">
-            <div class="mjp-brand-mark">{emblem_svg(36, detail="compact", uid="navmark")}</div>
-            <div>
+    # 표지 띠 — 브랜드 | 사용자. 컬럼이 아니라 한 덩어리 HTML 의 flex 라서
+    # 모바일 1단 강제 규칙과 무관하게 좁은 화면에서도 좌우가 유지된다.
+    # 엠블럼은 금박 잉크(ui/emblem.py)라 네이비 표지 위에서만 읽힌다.
+    meta = f"{role_label}{' · ' if role_label else ''}{_provider_label()}"
+    render_html(f"""
+    <div class="mjp-topbar">
+        <div class="mjp-brand">
+            <div class="mjp-brand-mark">{emblem_svg(38, detail="compact", uid="navmark")}</div>
+            <div style="min-width:0;">
                 <div class="mjp-brand-name">{SERVICE_NAME}</div>
                 <div class="mjp-brand-sub">{TEAM_FULL}</div>
             </div>
         </div>
-        """, unsafe_allow_html=True)
-    with ucol:
-        st.markdown(f"""
         <div class="mjp-userchip">
             <div class="mjp-userchip-name">{name} 님</div>
-            <div class="mjp-muted">{role_label}{' · ' if role_label else ''}{_provider_label()}</div>
+            <div class="mjp-userchip-meta">{meta}</div>
         </div>
-        """, unsafe_allow_html=True)
+    </div>
+    """)
 
     # --- 기능 메뉴 (모바일에서도 가로 유지) ---
     # 항목 수는 역할에 따라 달라진다(선생님은 '우리 반'이 추가되어 7개).
@@ -119,8 +115,6 @@ def topbar(active: str | None = None) -> None:
                              type="primary" if is_active else "secondary"):
                     ss.goto(key)
 
-    st.markdown(f'<div style="height:1px;background:{CARD_BORDER};margin:2px 0 16px;"></div>',
-                unsafe_allow_html=True)
 
 
 def _provider_label() -> str:
@@ -128,7 +122,7 @@ def _provider_label() -> str:
     return mapping.get(ss.provider(), "")
 
 
-def back_to_hub(label: str = "← 메인 허브로") -> None:
+def back_to_hub(label: str = "메인 허브로") -> None:
     """기능 화면 좌상단 뒤로가기. 브라우저 뒤로가기가 없는 Streamlit 의 보완책."""
     if st.button(label, key=f"back_hub_{ss.current_page()}"):
         ss.goto(ss.PAGE_HUB)
@@ -160,26 +154,26 @@ def disclaimer(text: str) -> None:
 
 def section_title(title: str, sub: str = "", icon_name: str = "") -> None:
     """
-    화면 상단 제목 블록 — 큰 타이포 + 여백 (참고 디자인 톤).
+    화면 제목 블록 — 공문서 제목처럼 명조 + 아래 겹괘선.
 
-    icon_name 을 주면 제목 왼쪽에 라인 아이콘이 붙는다. 이모지 대신 쓰는 자리라
-    색은 브랜드 블루로 고정해 마스코트(컬러풀)와 톤이 겹치지 않게 했다.
+    icon_name 을 주면 제목 왼쪽에 라인 아이콘이 붙는다 (브랜드 잉크 고정).
     """
     from ui.theme import BRAND
-    mark = (f'<span style="flex:none; display:inline-flex; padding-top:3px;">'
-            f'{icon(icon_name, size=26, color=BRAND, stroke=1.8)}</span>') if icon_name else ""
-    st.markdown(f"""
-    <div style="margin:4px 0 18px;">
-        <div style="display:flex; align-items:flex-start; gap:12px;">
+    mark = (f'<span style="flex:none; display:inline-flex; padding-top:2px;">'
+            f'{icon(icon_name, size=24, color=BRAND, stroke=1.8)}</span>') if icon_name else ""
+    sub_html = f'<div class="mjp-section-sub">{sub}</div>' if sub else ""
+    render_html(f"""
+    <div class="mjp-titleblock">
+        <div style="display:flex; align-items:flex-start; gap:10px;">
             {mark}<div class="mjp-section-title">{title}</div>
         </div>
-        {f'<div class="mjp-section-sub">{sub}</div>' if sub else ''}
+        {sub_html}
     </div>
-    """, unsafe_allow_html=True)
+    """)
 
 
 def pill(text: str, color: str = GREEN) -> str:
-    return f'<span class="mjp-badge" style="background:{color}; color:{BG};">{text}</span>'
+    return f'<span class="mjp-badge" style="background:{color}; color:{CARD};">{text}</span>'
 
 
 # ------------------------------------------------------------

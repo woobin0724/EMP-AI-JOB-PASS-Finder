@@ -1,61 +1,64 @@
 # -*- coding: utf-8 -*-
 """
 ui/theme.py
-[Phase 6] 디자인 토큰 + 전역 CSS + 모바일 반응형 단일 관문
+디자인 토큰 + 전역 CSS + 모바일 반응형 단일 관문
 
-설계 의도
----------
-기존 app.py 상단에 박혀 있던 색상 상수와 <style> 블록을 이 모듈로 모았다.
-화면 파일(views/*.py)은 색을 직접 알 필요가 없고 여기서 import 하기만 한다.
+시각 세계 — 국가기술자격증 수첩
+-------------------------------
+마이스터고 학생이 가장 잘 아는 '문서'는 자격증 수첩이다. 이 앱은 학생의
+스펙을 그 문서처럼 다룬다.
+
+  · 표지    : 짙은 네이비 띠 + 금박 엠블럼 (상단 바 · 랜딩 표지)
+  · 속지    : 차가운 민트그레이 보안용지 위에 흰 양식지, 1px 괘선
+  · 양식    : 직각에 가까운 모서리(4px), 필드 라벨 칸, 등폭 숫자
+  · 도장    : 점수·판정은 인주 도장처럼 '찍힌다' (화면당 한 번의 모션)
+
+밝은 바탕을 고른 이유: 교실·실습실 형광등 아래에서 폰으로 보는 화면이다.
+어두운 화면은 밝은 실내에서 반사광에 묻힌다.
 
 ▣ 모바일 대응이 왜 CSS 한 곳에 모여야 하는가
    심사 현장에서 학생/심사위원은 QR을 찍어 '폰'으로 접속한다. Streamlit의
    st.columns()는 좁은 화면에서 자동으로 1단이 되지 않고 가로로 짓눌리기만
-   한다(글자가 세로로 쪼개짐). 그래서 아래 @media 블록에서 Streamlit이
-   컬럼에 붙이는 data-testid를 직접 잡아 1단으로 강제 전환한다.
-   이 규칙이 여러 파일에 흩어지면 한 화면만 깨져도 원인을 못 찾는다.
+   한다. 그래서 아래 @media 블록에서 Streamlit이 컬럼에 붙이는 data-testid를
+   직접 잡아 1단으로 강제 전환한다.
 """
 
 import base64
+import math
 
 import streamlit as st
 
-from ui.emblem import circuit_pattern_svg
-
 # ============================================================
-# 디자인 토큰 (config.toml 의 [theme] 값과 일치시킬 것)
+# 디자인 토큰 (.streamlit/config.toml 의 [theme] 값과 일치시킬 것)
 # ============================================================
-BG = "#0A0E17"
-BG_SOFT = "#0E1320"
-CARD = "#131826"
-CARD_BORDER = "#232B3D"
-TEXT = "#E7EAF0"
-MUTED = "#8A93A6"
-GREEN = "#34D399"
-GOLD = "#FBBF24"
-PURPLE = "#8B5CF6"
-RED = "#F87171"
-BLUE = "#3B82F6"
+# 이름은 기존 화면 코드가 import 하는 그대로 두고 값만 새 세계로 바꿨다.
+BG = "#EDF1EF"            # 보안용지 (앱 바탕)
+BG_SOFT = "#E3E9E6"       # 한 톤 짙은 용지 (검색·필터 칸)
+CARD = "#FFFFFF"          # 양식지
+CARD_BORDER = "#C6D0CC"   # 괘선
+TEXT = "#18212D"          # 먹
+MUTED = "#55606B"         # 보조 글씨 (용지 위 5.8:1)
+GREEN = "#1D7447"         # 합격 안정권 · 성공 (흰 글씨 5.9:1)
+GOLD = "#8A5A00"          # 주의 · 도전권 (황토 잉크)
+PURPLE = "#51438A"        # 일부인(날짜 도장) 보라 잉크
+RED = "#B93A26"           # 인주 주홍 — 도장 · 경고
+BLUE = "#2A5DB0"          # 정보 · 출처 표시
 
 # ------------------------------------------------------------
-# 브랜드 컬러 램프 — 팀 로고에서 추출
+# 브랜드 — 수첩 표지와 금박
 # ------------------------------------------------------------
-# 원본 로고의 짙은 네이비 잉크를 다크 배경에서 읽히도록 밝기를 뒤집은 값이다.
-# ui/emblem.py 의 엠블럼, ui/brand.py 의 로고 블렌딩, 아래 CSS 가 모두 이
-# 세 값을 공유하므로 로고·엠블럼·UI가 한 벌로 붙는다.
-BRAND_LIGHT = "#A8CEF5"   # 시안 하이라이트
-BRAND = "#4C8FE0"         # 일렉트릭 블루 (로고 회로선)
-BRAND_DEEP = "#2B6BC4"    # 딥 블루
+BRAND_DEEP = "#14284A"    # 표지 네이비 (상단 바 · 주 버튼)
+BRAND = "#1F4E8C"         # 본문 위 브랜드 잉크 (아이콘 · 링크 · 포커스)
+BRAND_LIGHT = "#C8A55E"   # 금박
+COVER_TEXT = "#E8EDF5"    # 표지 위 글씨
+COVER_MUTED = "#A9B6CB"   # 표지 위 보조 글씨 (네이비 위 7:1)
 
-# ▣ 색의 역할을 분리한다
-#   브랜드 블루 = 정체성 (로고 · 내비 · 히어로 · 카드 호버)
-#   그린        = 상태 시맨틱 전용 (LIVE 배지 · 합격 안정권 · 성공 메시지)
-#   그린을 장식으로도 쓰면 "초록 = 좋음"이라는 신호가 희석된다.
-
-# 큐레이션은 장애가 아니라 설계된 상태다 — 경고색(골드)이 아니라
-# 무채색으로 두어 백업(폴백)과 눈으로 구분되게 한다.
+# ▣ 색의 역할
+#   네이비 = 정체성과 행동 (표지 · 주 버튼 · 선택된 탭)
+#   그린   = 상태 시맨틱 전용 (LIVE 배지 · 합격 안정권)
+#   주홍   = 도장 (판정 · 낮은 점수 · 오류)
 BADGE_COLORS = {"live": GREEN, "backup": GOLD, "curated": MUTED,
-                "ink": BG, "muted": MUTED}
+                "ink": CARD, "muted": MUTED}
 
 # 브랜드 제공자별 색 (로그인 버튼)
 PROVIDER_COLORS = {
@@ -69,415 +72,544 @@ PROVIDER_COLORS = {
 MOBILE_BREAKPOINT = 768
 
 
+def _guilloche_svg(color: str, opacity: float) -> str:
+    """
+    표지에 까는 보안 인쇄 무늬(길로셰).
+
+    자격증·지폐의 위조 방지 곡선이다. 사인파 여러 가닥을 위상만 달리해
+    겹치면 그 특유의 그물 무늬가 나온다. 타일 경계가 이어지도록 주기를
+    타일 폭에 맞췄다.
+    """
+    width, height = 240, 60
+    paths = []
+    for k in range(6):
+        phase = k * math.pi / 3
+        amp = 10 + 4 * math.sin(k)
+        points = []
+        for x in range(0, width + 1, 6):
+            y = height / 2 + amp * math.sin(2 * math.pi * x / width * 2 + phase)
+            points.append(f"{x},{y:.1f}")
+        paths.append(f'<polyline points="{" ".join(points)}"/>')
+    return (
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" '
+        f'viewBox="0 0 {width} {height}"><g fill="none" stroke="{color}" '
+        f'stroke-width="0.8" opacity="{opacity}">{"".join(paths)}</g></svg>'
+    )
+
+
+def _b64(svg: str) -> str:
+    # utf8 data URI 는 SVG 안의 '#' 색상값이 URL 프래그먼트로 잘린다 → base64
+    return base64.b64encode(svg.encode("utf-8")).decode("ascii")
+
+
 def inject_css() -> None:
     """전역 스타일을 주입한다. app.py 부팅 시 단 한 번만 호출한다."""
-    # 회로 패턴을 base64 data URI 로 인라인한다.
-    # utf8 data URI 로 넣으면 SVG 안의 '#' 색상값이 URL 프래그먼트로 잘려
-    # 패턴이 통째로 사라진다 — base64 가 이스케이프 사고가 없다.
-    circuit_b64 = base64.b64encode(
-        circuit_pattern_svg(BRAND, 0.9).encode("utf-8")
-    ).decode("ascii")
+    guilloche = _b64(_guilloche_svg(BRAND_LIGHT, 0.55))
 
     st.markdown(f"""
 <style>
-/* ===== 디자인 토큰 =====
-   타이포·여백·그림자·전환을 여기 한 곳에서만 정의한다. 화면 CSS 는 값을
-   직접 쓰지 않고 var() 로 참조하므로, 위계를 바꾸려면 이 블록만 고치면 된다. */
-/* 주 폰트 Pretendard (jsdelivr) + 폴백 웹폰트 Noto Sans KR (Google Fonts).
-   둘 다 싣는 이유: 학교·기관망이 jsdelivr 을 막는 경우가 있는데, 그때 폴백이
-   웹폰트가 아니면 기기 기본 한글 폰트로 떨어져 화면이 완전히 달라 보인다.
-   Pretendard 가 뜨면 Noto 는 실제로 내려받지 않는다(사용된 폰트만 다운로드). */
+/* 본문 Pretendard (jsdelivr) + 폴백 Noto Sans KR, 제목 나눔명조.
+   학교·기관망이 jsdelivr 을 막는 경우를 대비해 폴백도 웹폰트로 둔다.
+   명조는 자격증·공문서 제목의 서체다. 로드되지 않으면 기기 명조로 내려간다. */
 @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css");
-@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&family=Nanum+Myeongjo:wght@700;800&family=Noto+Serif+KR:wght@700;800&display=swap");
 
 :root {{
-    /* 본문 폰트. Pretendard 는 한글 자소서·기업명이 본문 주력인 이 앱에
-       맞춰 고른 값이고, 뒤는 로드 실패 시의 한글 폴백 사슬이다. */
     --mjp-font: "Pretendard Variable", Pretendard, "Noto Sans KR", -apple-system,
                 BlinkMacSystemFont, system-ui, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    --mjp-serif: "Nanum Myeongjo", "Noto Serif KR", "AppleMyungjo", "Batang", serif;
+    --mjp-mono: ui-monospace, "SF Mono", "Roboto Mono", Menlo, Consolas, monospace;
 
-    /* 타이포 6단 — 이 여섯 개 밖의 크기를 새로 만들지 않는다.
-       기존에 10~58px 17종이 흩어져 위계가 읽히지 않았다. */
-    --mjp-display: 34px;   /* 랜딩 히어로 */
-    --mjp-h1: 26px;        /* 화면 제목 */
-    --mjp-h2: 20px;        /* 섹션 제목 */
-    --mjp-body: 16px;      /* 본문 */
-    --mjp-small: 14px;     /* 보조 설명 */
-    --mjp-caption: 13px;   /* 캡션·배지 */
+    /* 타이포 6단 — 이 여섯 개 밖의 크기를 새로 만들지 않는다 */
+    --mjp-display: 34px;
+    --mjp-h1: 26px;
+    --mjp-h2: 20px;
+    --mjp-body: 16px;
+    --mjp-small: 14px;
+    --mjp-caption: 13px;
 
-    /* 여백 4단. 섹션 사이는 항상 --mjp-s4 이상을 쓴다. */
+    /* 여백 4단 */
     --mjp-s1: 8px;
     --mjp-s2: 16px;
     --mjp-s3: 32px;
     --mjp-s4: 56px;
 
-    /* 그림자는 옅게 두 단. 진하면 다크 배경에서 카드가 뜬 것처럼 보인다. */
-    --mjp-shadow-1: 0 1px 2px rgba(0,0,0,0.26);
-    --mjp-shadow-2: 0 1px 2px rgba(0,0,0,0.28), 0 10px 28px rgba(0,0,0,0.20);
+    /* 종이는 뜨지 않는다 — 그림자는 양식지가 바닥에 놓인 정도로만 */
+    --mjp-shadow-1: 0 1px 0 rgba(20,40,74,0.06);
+    --mjp-shadow-2: 0 2px 6px rgba(20,40,74,0.10), 0 1px 0 rgba(20,40,74,0.06);
 
-    --mjp-ease: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-    --mjp-radius: 14px;
+    --mjp-ease: 160ms cubic-bezier(0.16, 1, 0.3, 1);
+    --mjp-radius: 4px;
+
+    --mjp-paper: {BG};
+    --mjp-sheet: {CARD};
+    --mjp-rule: {CARD_BORDER};
+    --mjp-ink: {TEXT};
+    --mjp-muted: {MUTED};
+    --mjp-cover: {BRAND_DEEP};
+    --mjp-foil: {BRAND_LIGHT};
 }}
 
 /* 폰트를 앱 전체와 Streamlit 위젯 내부까지 적용한다.
-   Streamlit 은 body 에 직접 "Source Sans" 를 지정하므로 html/body 를 함께
-   잡지 않으면 본문이 기본 폰트로 남는다 (.stApp 만으로는 부족하다). */
+   Streamlit 은 body 에 직접 "Source Sans" 를 지정하므로 html/body 를 함께 잡는다. */
 html, body, .stApp, .stApp *,
 input, textarea, select, button, [class^="st-"], [class*=" st-"] {{
     font-family: var(--mjp-font) !important;
 }}
-
-/* ▣ 전역 폰트 규칙에서 되돌려야 하는 것들
-   위 규칙은 !important 라 폰트 자체가 글리프인 요소까지 덮어쓴다.
-   Streamlit 의 아이콘은 'keyboard_arrow_right' 같은 리거처 이름을 글자로
-   넣고 아이콘 폰트로 그리는 방식이라, 본문 폰트가 씌워지면 그 이름이
-   화면에 그대로 찍힌다 (expander 화살표 자리에 글자가 겹쳐 보였다).
-   Material Symbols 는 Streamlit 이 로컬로 함께 배포하므로 외부망과 무관하다. */
+/* 전역 폰트 규칙에서 되돌려야 하는 것들 — 아이콘 리거처 폰트, 코드, 수식 */
 [data-testid="stIconMaterial"],
 .material-icons, .material-icons-outlined,
 .material-symbols-rounded, .material-symbols-outlined {{
     font-family: "Material Symbols Rounded", "Material Icons" !important;
 }}
-/* 코드·수식도 본문 폰트로 덮이면 정렬이 무너진다 */
-code, pre, kbd, samp, .stCode, [data-testid="stCode"] * {{
-    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace !important;
+code, pre, kbd, samp, .stCode, [data-testid="stCode"] *, .mjp-serial {{
+    font-family: var(--mjp-mono) !important;
 }}
 .katex, .katex * {{ font-family: KaTeX_Main, "Times New Roman", serif !important; }}
+/* h1 에는 Streamlit 제목 규칙이 더 높은 우선순위로 붙으므로 .stApp 을 앞에 둔다 */
+.stApp .mjp-serif, .stApp .mjp-section-title, .stApp h1.mjp-hero-title,
+.stApp h1.mjp-cover-title, .stApp .mjp-cover-title, .stApp .mjp-scorecard-name {{
+    font-family: var(--mjp-serif) !important;
+}}
 
-.stApp {{ font-size: var(--mjp-body); }}
-
-/* ===== 0. 기본 바탕 ===== */
-.stApp {{ background: {BG}; }}
+/* ===== 0. 바탕 · 브라우저 기본 표면 ===== */
+.stApp {{ background: {BG}; color: {TEXT}; font-size: var(--mjp-body); }}
+/* 한글은 어절 단위로 줄바꿈 — '알려드립니/다' 처럼 낱글자로 끊기지 않게 */
+.stApp, .stMarkdown, .stMarkdown *, div[data-testid="stCaptionContainer"] *,
+div[data-testid="stAlert"] * {{ word-break: keep-all !important; overflow-wrap: break-word; }}
 h1, h2, h3, h4, h5 {{ color: {TEXT}; letter-spacing: -0.02em; }}
+::selection {{ background: rgba(200,165,94,0.38); color: {TEXT}; }}
+input, textarea {{ caret-color: {BRAND_DEEP}; }}
+a {{ color: {BRAND}; text-underline-offset: 3px; text-decoration-thickness: 1px; }}
+* {{ scrollbar-width: thin; scrollbar-color: {CARD_BORDER} transparent; }}
+::-webkit-scrollbar {{ width: 10px; height: 10px; }}
+::-webkit-scrollbar-thumb {{ background: {CARD_BORDER}; border-radius: 10px;
+                             border: 2px solid {BG}; }}
+/* 숫자는 전부 등폭 — 점수·코드·통계가 자리마다 흔들리지 않는다 */
+.stApp {{ font-variant-numeric: tabular-nums; }}
 
-/* Streamlit 기본 상단 여백을 줄여 랜딩 히어로가 화면을 꽉 채우게 한다 */
-.block-container {{ padding-top: 2.2rem; padding-bottom: 3rem; max-width: 1180px; }}
-
-/* 우상단 햄버거/배포 뱃지 숨김 — 시연 화면을 깔끔하게 */
+.block-container {{ padding-top: 2.2rem; padding-bottom: 3rem; max-width: 1120px; }}
 #MainMenu {{ visibility: hidden; }}
 footer {{ visibility: hidden; }}
-
-/* Streamlit 기본 헤더 바를 투명하게.
-   그냥 두면 흰 띠가 다크 테마 위에 남고, 모바일에서는 브랜드 영역을 덮어버린다.
-   display:none 대신 투명 처리하는 이유 — 숨기면 상단 여백까지 사라져
-   콘텐츠가 노치/상태바에 붙는다. */
-header[data-testid="stHeader"] {{
-    background: transparent !important;
-    height: 2.2rem;
-}}
+header[data-testid="stHeader"] {{ background: transparent !important; height: 2.2rem; }}
 header[data-testid="stHeader"] * {{ color: {MUTED} !important; }}
 div[data-testid="stToolbar"] {{ right: 0.4rem; }}
 
-/* ===== 화면 제목 블록 ===== */
+/* ===== 1. 화면 제목 — 공문서 제목처럼 명조 + 겹괘선 ===== */
+.mjp-titleblock {{
+    margin: 6px 0 var(--mjp-s3); padding-bottom: 14px;
+    border-bottom: 3px double {TEXT};
+}}
 .mjp-section-title {{
     font-size: var(--mjp-h1); font-weight: 800; color: {TEXT};
-    letter-spacing: -0.03em; line-height: 1.25;
+    letter-spacing: -0.01em; line-height: 1.3; text-wrap: balance;
 }}
 .mjp-section-sub {{
     color: {MUTED}; font-size: var(--mjp-small);
-    margin-top: var(--mjp-s1); line-height: 1.65; max-width: 62ch;
+    margin-top: var(--mjp-s1); line-height: 1.7; max-width: 66ch;
 }}
-/* 섹션 사이 호흡. Streamlit 기본 간격(1rem 남짓)으로는 화면이 빽빽해진다. */
 .mjp-section {{ margin-top: var(--mjp-s4); }}
 hr, div[data-testid="stDivider"] {{
     margin-top: var(--mjp-s4) !important;
     margin-bottom: var(--mjp-s3) !important;
     border-color: {CARD_BORDER};
 }}
-/* 마크다운 제목을 6단 스케일에 맞춘다 — Streamlit 기본값(h3=28px 등)이
-   그대로 나오면 스케일 밖 크기가 화면에 섞인다. */
+/* 마크다운 소제목 = 양식의 구획 제목. 아래로 괘선 한 줄. */
 .stMarkdown h1 {{ font-size: var(--mjp-h1) !important; }}
 .stMarkdown h2 {{ font-size: var(--mjp-h1) !important; }}
-.stMarkdown h3 {{
-    font-size: var(--mjp-h2) !important; font-weight: 800;
+.stMarkdown h3, .stMarkdown h4 {{
+    font-size: var(--mjp-h2) !important; font-weight: 800; color: {TEXT};
     margin-top: var(--mjp-s3) !important; margin-bottom: var(--mjp-s2) !important;
-    letter-spacing: -0.02em;
-}}
-.stMarkdown h4 {{
-    font-size: var(--mjp-h2) !important; font-weight: 800;
-    margin-top: var(--mjp-s3) !important; margin-bottom: var(--mjp-s2) !important;
+    padding-bottom: 8px !important; border-bottom: 1px solid {CARD_BORDER};
     letter-spacing: -0.02em;
 }}
 .stMarkdown p, .stMarkdown li {{ font-size: var(--mjp-body); line-height: 1.7; }}
 div[data-testid="stCaptionContainer"], .stCaption, small {{
-    font-size: var(--mjp-caption) !important; line-height: 1.6;
+    font-size: var(--mjp-caption) !important; line-height: 1.6; color: {MUTED};
+}}
+/* Streamlit 캡션은 글자색에 투명도를 걸어 용지 위 대비가 3:1 로 떨어진다 */
+div[data-testid="stCaptionContainer"] p, div[data-testid="stCaptionContainer"] {{
+    color: {MUTED} !important; opacity: 1 !important;
 }}
 
-/* ===== 1. 공통 카드 ===== */
+/* ===== 2. 양식지 (공통 카드) ===== */
 .mjp-card {{
     background: {CARD}; border: 1px solid {CARD_BORDER};
     border-radius: var(--mjp-radius);
-    padding: 22px 24px; margin-bottom: var(--mjp-s2);
+    padding: 20px 22px; margin-bottom: var(--mjp-s2);
     box-shadow: var(--mjp-shadow-1);
-    transition: border-color var(--mjp-ease), box-shadow var(--mjp-ease),
-                transform var(--mjp-ease);
+    transition: border-color var(--mjp-ease), box-shadow var(--mjp-ease);
 }}
-.mjp-card:hover {{
-    border-color: rgba(76,143,224,0.45);
-    box-shadow: var(--mjp-shadow-2);
-    transform: translateY(-2px);
-}}
+.mjp-card:hover {{ border-color: #9FB0BE; box-shadow: var(--mjp-shadow-2); }}
+/* 배지 = 고무 스탬프. 둥근 알약이 아니라 직각 도장 테두리. */
 .mjp-badge {{
-    display: inline-block; font-size:var(--mjp-caption); font-weight: 700; padding: 4px 11px;
-    border-radius: 999px; letter-spacing: 0.03em;
+    display: inline-block; font-size: var(--mjp-caption); font-weight: 800;
+    padding: 3px 9px; border-radius: 3px; letter-spacing: 0.02em;
+    line-height: 1.45; vertical-align: 1px;
 }}
 .mjp-tag {{
-    display: inline-block; font-size:var(--mjp-caption); padding: 3px 10px; border-radius: 7px;
-    margin-right: 4px; background: {CARD_BORDER}; color: {MUTED};
+    display: inline-block; font-size: var(--mjp-caption); padding: 2px 8px;
+    border-radius: 3px; margin-right: 4px; background: {BG};
+    border: 1px solid {CARD_BORDER}; color: {MUTED};
 }}
 .mjp-muted {{ color: {MUTED}; font-size: var(--mjp-small); line-height: 1.65; }}
 .mjp-star {{ color: {GOLD}; }}
+.mjp-serial {{ letter-spacing: 0.12em; font-weight: 700; }}
+/* 비고란 — 예시 데이터·면책 문구 */
 .mjp-disclaimer {{
-    background: rgba(52,211,153,0.08); border: 1px dashed {GREEN};
-    border-radius: 10px; padding: 8px 12px; font-size:var(--mjp-caption);
+    background: {BG}; border: 1px dashed {CARD_BORDER};
+    border-radius: var(--mjp-radius); padding: 8px 12px; font-size: var(--mjp-caption);
     color: {MUTED}; margin-bottom: 14px;
 }}
+.mjp-disclaimer::before {{ content: "비고 "; font-weight: 800; color: {TEXT}; }}
 .mjp-interview {{
-    background: {CARD}; border: 1px solid {PURPLE}; border-radius: 10px;
+    background: {CARD}; border: 1px solid {CARD_BORDER}; border-radius: var(--mjp-radius);
     padding: 12px 14px; margin-bottom: 10px;
 }}
-.mjp-qbadge {{ color: {PURPLE}; font-weight: 700; font-size:var(--mjp-caption); margin-bottom: 4px; display: block; }}
-/* 검색바 — 라벨 없는 버튼을 옆 입력창의 baseline 에 맞춘다.
-   (Streamlit 은 라벨 높이만큼 입력만 밀어내므로 버튼이 위로 뜬다) */
+.mjp-qno {{ color: {PURPLE}; margin-right: 4px; }}
+@media (min-width: {MOBILE_BREAKPOINT + 1}px) {{
+    /* 한 줄의 기업 카드 높이를 맞춰 아래 버튼 줄이 같은 높이에 선다 */
+    .mjp-company {{ min-height: 272px; }}
+}}
+.mjp-qbadge {{ color: {PURPLE}; font-weight: 800; font-size: var(--mjp-caption); margin-bottom: 4px; display: block; }}
+
+/* 검색·필터 칸 — 양식 상단의 '조건 기입란' */
 .mjp-btn-align {{ height: 28px; }}
-div[class*="st-key-mjp_searchbar"] {{
+div[class*="st-key-mjp_searchbar"], div[class*="st-key-mjp_filterbar"] {{
     background: {BG_SOFT}; border: 1px solid {CARD_BORDER};
-    border-radius: var(--mjp-radius); padding: 18px 20px 6px;
+    border-radius: var(--mjp-radius); padding: 16px 18px 6px;
     margin-bottom: var(--mjp-s2);
 }}
 
-/* 탐색기 필터바 — 검색바와 같은 형태로 묶어 '조건을 거는 곳'으로 읽히게 한다 */
-div[class*="st-key-mjp_filterbar"] {{
-    background: {BG_SOFT}; border: 1px solid {CARD_BORDER};
-    border-radius: var(--mjp-radius); padding: 18px 20px 6px;
-    margin-bottom: var(--mjp-s2);
-}}
-
-/* ===== 스펙 진단 점수 배너 =====
-   화면 폭 전체를 쓰는 요약 배너. 모바일에서도 첫 화면 안에 들어오도록
-   높이를 낮게 잡고, 좁아지면 원과 판정문이 세로로 접힌다. */
+/* ===== 3. 진단서 — 점수 도장 ===== */
 .mjp-scorecard {{
-    background: linear-gradient(150deg, {CARD} 0%, {BG_SOFT} 100%);
-    border: 1px solid {CARD_BORDER}; border-radius: 18px;
-    padding: 22px 26px; margin-bottom: var(--mjp-s2);
-    box-shadow: var(--mjp-shadow-2);
+    background: {CARD}; border: 1px solid {CARD_BORDER};
+    border-top: 6px solid {BRAND_DEEP};
+    border-radius: var(--mjp-radius);
+    padding: 0; margin-bottom: var(--mjp-s2); overflow: hidden;
 }}
+.mjp-scorecard-head {{
+    display: flex; justify-content: space-between; align-items: baseline;
+    gap: 12px; flex-wrap: wrap;
+    padding: 12px 20px; border-bottom: 1px solid {CARD_BORDER}; background: {BG};
+}}
+.mjp-scorecard-name {{ font-family: var(--mjp-serif) !important; font-size: var(--mjp-h2);
+                       font-weight: 800; color: {TEXT}; letter-spacing: 0.04em; }}
 .mjp-scorecard-row {{
-    display: flex; align-items: center; gap: 24px;
-    margin-top: 14px; flex-wrap: wrap;
+    display: flex; align-items: center; gap: 28px;
+    padding: 20px 24px; flex-wrap: wrap;
 }}
+/* 도장: 겹테두리 원 + 약간 기운 각도 + 잉크 곱하기 합성.
+   색은 판정에 따라 인라인으로 준다 (--seal). */
 .mjp-scorering {{
-    width: 112px; height: 112px; border-radius: 50%; flex: none;
-    display: flex; flex-direction: column; align-items: center;
-    justify-content: center; color: {BG};
+    --seal: {RED};
+    width: 124px; height: 124px; border-radius: 50%; flex: none;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    color: var(--seal) !important; background: transparent !important;
+    border: 3px solid var(--seal);
+    box-shadow: inset 0 0 0 3px {CARD}, inset 0 0 0 4.5px var(--seal);
+    transform: rotate(-7deg);
+    mix-blend-mode: multiply;
+    animation: mjp-stamp 560ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }}
-.mjp-scorering-num {{ font-size: var(--mjp-display); font-weight: 800; line-height: 1; }}
-.mjp-scorering-cap {{ font-size: var(--mjp-caption); font-weight: 700; margin-top: 4px; opacity: 0.82; }}
+.mjp-scorering-num {{ font-size: 42px; font-weight: 900; line-height: 1;
+                      letter-spacing: -0.03em; }}
+.mjp-scorering-cap {{ font-size: var(--mjp-caption); font-weight: 800; margin-top: 4px;
+                      letter-spacing: 0.08em; }}
 .mjp-verdict {{ font-size: var(--mjp-h2); font-weight: 800; letter-spacing: -0.02em; }}
+/* 도장이 '찍히는' 한 번의 모션 — 이 앱의 유일한 연출.
+   이미 보이는 상태(불투명도 0.4)에서 출발해 압착되듯 내려앉는다. */
+@keyframes mjp-stamp {{
+    0%   {{ transform: scale(1.22) rotate(-13deg); opacity: 0.4; filter: blur(1.5px); }}
+    55%  {{ transform: scale(0.97) rotate(-6deg);  opacity: 1;   filter: blur(0); }}
+    100% {{ transform: scale(1) rotate(-7deg);     opacity: 1; }}
+}}
+@media (prefers-reduced-motion: reduce) {{
+    .mjp-scorering, .mjp-seal {{ animation: none !important; }}
+}}
 
-.mjp-bar-track {{ background: {CARD_BORDER}; border-radius: 999px; height: 8px; width: 100%; }}
-.mjp-bar-fill {{ background: {GREEN}; border-radius: 999px; height: 8px; }}
+/* 점수 막대 = 눈금자. 10% 마다 눈금. */
+.mjp-bar-track {{
+    background:
+        repeating-linear-gradient(90deg, transparent 0, transparent calc(10% - 1px),
+                                  {CARD_BORDER} calc(10% - 1px), {CARD_BORDER} 10%),
+        {BG};
+    border: 1px solid {CARD_BORDER}; border-radius: 2px; height: 10px; width: 100%;
+}}
+.mjp-bar-fill {{ background: {BRAND_DEEP}; border-radius: 1px; height: 8px; }}
 .mjp-later {{
-    background: {CARD}; border: 1px dashed {CARD_BORDER}; border-left: 4px solid {PURPLE};
-    border-radius: 12px; padding: 16px 18px; margin-bottom: 14px;
+    background: {CARD}; border: 1px dashed {CARD_BORDER};
+    border-radius: var(--mjp-radius); padding: 16px 18px; margin-bottom: 14px;
 }}
 
-/* ===== 2. 랜딩 히어로 (참고 디자인: 큰 타이포 + 넉넉한 여백 + 은은한 그라데이션) ===== */
-.mjp-hero {{
-    position: relative; text-align: center;
-    /* 히어로가 화면 절반을 먹으면 CTA 가 fold 아래로 밀린다 */
-    padding: 30px 20px 16px; margin-bottom: 4px;
+/* ===== 4. 표지 (랜딩) ===== */
+.mjp-cover {{
+    position: relative; overflow: hidden;
+    background: {BRAND_DEEP}; color: {COVER_TEXT};
+    border-radius: var(--mjp-radius);
+    padding: 72px 28px 80px; text-align: center;
+    box-shadow: inset 0 0 0 1px rgba(200,165,94,0.35), inset 0 0 0 7px {BRAND_DEEP},
+                inset 0 0 0 8px rgba(200,165,94,0.55);
 }}
-/* 로고 뒤에 깔리는 은은한 방사형 글로우 — 다크 배경에 깊이를 준다 */
-.mjp-hero::before {{
-    content: ""; position: absolute; top: -40px; left: 50%;
-    transform: translateX(-50%);
-    width: 620px; height: 420px; pointer-events: none; z-index: 0;
-    background: radial-gradient(circle at 50% 35%,
-        rgba(76,143,224,0.22) 0%,
-        rgba(43,107,196,0.12) 38%,
-        rgba(10,14,23,0) 70%);
-    filter: blur(6px);
+/* 길로셰 보안 무늬 — 표지 위아래 띠에만 */
+.mjp-cover::before, .mjp-cover::after {{
+    content: ""; position: absolute; left: 8px; right: 8px; height: 60px;
+    background-image: url("data:image/svg+xml;base64,{guilloche}");
+    background-size: 240px 60px; opacity: 0.5; pointer-events: none;
 }}
-/* 로고의 PCB 회로 모티프를 배경에 아주 옅게 깐다.
-   불투명도 0.05 — '있는 줄 모르지만 없으면 허전한' 수준으로만 둔다. */
-.mjp-hero::after {{
-    content: ""; position: absolute; inset: -30px 0 0; z-index: 0;
-    pointer-events: none; opacity: 0.05;
-    background-image: url("data:image/svg+xml;base64,{circuit_b64}");
-    background-size: 220px 220px;
-    -webkit-mask-image: radial-gradient(ellipse at 50% 30%, #000 0%, transparent 72%);
-    mask-image: radial-gradient(ellipse at 50% 30%, #000 0%, transparent 72%);
+.mjp-cover::before {{ top: 8px; }}
+.mjp-cover::after {{ bottom: 8px; transform: scaleY(-1); }}
+.mjp-cover > * {{ position: relative; z-index: 1; }}
+.mjp-cover-issuer {{
+    font-size: var(--mjp-small); font-weight: 700; color: {COVER_MUTED};
+    letter-spacing: 0.12em; margin-top: 22px;
 }}
-.mjp-hero > * {{ position: relative; z-index: 1; }}
-
-.mjp-hero-title {{
-    font-size: clamp(34px, 5.4vw, 52px); font-weight: 800; line-height: 1.1;
-    letter-spacing: -0.035em; margin: 18px 0 0;
-    background: linear-gradient(180deg, {TEXT} 0%, #9FB0CC 100%);
-    -webkit-background-clip: text; background-clip: text;
-    -webkit-text-fill-color: transparent;
+.mjp-hero-title, .mjp-cover-title {{
+    font-size: clamp(34px, 5.2vw, 54px); font-weight: 800; line-height: 1.15;
+    letter-spacing: 0.02em; margin: 10px 0 0 !important; padding: 0 !important;
+    color: {BRAND_LIGHT} !important; text-wrap: balance;
 }}
-.mjp-hero-sub {{
-    font-size: var(--mjp-h2); color: {MUTED}; margin-top: var(--mjp-s2); line-height: 1.65;
-    max-width: 620px; margin-left: auto; margin-right: auto;
+.mjp-hero-sub, .mjp-cover-sub {{
+    font-size: var(--mjp-body) !important; color: {COVER_TEXT}; margin: 18px auto 0 !important;
+    line-height: 1.75; max-width: 34em; text-wrap: balance;
 }}
-.mjp-hero-kicker {{
-    display: inline-block; font-size: var(--mjp-caption); font-weight: 700; letter-spacing: 0.08em;
-    color: {BRAND_LIGHT}; border: 1px solid rgba(76,143,224,0.38);
-    background: rgba(76,143,224,0.10);
-    padding: 5px 14px; border-radius: 999px; text-transform: uppercase;
+.mjp-hero-sub b, .mjp-cover-sub b {{ color: #FFFFFF; }}
+/* 대회 본선 진출 — 표지 모서리의 원형 인장 */
+.mjp-seal {{
+    position: absolute; top: 26px; right: 26px; z-index: 2;
+    width: 92px; height: 92px; border-radius: 50%;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    color: #E86A52; border: 2.5px solid #E86A52;
+    box-shadow: inset 0 0 0 3px {BRAND_DEEP}, inset 0 0 0 4px #E86A52;
+    font-size: 11px; font-weight: 800; line-height: 1.3; text-align: center;
+    transform: rotate(12deg);
+    animation: mjp-seal-in 620ms 180ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }}
-/* 로고 하단 레터스페이싱을 타이포 요소로 가져온 서브라인 */
-.mjp-hero-team {{
-    font-size: var(--mjp-caption); font-weight: 700; color: {BRAND};
-    letter-spacing: 0.14em; margin-top: 14px;
+.mjp-seal b {{ font-size: 16px; letter-spacing: 0.06em; }}
+@keyframes mjp-seal-in {{
+    0%   {{ transform: scale(1.25) rotate(20deg); opacity: 0.35; }}
+    100% {{ transform: scale(1) rotate(12deg); opacity: 1; }}
 }}
 
-/* ===== 3. 기능 카드 (메인 허브) ===== */
-.mjp-feature {{
-    background: linear-gradient(160deg, {CARD} 0%, {BG_SOFT} 100%);
-    border: 1px solid {CARD_BORDER}; border-radius: 16px;
-    padding: 26px 24px 22px; height: 100%;
-    box-shadow: var(--mjp-shadow-1);
-    transition: border-color var(--mjp-ease), transform var(--mjp-ease),
-                box-shadow var(--mjp-ease);
+/* 양식 표 — 항목 | 내용 괘선 표 (랜딩 가치 제안, 역할 선택 등) */
+.mjp-form {{
+    background: {CARD}; border: 1px solid {TEXT}; border-radius: 2px;
+    margin: var(--mjp-s3) 0 var(--mjp-s2);
 }}
-.mjp-feature:hover {{
-    border-color: {BRAND}; transform: translateY(-3px);
-    box-shadow: var(--mjp-shadow-2);
+.mjp-form-row {{
+    display: grid; grid-template-columns: 180px 1fr; border-top: 1px solid {CARD_BORDER};
 }}
-.mjp-feature-icon {{ font-size:var(--mjp-h1); line-height: 1; }}
-.mjp-feature-title {{ font-size: var(--mjp-h2); font-weight: 800; color: {TEXT}; margin-top: 14px; letter-spacing: -0.02em; }}
-.mjp-feature-desc {{ font-size: var(--mjp-small); color: {MUTED}; margin-top: var(--mjp-s1); line-height: 1.65; min-height: 62px; }}
+.mjp-form-row:first-child {{ border-top: none; }}
+.mjp-form-key {{
+    background: {BG}; border-right: 1px solid {CARD_BORDER};
+    padding: 16px 18px; font-weight: 800; color: {TEXT}; font-size: var(--mjp-small);
+    display: flex; align-items: flex-start; gap: 10px; line-height: 1.5;
+}}
+.mjp-form-val {{ padding: 16px 20px; color: {MUTED}; font-size: var(--mjp-small); line-height: 1.7; }}
+.mjp-form-val b {{ color: {TEXT}; }}
 
-/* ===== 4. 상단 내비게이션 바 ===== */
-.mjp-topbar {{
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 10px 0 14px; border-bottom: 1px solid {CARD_BORDER}; margin-bottom: 18px;
+/* ===== 5. 허브 — 공정 순서표 ===== */
+.mjp-step {{
+    display: flex; gap: 18px; align-items: flex-start;
+    padding: 18px 0 6px;
 }}
-.mjp-brand {{ display: flex; align-items: center; gap: 10px; }}
-.mjp-brand-mark {{
-    width: 36px; height: 36px; flex: none;
+.mjp-step-no {{
+    flex: none; width: 40px; height: 40px; border-radius: 50%;
+    border: 1.5px solid {BRAND_DEEP}; color: {BRAND_DEEP};
     display: flex; align-items: center; justify-content: center;
+    font-weight: 900; font-size: var(--mjp-body);
 }}
+.mjp-step-title {{ font-size: var(--mjp-h2); font-weight: 800; color: {TEXT}; letter-spacing: -0.02em;
+                   display: flex; align-items: center; gap: 8px; }}
+.mjp-step-desc {{ font-size: var(--mjp-small); color: {MUTED}; margin-top: 6px; line-height: 1.65; max-width: 60ch; }}
+div[class*="st-key-mjp_steps"] {{
+    background: {CARD}; border: 1px solid {CARD_BORDER}; border-radius: var(--mjp-radius);
+    padding: 4px 22px 10px;
+}}
+div[class*="st-key-mjp_step_"] {{ border-top: 1px solid {CARD_BORDER}; padding-bottom: 14px; }}
+div[class*="st-key-mjp_step_first"] {{ border-top: none; }}
+
+/* 기존 기능 카드 (역할 선택 등에서 사용) — 양식지 한 장 */
+.mjp-feature {{
+    background: {CARD}; border: 1px solid {CARD_BORDER}; border-radius: var(--mjp-radius);
+    padding: 22px 22px 18px; height: 100%;
+    transition: border-color var(--mjp-ease), box-shadow var(--mjp-ease);
+}}
+.mjp-feature:hover {{ border-color: {BRAND_DEEP}; box-shadow: var(--mjp-shadow-2); }}
+.mjp-feature-icon {{ font-size: var(--mjp-h1); line-height: 1; }}
+.mjp-feature-title {{ font-size: var(--mjp-h2); font-weight: 800; color: {TEXT}; margin-top: 12px; letter-spacing: -0.02em; }}
+.mjp-feature-desc {{ font-size: var(--mjp-small); color: {MUTED}; margin-top: var(--mjp-s1); line-height: 1.65; }}
+
+/* ===== 6. 상단 표지 띠 + 목차 탭 ===== */
+.mjp-topbar {{
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    background: {BRAND_DEEP}; color: {COVER_TEXT};
+    border-radius: var(--mjp-radius) var(--mjp-radius) 0 0;
+    padding: 12px 18px; margin-bottom: 0;
+    box-shadow: inset 0 -3px 0 {BRAND_LIGHT};
+}}
+.mjp-brand {{ display: flex; align-items: center; gap: 12px; min-width: 0; }}
+.mjp-brand-mark {{ width: 38px; height: 38px; flex: none;
+                   display: flex; align-items: center; justify-content: center; }}
 .mjp-brand-mark svg {{ width: 100%; height: 100%; display: block; }}
+.mjp-brand-name {{ font-size: var(--mjp-body); font-weight: 800; color: #FFFFFF; line-height: 1.25;
+                   white-space: nowrap; }}
+.mjp-brand-sub {{ font-size: 11px; font-weight: 700; color: {BRAND_LIGHT}; letter-spacing: 0.17em;
+                  white-space: nowrap; }}
+.mjp-userchip {{ text-align: right; min-width: 0; }}
+.mjp-userchip-name {{ color: #FFFFFF; font-size: var(--mjp-small); font-weight: 800;
+                      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }}
+.mjp-userchip-meta {{ color: {COVER_MUTED}; font-size: var(--mjp-caption); white-space: nowrap; }}
+
+/* 목차 탭: 버튼을 수첩 색인 탭처럼. 선택된 탭만 표지색으로 채운다. */
+div.st-key-mjp_navbar {{
+    border-bottom: 2px solid {BRAND_DEEP}; margin-bottom: var(--mjp-s3);
+    background: {BG_SOFT}; padding: 8px 8px 0; border-left: 1px solid {CARD_BORDER};
+    border-right: 1px solid {CARD_BORDER};
+}}
+div.st-key-mjp_navbar div[data-testid="stHorizontalBlock"] {{ gap: 4px !important; }}
+div.st-key-mjp_navbar div[data-testid="stButton"] button {{
+    border-radius: 3px 3px 0 0 !important; min-height: 44px;
+    border: 1px solid {CARD_BORDER} !important; border-bottom: none !important;
+    background: {CARD}; color: {TEXT}; box-shadow: none !important;
+    transform: none !important; font-weight: 700;
+}}
+div.st-key-mjp_navbar div[data-testid="stButton"] button:hover {{ color: {BRAND}; background: #F7F9F8; }}
+div.st-key-mjp_navbar div[data-testid="stButton"] button[kind="primary"] {{
+    background: {BRAND_DEEP} !important; color: #FFFFFF !important;
+    border-color: {BRAND_DEEP} !important;
+}}
 
 /* ===== 로고 ===== */
-.mjp-logo {{
-    height: auto; max-width: 100%; display: block; margin: 0 auto;
-    /* 엠블럼 링 바깥으로 번지는 발광. 로고가 배경 위에 '떠 있지' 않고
-       배경에서 빛나는 것처럼 보이게 하는 장치다. */
-    filter: drop-shadow(0 0 22px rgba(76,143,224,0.28));
-}}
+.mjp-logo {{ height: auto; max-width: 100%; display: block; margin: 0 auto; }}
 .mjp-logo-svg svg {{ width: 100%; height: 100%; display: block; }}
-.mjp-brand-name {{ font-size: var(--mjp-small); font-weight: 800; color: {TEXT}; line-height: 1.25; }}
-.mjp-brand-sub {{
-    /* 자간을 넓힌 마이크로 라벨. 본문이 아니라 로고의 일부라 스케일 밖이지만,
-       가독성 하한(11px)은 지킨다. */
-    font-size: 11px; font-weight: 700; color: {BRAND};
-    letter-spacing: 0.17em;   /* 원본 로고 하단 아크 타이포에서 가져온 자간 */
-}}
-.mjp-userchip {{ text-align: right; padding-top: 6px; overflow-wrap: anywhere; }}
-.mjp-userchip-name {{ color: {TEXT}; font-size:var(--mjp-caption); font-weight: 700; }}
 
-/* ===== 5. Streamlit 위젯 다듬기 ===== */
-/* 버튼 선택자를 data-testid 기반으로 잡는다.
-   .stButton 클래스만 쓰면 Streamlit 버전에 따라 일부 버튼이 규칙 밖으로
-   빠진다 (실측에서 '다시 생성하기'가 40px 로 남아 있었다). */
+/* ===== 7. Streamlit 위젯 — 양식 컨트롤 ===== */
 .stButton > button,
 div[data-testid="stButton"] button,
 div[data-testid="stFormSubmitButton"] button,
-div[data-testid="stDownloadButton"] button {{
-    border-radius: 11px; font-weight: 700; border: 1px solid {CARD_BORDER};
-    min-height: 44px;              /* 터치 타깃 최소 44px (애플 HIG 권장) */
+div[data-testid="stDownloadButton"] button,
+div[data-testid="stLinkButton"] a {{
+    border-radius: var(--mjp-radius); font-weight: 800;
+    border: 1px solid {BRAND_DEEP}; color: {BRAND_DEEP}; background: {CARD};
+    min-height: 44px;              /* 터치 타깃 최소 44px */
     font-size: var(--mjp-small);
-    box-shadow: var(--mjp-shadow-1);
-    transition: border-color var(--mjp-ease), transform var(--mjp-ease),
-                box-shadow var(--mjp-ease), background-color var(--mjp-ease);
+    box-shadow: 0 1px 0 rgba(20,40,74,0.10);
+    transition: background-color var(--mjp-ease), color var(--mjp-ease),
+                box-shadow var(--mjp-ease), transform var(--mjp-ease);
 }}
 .stButton > button:hover,
 div[data-testid="stButton"] button:hover,
 div[data-testid="stFormSubmitButton"] button:hover,
 div[data-testid="stDownloadButton"] button:hover {{
-    border-color: {BRAND};
-    transform: translateY(-1px);
-    box-shadow: var(--mjp-shadow-2);
+    background: #F2F5F8; color: {BRAND_DEEP}; border-color: {BRAND_DEEP};
 }}
-/* 누르는 순간 되돌아오는 반응 — 클릭이 먹었는지 눈으로 확인된다 */
+/* 주 버튼 = 표지색. 누르면 도장처럼 1px 눌린다. */
+div[data-testid="stButton"] button[kind="primary"],
+div[data-testid="stFormSubmitButton"] button[kind="primaryFormSubmit"],
+div[data-testid="stFormSubmitButton"] button[kind="primary"] {{
+    background: {BRAND_DEEP}; color: #FFFFFF; border-color: {BRAND_DEEP};
+    box-shadow: 0 2px 0 #0A1830;
+}}
+div[data-testid="stButton"] button[kind="primary"]:hover,
+div[data-testid="stFormSubmitButton"] button[kind="primaryFormSubmit"]:hover {{
+    background: #1C3663; color: #FFFFFF;
+}}
 .stButton > button:active,
 div[data-testid="stButton"] button:active,
 div[data-testid="stFormSubmitButton"] button:active {{
-    transform: translateY(0); box-shadow: var(--mjp-shadow-1);
+    transform: translateY(1px); box-shadow: none;
 }}
-/* 키보드 포커스 링 — 마우스 클릭에는 뜨지 않는다 */
+/* 뒤로가기 — 주 동선이 아니므로 테두리 없는 링크 버튼 */
+div[class*="st-key-back_hub"] button {{
+    border: none !important; background: transparent !important; box-shadow: none !important;
+    color: {BRAND} !important; padding-left: 0 !important; font-weight: 700;
+}}
+div[class*="st-key-back_hub"] button:hover {{ text-decoration: underline; text-underline-offset: 3px; }}
+button:disabled, button[disabled] {{
+    background: {BG} !important; color: #8C959E !important;
+    border-color: {CARD_BORDER} !important; box-shadow: none !important;
+}}
 .stButton > button:focus-visible,
-div[data-testid="stButton"] button:focus-visible {{
+div[data-testid="stButton"] button:focus-visible,
+a:focus-visible {{
     outline: 2px solid {BRAND}; outline-offset: 2px;
 }}
 div[data-testid="stTextInput"] input,
 div[data-testid="stNumberInput"] input,
 div[data-testid="stTextArea"] textarea {{
-    font-size:var(--mjp-body) !important;    /* iOS 사파리 자동 확대(zoom) 방지 임계값 */
-    min-height: 44px;
+    font-size: var(--mjp-body) !important;    /* iOS 사파리 자동 확대 방지 임계값 */
+    min-height: 44px; color: {TEXT};
 }}
-/* 입력 컨트롤 공통 — 포커스가 어디 있는지 보이게 한다 */
 div[data-testid="stTextInput"] div[data-baseweb="input"],
+div[data-testid="stNumberInput"] div[data-baseweb="input"],
 div[data-testid="stTextArea"] div[data-baseweb="textarea"],
 div[data-baseweb="select"] > div {{
-    border-radius: 11px;
+    border-radius: var(--mjp-radius); background: {CARD};
+    border-color: {CARD_BORDER};
     transition: border-color var(--mjp-ease), box-shadow var(--mjp-ease);
 }}
 div[data-testid="stTextInput"] div[data-baseweb="input"]:focus-within,
 div[data-testid="stTextArea"] div[data-baseweb="textarea"]:focus-within,
 div[data-baseweb="select"] > div:focus-within {{
-    border-color: {BRAND} !important;
-    box-shadow: 0 0 0 3px rgba(76,143,224,0.16);
+    border-color: {BRAND_DEEP} !important;
+    box-shadow: 0 0 0 3px rgba(31,78,140,0.16);
 }}
-/* 위젯 라벨 위계 */
+input::placeholder, textarea::placeholder {{ color: #6B7580 !important; opacity: 1; }}
+/* 선택된 칩 — 양식에 기입한 값처럼 */
+span[data-baseweb="tag"] {{
+    background: {BRAND_DEEP} !important; border-radius: 3px !important;
+}}
+span[data-baseweb="tag"] span {{ color: #FFFFFF !important; }}
 div[data-testid="stWidgetLabel"] label, label[data-testid="stWidgetLabel"] {{
     font-size: var(--mjp-small) !important; font-weight: 700; color: {TEXT};
 }}
+/* 접이식 구획 — 양식지 한 장 */
+div[data-testid="stExpander"] details {{
+    background: {CARD}; border: 1px solid {CARD_BORDER} !important;
+    border-radius: var(--mjp-radius) !important;
+}}
+div[data-testid="stExpander"] summary {{ font-weight: 700; }}
+div[data-testid="stExpander"] summary:hover {{ color: {BRAND}; }}
+/* 탭 — 색인. 선택된 탭만 표지색으로 채운다. */
+div[data-testid="stTabs"] [role="tablist"] {{
+    border-bottom: 2px solid {BRAND_DEEP}; gap: 4px;
+}}
+div[data-testid="stTabs"] [role="tab"] {{
+    font-weight: 800; padding: 10px 16px !important; min-height: 44px;
+    border-radius: 3px 3px 0 0; border: 1px solid {CARD_BORDER}; border-bottom: none;
+    background: {CARD};
+}}
+div[data-testid="stTabs"] [role="tab"][aria-selected="true"] {{
+    background: {BRAND_DEEP}; border-color: {BRAND_DEEP};
+}}
+div[data-testid="stTabs"] [role="tab"][aria-selected="true"] p,
+div[data-testid="stTabs"] [role="tab"][aria-selected="true"] {{ color: #FFFFFF !important; }}
+div[data-baseweb="tab-highlight"], div[data-baseweb="tab-border"] {{ display: none !important; }}
+/* 안내 상자 */
+div[data-testid="stAlert"] {{ border-radius: var(--mjp-radius); }}
+/* 안내(info)는 양식의 기입 칸처럼 — 흰 칸 + 괘선. 경고·오류는 의미색을 유지한다. */
+div[data-testid="stAlert"]:has([data-testid="stAlertContentInfo"]) > div {{
+    background: {CARD} !important; border: 1px solid {CARD_BORDER};
+    border-radius: var(--mjp-radius); color: {TEXT} !important;
+}}
+div[data-testid="stAlertContentInfo"], div[data-testid="stAlertContentInfo"] * {{ color: {TEXT} !important; }}
+div[data-testid="stAlertContentInfo"] svg, div[data-testid="stAlert"]:has([data-testid="stAlertContentInfo"]) [data-testid="stIconMaterial"] {{
+    color: {BRAND} !important;
+}}
+div[data-testid="stMetricValue"] {{ font-weight: 900; color: {TEXT}; }}
 
-/* ===== 6. 모바일 (QR 스캔 접속) ===== */
+/* ===== 8. 모바일 (QR 스캔 접속) ===== */
 @media (max-width: {MOBILE_BREAKPOINT}px) {{
     .block-container {{ padding: 1.1rem 0.85rem 2.4rem; }}
 
-    /* 숫자 입력의 +/- 스테퍼와 파일 업로더 버튼은 Streamlit 이 기본 38~40px 로
-       그린다. 관리자 입력 화면처럼 이 컨트롤이 많은 화면에서 터치 타깃
-       기준(44px)에 걸리므로 여기서 올린다. */
     div[data-testid="stNumberInput"] button,
     div[data-testid="stNumberInputStepDown"],
     div[data-testid="stNumberInputStepUp"] {{
         min-height: 44px !important; min-width: 44px !important;
     }}
     section[data-testid="stFileUploaderDropzone"] button,
-    div[data-testid="stFileUploader"] button {{
-        min-height: 44px !important;
-    }}
-
-    /* 상단 브랜드|사용자 줄은 1단 전환에서 제외 — 좁아도 좌우가 맞아야
-       헤더로 읽힌다. 세로로 쌓이면 사용자명이 서비스명 바로 밑에 붙는다. */
-    div[class*="st-key-mjp_brandrow"] div[data-testid="stHorizontalBlock"] {{
-        flex-direction: row !important; flex-wrap: nowrap !important; gap: 8px !important;
-    }}
-    /* 브랜드 쪽을 넓게, 사용자칩은 한 줄로 줄여 잡는다.
-       균등 분할하면 390px 에서 양쪽 다 두세 줄로 접힌다. */
-    div[class*="st-key-mjp_brandrow"] div[data-testid="stColumn"]:first-child {{
-        width: auto !important; flex: 1 1 auto !important; min-width: 0 !important;
-    }}
-    div[class*="st-key-mjp_brandrow"] div[data-testid="stColumn"]:last-child {{
-        width: auto !important; flex: 0 0 auto !important; min-width: 0 !important;
-    }}
-    .mjp-brand-name {{ white-space: nowrap; }}
-    .mjp-userchip-name {{
-        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }}
-    /* 역할·제공자 보조 줄은 좁은 화면에서 이름의 폭만 빼앗는다.
-       같은 정보는 마이페이지에 그대로 있다. */
-    .mjp-userchip .mjp-muted {{ display: none; }}
-    .mjp-userchip {{ max-width: 42%; }}
-
+    div[data-testid="stFileUploader"] button {{ min-height: 44px !important; }}
 
     /* 핵심: st.columns 다단을 1단으로 강제 전환 */
     div[data-testid="stHorizontalBlock"] {{
@@ -490,40 +622,45 @@ div[data-testid="stWidgetLabel"] label, label[data-testid="stWidgetLabel"] {{
         flex: 1 1 100% !important;
     }}
 
-    /* 히어로 타이포를 폰 폭에 맞게 축소 */
-    .mjp-hero {{ padding: 26px 6px 16px; }}
-    .mjp-hero-title {{ font-size:var(--mjp-display); letter-spacing: -0.03em; }}
-    .mjp-hero-sub {{ font-size:var(--mjp-body); margin-top: 14px; }}
-    .mjp-hero::before {{ width: 360px; height: 280px; }}
+    /* 표지 */
+    .mjp-cover {{ padding: 64px 18px 72px; }}
+    .mjp-cover-title, .mjp-hero-title {{ font-size: var(--mjp-display); }}
+    .mjp-cover-sub, .mjp-hero-sub {{ font-size: var(--mjp-small); }}
+    .mjp-seal {{ width: 78px; height: 78px; top: 14px; right: 12px; font-size: var(--mjp-caption);
+                 line-height: 1.15; }}
+    .mjp-seal span {{ font-size: 11px; }}
+    .mjp-seal b {{ font-size: 14px; }}
+    /* 탭이 4개 이상이면 390px 에서 넘친다 — 탭 폭을 줄이고 가로 스크롤 */
+    div[data-testid="stTabs"] [role="tablist"] {{ overflow-x: auto; scrollbar-width: none; }}
+    div[data-testid="stTabs"] [role="tab"] {{ padding: 10px 11px !important; white-space: nowrap; }}
+    .mjp-form-row {{ grid-template-columns: 1fr; }}
+    .mjp-form-key {{ border-right: none; border-bottom: 1px solid {CARD_BORDER}; padding: 12px 14px; }}
+    .mjp-form-val {{ padding: 12px 14px; }}
 
-    /* 화면 제목이 폰에서 3줄로 넘치지 않게 축소 */
     .mjp-section-title {{ font-size: var(--mjp-h2); }}
     .mjp-section-sub {{ font-size: var(--mjp-caption); margin-top: 6px; }}
-    /* 모바일은 세로가 귀하다 — 섹션 간격을 한 단 낮춘다 */
+    .mjp-titleblock {{ margin-bottom: var(--mjp-s2); padding-bottom: 10px; }}
     .mjp-section {{ margin-top: var(--mjp-s3); }}
     hr, div[data-testid="stDivider"] {{
         margin-top: var(--mjp-s3) !important;
         margin-bottom: var(--mjp-s2) !important;
     }}
-    .stMarkdown h4 {{ margin-top: var(--mjp-s2) !important; }}
-    .mjp-card {{ padding: 18px 16px; }}
-    .mjp-scorecard {{ padding: 18px 18px; }}
-    .mjp-section-sub {{ font-size:var(--mjp-caption); }}
-
+    .stMarkdown h3, .stMarkdown h4 {{ margin-top: var(--mjp-s2) !important; }}
     .mjp-card, .mjp-feature {{ padding: 15px 15px; }}
-    .mjp-feature-desc {{ min-height: 0; }}
+    .mjp-scorecard-row {{ padding: 16px; gap: 18px; }}
+    .mjp-scorering {{ width: 104px; height: 104px; }}
+    .mjp-scorering-num {{ font-size: var(--mjp-display); }}
+    div[class*="st-key-mjp_steps"] {{ padding: 2px 14px 8px; }}
+    .mjp-step {{ gap: 12px; }}
+    .mjp-step-no {{ width: 34px; height: 34px; }}
 
-    /* 모바일에서는 버튼을 더 크게 (엄지 터치) */
     .stButton > button,
     div[data-testid="stButton"] button,
     div[data-testid="stFormSubmitButton"] button,
     div[data-testid="stDownloadButton"] button {{
-        min-height: 48px !important; font-size:var(--mjp-body);
+        min-height: 48px !important; font-size: var(--mjp-body);
     }}
 
-    /* 입력 컨트롤 자체의 터치 높이 확보.
-       실측 결과 selectbox 는 38px, 비밀번호 입력 래퍼는 40px 이라
-       44px 기준에 미달했다. 컨트롤을 키우면 안쪽 토글도 같이 커진다. */
     div[data-baseweb="select"] > div,
     div[data-testid="stSelectbox"] div[data-baseweb="select"],
     div[data-testid="stTextInputRootElement"],
@@ -534,73 +671,50 @@ div[data-testid="stWidgetLabel"] label, label[data-testid="stWidgetLabel"] {{
     div[data-testid="stTextInputRootElement"] button {{
         min-height: 44px !important; min-width: 40px !important;
     }}
-
-    /* --- iOS 사파리 자동 확대 방지 (측정으로 발견) ---
-       입력창 폰트가 16px 미만이면 사파리가 포커스할 때 화면을 확대하고,
-       그 확대가 풀리지 않아 이후 레이아웃이 어긋난 채로 남는다.
-       stTextInput/stTextArea 만 막아뒀는데 실제로는 selectbox·multiselect 의
-       내부 input 이 14px 이라 그대로 뚫렸다. BaseWeb 이 만드는 input 까지 덮는다. */
+    /* iOS 사파리 자동 확대 방지 — BaseWeb 내부 input 까지 16px */
     div[data-testid="stSelectbox"] input,
     div[data-testid="stMultiSelect"] input,
     div[data-testid="stMultiSelectTagsContainer"] input,
     div[data-baseweb="select"] input,
     div[data-baseweb="input"] input {{
-        font-size:var(--mjp-body) !important;
+        font-size: var(--mjp-body) !important;
     }}
-
-    /* 도움말(?) 아이콘의 탭 영역 확보 — 16px 은 손가락으로 누르기 어렵다 */
     div[data-testid="stTooltipHoverTarget"] {{
         min-width: 30px; min-height: 30px;
         display: inline-flex; align-items: center; justify-content: center;
     }}
 
-    /* 상단 브랜드 줄바꿈 허용 */
-    .mjp-topbar {{
-        flex-wrap: nowrap; gap: 10px; align-items: center;
-        padding: 6px 0 10px; margin-bottom: 12px;
-    }}
-    /* 자간 0.17em 짜리 마이크로 라벨은 390px 에서 화면 밖으로 넘친다.
-       모바일에서는 브랜드명만 남긴다 — 로고 마크가 이미 정체성을 진다. */
+    /* 상단 표지 띠 — 로고 마크가 정체성을 지므로 영문 서브라인은 뺀다 */
+    .mjp-topbar {{ padding: 10px 12px; }}
     .mjp-brand-sub {{ display: none; }}
-    .mjp-brand-mark {{ width: 30px; height: 30px; }}
+    .mjp-brand-mark {{ width: 32px; height: 32px; }}
+    .mjp-brand-name {{ font-size: var(--mjp-small); }}
+    .mjp-userchip {{ max-width: 44%; }}
+    .mjp-userchip-meta {{ display: none; }}
 
-    /* 컬럼이 1단으로 접히면 오른쪽 정렬 텍스트가 화면 밖으로 밀린다 → 왼쪽 정렬 */
-    .mjp-userchip {{
-        text-align: right; padding-top: 0; flex: none;
-        max-width: 46%; overflow: hidden;
-    }}
-    .mjp-userchip-name {{ font-size: var(--mjp-caption); }}
-
-    /* 인사말 옆 장식용 스티커는 폰에서 숨긴다.
-       세로 공간을 200px 가까이 먹으면서 정보는 주지 않기 때문이다. */
     .st-key-mjp_hub_sticker {{ display: none !important; }}
 
-    /* --- 예외: 상단 기능 내비게이션만 가로 유지 ---
-       위의 1단 강제 규칙을 그대로 두면 메뉴 6개가 세로로 쌓여 폰 화면을
-       전부 차지한다. st.container(key="mjp_navbar") 가 붙여주는
-       .st-key-mjp_navbar 클래스로 이 블록만 되돌리고 가로 스크롤을 준다. */
+    /* 예외: 목차 탭은 가로 스크롤 유지 */
+    .st-key-mjp_navbar {{ margin-bottom: var(--mjp-s2) !important; }}
     .st-key-mjp_navbar div[data-testid="stHorizontalBlock"] {{
         flex-direction: row !important;
         flex-wrap: nowrap !important;
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
         scrollbar-width: none;
-        gap: 0.4rem !important;
-        padding-bottom: 4px;
+        gap: 4px !important;
     }}
     .st-key-mjp_navbar div[data-testid="stHorizontalBlock"]::-webkit-scrollbar {{ display: none; }}
     .st-key-mjp_navbar div[data-testid="stColumn"] {{
         width: auto !important;
-        min-width: 42% !important;
+        min-width: 30% !important;
         flex: 0 0 auto !important;
     }}
-    .st-key-mjp_navbar .stButton > button {{ font-size:var(--mjp-caption); white-space: nowrap; }}
+    .st-key-mjp_navbar .stButton > button {{
+        font-size: var(--mjp-caption) !important; white-space: nowrap; min-height: 44px !important;
+    }}
 
-    /* --- 예외 2: 카드 하단의 짧은 버튼 줄은 가로 유지 ---
-       기업 카드마다 [♡][합격 정보][이력서] 3개가 세로로 쌓이면 카드 하나가
-       화면 절반을 먹는다. 컨테이너 key 를 mjp_row_ 로 시작하게 만들고
-       부분 일치 선택자로 한 번에 잡는다 (key 는 카드마다 달라야 하므로
-       클래스를 공유할 수 없다). */
+    /* 예외 2: 카드 하단의 짧은 버튼 줄은 가로 유지 */
     div[class*="st-key-mjp_row"] div[data-testid="stHorizontalBlock"] {{
         flex-direction: row !important;
         flex-wrap: nowrap !important;
@@ -612,30 +726,27 @@ div[data-testid="stWidgetLabel"] label, label[data-testid="stWidgetLabel"] {{
         flex: 1 1 0 !important;
     }}
     div[class*="st-key-mjp_row"] .stButton > button {{
-        font-size:var(--mjp-caption); padding-left: 4px; padding-right: 4px;
+        font-size: var(--mjp-caption); padding-left: 4px; padding-right: 4px;
         white-space: nowrap; overflow: hidden;
     }}
 
-    /* 표/데이터프레임 가로 스크롤 허용 (레이아웃을 밀어내지 않도록) */
     div[data-testid="stDataFrame"] {{ overflow-x: auto; }}
 }}
 
-/* 아주 좁은 폰(360px 이하) 추가 보정 */
 @media (max-width: 380px) {{
-    .mjp-hero-title {{ font-size:var(--mjp-h1); }}
-    .mjp-brand-sub {{ display: none; }}
+    .mjp-cover-title, .mjp-hero-title {{ font-size: var(--mjp-h1); }}
 }}
 </style>
 """, unsafe_allow_html=True)
 
 
 def score_bar(label: str, value: float, maximum: int) -> str:
-    """점수 막대 HTML. 여러 화면에서 재사용되므로 테마 모듈에 둔다."""
+    """점수 막대 HTML — 눈금자 형태. 여러 화면에서 재사용되므로 테마 모듈에 둔다."""
     pct = 0 if not maximum else min(100, value / maximum * 100)
     return f"""
-    <div style="margin-bottom:10px;">
+    <div style="margin-bottom:12px;">
       <div style="display:flex; justify-content:space-between; font-size:var(--mjp-caption); color:{MUTED};">
-        <span>{label}</span><span style="color:{TEXT}; font-weight:700;">{value} / {maximum}</span>
+        <span style="font-weight:700;">{label}</span><span style="color:{TEXT}; font-weight:800;">{value} / {maximum}</span>
       </div>
       <div class="mjp-bar-track" style="margin-top:5px;">
         <div class="mjp-bar-fill" style="width:{pct:.0f}%;"></div>
@@ -648,7 +759,7 @@ def render_stars(rating: float) -> str:
     별점 HTML.
 
     ★☆ 문자 대신 SVG 로 그린다. 문자 별은 폰트에 따라 굵기·크기가 달라지고
-    안드로이드 일부 기기에서는 이모지 폰트로 렌더링돼 주황색 별이 튀어나온다.
+    안드로이드 일부 기기에서는 이모지 폰트로 렌더링된다.
     """
     from ui.icons import icon
 

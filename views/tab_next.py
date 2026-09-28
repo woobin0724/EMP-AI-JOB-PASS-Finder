@@ -80,16 +80,16 @@ def _cut_features() -> list[dict]:
 
 def _feature_card(f: dict) -> None:
     render_html(f"""
-    <div class="mjp-later" style="border-left-color:{f['status_color']};">
+    <div class="mjp-later">
         <div style="display:flex; align-items:center; gap:10px;">
             <div style="flex:none;">{icon(f["icon"], size=22, color=f["status_color"], stroke=1.8)}</div>
             <div>
                 <div style="font-size:var(--mjp-body); font-weight:800; color:{TEXT};">{f['title']}</div>
-                <span class="mjp-badge" style="background:{f['status_color']}; color:#0A0E17;">{f['when']}</span>
+                <span class="mjp-badge" style="background:{f['status_color']}; color:#fff;">{f['when']}</span>
             </div>
         </div>
         <div class="mjp-muted" style="margin-top:12px; line-height:1.6;">{f['why']}</div>
-        <div style="margin-top:10px; font-size:var(--mjp-caption); color:{GREEN};">▸ {f['trigger']}</div>
+        <div style="margin-top:10px; font-size:var(--mjp-caption); color:{GREEN};"><b>착수 조건</b> · {f['trigger']}</div>
     </div>
     """)
 

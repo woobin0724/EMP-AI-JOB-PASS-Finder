@@ -151,8 +151,15 @@ def _keyed_png(path: str, mtime: float) -> bytes | None:
     bg = np.array(LEGACY_BG, dtype=np.float32)
     dist = np.sqrt(((rgb - bg) ** 2).sum(axis=-1))
 
-    # 거리 0 → 완전 투명, tolerance 이상 → 완전 불투명 (그 사이는 선형)
-    alpha = np.clip(dist / LEGACY_TOLERANCE, 0.0, 1.0)
+    # 거리 floor 이하 → 완전 투명, tolerance 이상 → 완전 불투명 (그 사이는 선형).
+    # floor 가 없으면 JPEG 압축 노이즈가 옅은 알파로 남아, 밝은 용지 위에서
+    # 캐릭터 주변에 회색 반점 테두리로 보인다.
+    floor = 14.0
+    alpha = np.clip((dist - floor) / 40.0, 0.0, 1.0)
+    # 반투명 경계 픽셀의 색에서 원래 회색 배경을 빼낸다 (색 오염 제거).
+    # 이걸 안 하면 외곽선이 어두운 배경색을 머금은 채 밝은 바탕에 얹혀 탁해진다.
+    a3 = np.maximum(alpha, 1e-3)[..., None]
+    rgb = np.clip((rgb - (1.0 - alpha[..., None]) * bg) / a3, 0.0, 255.0)
     out = np.dstack([rgb, alpha * 255.0]).astype(np.uint8)
 
     result = Image.fromarray(out, mode="RGBA")
@@ -232,7 +239,7 @@ def speech(slot: str, message: str, tone: str = "brand", size: int = 92) -> None
 
     tone: brand | success | warn — 말풍선 테두리 색만 달라진다.
     """
-    from ui.theme import BRAND, CARD, CARD_BORDER, GOLD, GREEN, TEXT
+    from ui.theme import BRAND, CARD, GOLD, GREEN, TEXT
 
     color = {"brand": BRAND, "success": GREEN, "warn": GOLD}.get(tone, BRAND)
     markup = html(slot, size)
@@ -240,7 +247,7 @@ def speech(slot: str, message: str, tone: str = "brand", size: int = 92) -> None
     if not markup:
         # 마스코트가 없으면 말풍선만 (문구는 전달돼야 한다)
         st.markdown(
-            f'<div class="mjp-card" style="border-left:3px solid {color};">'
+            f'<div class="mjp-card" style="border-color:{color};">'
             f'<div style="color:{TEXT}; line-height:1.6;">{message}</div></div>',
             unsafe_allow_html=True,
         )
@@ -248,8 +255,7 @@ def speech(slot: str, message: str, tone: str = "brand", size: int = 92) -> None
 
     st.markdown(f"""
     <div class="mjp-mascot-row" style="display:flex; align-items:center; gap:14px;
-                background:{CARD}; border:1px solid {CARD_BORDER};
-                border-left:3px solid {color}; border-radius:14px;
+                background:{CARD}; border:1px solid {color}; border-radius:4px;
                 padding:14px 18px; margin-bottom:16px; flex-wrap:wrap;">
         <div style="flex:none;">{markup}</div>
         <div style="flex:1; min-width:180px; color:{TEXT}; font-size:var(--mjp-small);

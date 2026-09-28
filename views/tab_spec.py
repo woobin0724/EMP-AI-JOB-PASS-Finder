@@ -102,7 +102,7 @@ def render() -> None:
             target_company = next(c for c in COMPANY_SHOWCASE if c["name"] == pick)
             st.session_state.selected_company_id = target_company["id"]
 
-        st.caption("※ 입력값을 바꾸면 오른쪽 점수가 **즉시** 갱신됩니다.")
+        st.caption("※ 입력값을 바꾸면 위 진단서 점수가 **즉시** 갱신됩니다.")
 
     # ------------------------------------------------------------
     # 점수 (순수 로컬 연산, 과금 0원)
@@ -125,13 +125,22 @@ def render() -> None:
 
     # 화면 맨 위에 잡아둔 자리에 점수를 채운다 (배치 의도는 위 주석 참조)
     with score_slot:
+        # 진단서 양식: 머리칸(문서명 · 기입 사항) + 도장 + 판정.
+        # 도장 색은 판정 구간을 따른다. 점수가 바뀌면 도장이 새로 찍힌다.
+        target_label = target_company["name"] if target_company else "일반 진단"
         render_html(f"""
         <div class="mjp-scorecard">
-            <span class="mjp-badge" style="background:{ring_color}; color:{BG};">SPEC DIAGNOSIS · 실시간</span>
+            <div class="mjp-scorecard-head">
+                <div class="mjp-scorecard-name">합격 지수 진단서</div>
+                <div class="mjp-muted" style="font-size:var(--mjp-caption);">
+                    {dept} · 내신 {grade:.1f}등급 · {target_label}
+                </div>
+            </div>
             <div class="mjp-scorecard-row">
-                <div class="mjp-scorering" style="background:{ring_color};">
+                <div class="mjp-scorering" style="--seal:{ring_color};" role="img"
+                     aria-label="합격 지수 {result['final_score']}점 (100점 만점)">
                     <div class="mjp-scorering-num">{result['final_score']}</div>
-                    <div class="mjp-scorering-cap">100점 만점</div>
+                    <div class="mjp-scorering-cap">/ 100점</div>
                 </div>
                 <div style="flex:1; min-width:210px;">
                     <div class="mjp-verdict" style="color:{ring_color};">{verdict}</div>
@@ -153,9 +162,8 @@ def render() -> None:
         if result["cert_details"]:
             with st.expander("자격증 인정 비율 상세 보기", expanded=False):
                 for d in result["cert_details"]:
-                    mark = "●" if d["ratio"] == 1.0 else ("◐" if d["ratio"] > 0 else "○")
-                    extra = f" ← 보유: {d['matched_by']}" if d["matched_by"] and d["ratio"] < 1.0 else ""
-                    st.markdown(f"{mark} **{d['cert']}** · {d['status']}{extra}")
+                    extra = f" · 보유: {d['matched_by']}" if d["matched_by"] and d["ratio"] < 1.0 else ""
+                    st.markdown(f"**{d['cert']}** — 인정 {d['ratio'] * 100:.0f}% · {d['status']}{extra}")
                 st.caption("정확히 일치 100% · 직무 유사 자격증 70% 인정 → 평균 인정비율 × 40점")
 
     # ------------------------------------------------------------
@@ -176,15 +184,17 @@ def render() -> None:
                     unsafe_allow_html=True)
     with tip_r:
         badge = ("AI 설명" if explain_source == "ai" else "규칙 기반 설명")
-        badge_bg = BLUE if explain_source == "ai" else CARD_BORDER
+        badge_bg = BLUE if explain_source == "ai" else BG
         badge_fg = "#fff" if explain_source == "ai" else MUTED
         render_html(f"""
         <div class="mjp-card" style="margin-bottom:10px;">
-            <span class="mjp-badge" style="background:{badge_bg}; color:{badge_fg};">{badge}</span>
-            <div style="margin-top:10px; line-height:1.7;">{explanation['explanation']}</div>
+            <div style="line-height:1.7;">{explanation['explanation']}</div>
             <div style="margin-top:12px; padding-top:12px; border-top:1px solid {CARD_BORDER};
                         color:{GREEN}; font-weight:700;">
                 다음 한 걸음 · {explanation['suggestion']}
+            </div>
+            <div style="margin-top:10px; text-align:right;">
+                <span class="mjp-badge" style="background:{badge_bg}; color:{badge_fg};">{badge}</span>
             </div>
         </div>
         """)

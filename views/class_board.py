@@ -243,7 +243,7 @@ def _render_attention(rows: list[dict]) -> None:
             names = ", ".join(r["name"] for r in group[:6]) or "해당 없음"
             more = f" 외 {len(group) - 6}명" if len(group) > 6 else ""
             st.markdown(f"""
-            <div class="mjp-card" style="border-left:3px solid {color};">
+            <div class="mjp-card">
                 <div style="font-weight:800; color:{TEXT};">{title}
                     <span style="color:{color};">{len(group)}명</span></div>
                 <div class="mjp-muted" style="margin-top:6px; line-height:1.55;">{desc}</div>
