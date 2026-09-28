@@ -18,7 +18,7 @@ from services import auth as auth_svc
 from ui import mascot
 from ui.components import back_to_hub, grid_columns, render_html, section_title, topbar
 from ui.icons import icon
-from ui.theme import GREEN, MUTED, PURPLE, TEXT
+from ui.theme import GOLD, GREEN, MUTED, PURPLE, TEXT
 
 
 SHIPPED = "구현 완료"
@@ -41,7 +41,7 @@ def _cut_features() -> list[dict]:
         {
             "icon": "lock", "title": "카카오·네이버·구글 소셜 로그인",
             "when": "구현 완료" if oauth_ready else "준비 중",
-            "status_color": GREEN if oauth_ready else "#FBBF24",
+            "status_color": GREEN if oauth_ready else GOLD,
             "why": "로그인은 '다시 돌아올 이유'가 있을 때 필요합니다. 찜하기·진행 기록처럼 "
                    "재방문해야 값이 생기는 기능이 들어오면서 로그인이 비로소 필요해졌습니다.",
             "trigger": ("세 제공자의 OAuth2 인가 코드 흐름을 모두 구현했고, 게스트모드는 "

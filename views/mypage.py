@@ -168,7 +168,7 @@ def _class_section(saved: dict) -> None:
         klass = store.get_class(code)
         st.markdown(f"""
         <div class="mjp-card" style="border-color:{GREEN};">
-            <span class="mjp-badge" style="background:{GREEN}; color:#0A0E17;">등록됨</span>
+            <span class="mjp-badge" style="background:{GREEN}; color:#fff;">등록됨</span>
             <div style="font-size:var(--mjp-body); font-weight:800; color:{TEXT}; margin-top:10px;">
                 {store.class_label(klass) or code}</div>
             <div class="mjp-muted" style="margin-top:4px;">반 코드 {code}</div>

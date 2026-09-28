@@ -168,7 +168,8 @@ code, pre, kbd, samp, .stCode, [data-testid="stCode"] *, .mjp-serial {{
 .katex, .katex * {{ font-family: KaTeX_Main, "Times New Roman", serif !important; }}
 /* h1 에는 Streamlit 제목 규칙이 더 높은 우선순위로 붙으므로 .stApp 을 앞에 둔다 */
 .stApp .mjp-serif, .stApp .mjp-section-title, .stApp h1.mjp-hero-title,
-.stApp h1.mjp-cover-title, .stApp .mjp-cover-title, .stApp .mjp-scorecard-name {{
+.stApp h1.mjp-cover-title, .stApp .mjp-cover-title, .stApp .mjp-scorecard-name,
+.stApp .mjp-cover-title *, .stApp .mjp-section-title *, .stApp .mjp-serif * {{
     font-family: var(--mjp-serif) !important;
 }}
 
@@ -270,6 +271,11 @@ div[data-testid="stCaptionContainer"] p, div[data-testid="stCaptionContainer"] {
 @media (min-width: {MOBILE_BREAKPOINT + 1}px) {{
     /* 한 줄의 기업 카드 높이를 맞춰 아래 버튼 줄이 같은 높이에 선다 */
     .mjp-company {{ min-height: 272px; }}
+}}
+/* 기업명은 한 줄 — 줄바꿈되면 카드가 길어져 버튼 줄이 이웃 카드와 어긋난다.
+   전체 이름은 title 속성(마우스 오버)으로 남긴다. */
+.mjp-company-name {{
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }}
 .mjp-qbadge {{ color: {PURPLE}; font-weight: 800; font-size: var(--mjp-caption); margin-bottom: 4px; display: block; }}
 

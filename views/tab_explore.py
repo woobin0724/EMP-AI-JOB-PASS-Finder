@@ -196,7 +196,7 @@ def render() -> None:
                 <span style="float:right; display:inline-flex; align-items:center; gap:6px;">
                     {render_stars(c['overall_rating'])}{heart}
                 </span>
-                <div style="font-size:var(--mjp-h2); font-weight:800; margin-top:8px;">{c['name']}</div>
+                <div class="mjp-company-name" title="{c['name']}" style="font-size:var(--mjp-h2); font-weight:800; margin-top:8px;">{c['name']}</div>
                 <div class="mjp-muted" style="margin-bottom:8px;">{c['description']}</div>
                 <div class="mjp-muted">인재상<br><b style="color:{TEXT};">{', '.join(c['ideal_talent'])}</b></div>
                 <div class="mjp-muted" style="margin-top:6px;">독점 복지 혜택<br>

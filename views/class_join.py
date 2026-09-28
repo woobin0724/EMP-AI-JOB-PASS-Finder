@@ -91,7 +91,7 @@ def _render_joined(code: str) -> None:
 
     st.markdown(f"""
     <div class="mjp-card" style="border-color:{GREEN};">
-        <span class="mjp-badge" style="background:{GREEN}; color:#0A0E17;">등록 완료</span>
+        <span class="mjp-badge" style="background:{GREEN}; color:#fff;">등록 완료</span>
         <div style="font-size:var(--mjp-h2); font-weight:800; color:{TEXT}; margin-top:12px;">{label}</div>
         <div class="mjp-muted" style="margin-top:6px;">반 코드 {code}</div>
         <div class="mjp-muted" style="margin-top:10px; line-height:1.6;">
