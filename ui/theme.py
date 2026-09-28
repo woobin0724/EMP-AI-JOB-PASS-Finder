@@ -515,7 +515,7 @@ div[data-testid="stButton"] button[kind="primary"],
 div[data-testid="stFormSubmitButton"] button[kind="primaryFormSubmit"],
 div[data-testid="stFormSubmitButton"] button[kind="primary"] {{
     background: {BRAND_DEEP}; color: #FFFFFF; border-color: {BRAND_DEEP};
-    box-shadow: 0 2px 0 #0A1830;
+    box-shadow: 0 1px 2px rgba(10,24,48,0.28), 0 2px 6px rgba(10,24,48,0.12);
 }}
 div[data-testid="stButton"] button[kind="primary"]:hover,
 div[data-testid="stFormSubmitButton"] button[kind="primaryFormSubmit"]:hover {{

@@ -1,0 +1,536 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-28T05:44:13+00:00",
+  "title": "Design System: AI Job Pass Finder",
+  "extensions": {
+    "colorMeta": {
+      "cover-navy": {
+        "role": "primary",
+        "displayName": "표지 네이비",
+        "canonical": "#14284A",
+        "tonalRamp": [
+          "#10213C",
+          "#1C3868",
+          "#285095",
+          "#3468C1",
+          "#5E8AD4",
+          "#8FADE1",
+          "#BFD0EE",
+          "#EBF0FA"
+        ]
+      },
+      "cover-navy-hover": {
+        "role": "primary",
+        "displayName": "표지 네이비 호버",
+        "canonical": "#1C3663",
+        "tonalRamp": [
+          "#11213C",
+          "#1D3867",
+          "#2A5093",
+          "#3668BF",
+          "#608AD2",
+          "#90ADE0",
+          "#BFD0ED",
+          "#EBF0F9"
+        ]
+      },
+      "brand-ink": {
+        "role": "primary",
+        "displayName": "브랜드 잉크",
+        "canonical": "#1F4E8C",
+        "tonalRamp": [
+          "#0E233F",
+          "#183C6D",
+          "#22569A",
+          "#2C70C8",
+          "#5890DA",
+          "#8AB1E5",
+          "#BCD3F0",
+          "#EAF1FA"
+        ]
+      },
+      "gold-foil": {
+        "role": "secondary",
+        "displayName": "금박",
+        "canonical": "#C8A55E",
+        "tonalRamp": [
+          "#392D13",
+          "#634D22",
+          "#8D6E30",
+          "#B68F3E",
+          "#CBAA67",
+          "#DBC395",
+          "#EADDC2",
+          "#F9F4EC"
+        ]
+      },
+      "foil-highlight": {
+        "role": "secondary",
+        "displayName": "금박 하이라이트",
+        "canonical": "#EAD6A0",
+        "tonalRamp": [
+          "#3F310E",
+          "#6D5618",
+          "#9B7A22",
+          "#C89E2C",
+          "#DAB758",
+          "#E5CD8A",
+          "#F0E2BC",
+          "#FAF6EA"
+        ]
+      },
+      "foil-shade": {
+        "role": "secondary",
+        "displayName": "금박 그늘",
+        "canonical": "#A8843C",
+        "tonalRamp": [
+          "#382C14",
+          "#624D23",
+          "#8B6D32",
+          "#B48E40",
+          "#C9A969",
+          "#D9C396",
+          "#EADDC3",
+          "#F8F4EC"
+        ]
+      },
+      "cover-text": {
+        "role": "neutral",
+        "displayName": "표지 글씨",
+        "canonical": "#E8EDF5",
+        "tonalRamp": [
+          "#172335",
+          "#283C5C",
+          "#395684",
+          "#4A6FAB",
+          "#7190C1",
+          "#9BB1D4",
+          "#C6D2E6",
+          "#EDF1F7"
+        ]
+      },
+      "cover-muted": {
+        "role": "neutral",
+        "displayName": "표지 보조 글씨",
+        "canonical": "#A9B6CB",
+        "tonalRamp": [
+          "#1D2430",
+          "#323E53",
+          "#475976",
+          "#5C7399",
+          "#8093B2",
+          "#A6B3C9",
+          "#CCD4E0",
+          "#EFF2F5"
+        ]
+      },
+      "seal-vermilion": {
+        "role": "tertiary",
+        "displayName": "인주 주홍",
+        "canonical": "#B93A26",
+        "tonalRamp": [
+          "#3F140D",
+          "#6E2217",
+          "#9D3120",
+          "#CB402A",
+          "#DC6856",
+          "#E79589",
+          "#F1C3BB",
+          "#FBECEA"
+        ]
+      },
+      "seal-on-cover": {
+        "role": "tertiary",
+        "displayName": "표지 위 인주",
+        "canonical": "#E86A52",
+        "tonalRamp": [
+          "#441209",
+          "#752010",
+          "#A72D16",
+          "#D83B1D",
+          "#E7644B",
+          "#EE9281",
+          "#F5C1B7",
+          "#FCECE8"
+        ]
+      },
+      "date-stamp-violet": {
+        "role": "tertiary",
+        "displayName": "일부인 보라",
+        "canonical": "#51438A",
+        "tonalRamp": [
+          "#1E1933",
+          "#342B59",
+          "#4B3E7F",
+          "#6150A5",
+          "#8476BC",
+          "#A99FD0",
+          "#CEC8E4",
+          "#F0EEF7"
+        ]
+      },
+      "pass-green": {
+        "role": "tertiary",
+        "displayName": "합격 녹색",
+        "canonical": "#1D7447",
+        "tonalRamp": [
+          "#0F3D25",
+          "#1B6A41",
+          "#26975C",
+          "#31C478",
+          "#5CD697",
+          "#8DE2B6",
+          "#BEEFD5",
+          "#EBFAF2"
+        ]
+      },
+      "ochre-ink": {
+        "role": "tertiary",
+        "displayName": "황토 잉크",
+        "canonical": "#8A5A00",
+        "tonalRamp": [
+          "#4C3200",
+          "#855600",
+          "#BD7B00",
+          "#F5A000",
+          "#FFB833",
+          "#FFCD70",
+          "#FFE3AD",
+          "#FFF6E5"
+        ]
+      },
+      "info-blue": {
+        "role": "tertiary",
+        "displayName": "정보 파랑",
+        "canonical": "#2A5DB0",
+        "tonalRamp": [
+          "#0F213E",
+          "#1A396B",
+          "#245198",
+          "#2F68C6",
+          "#5A8AD8",
+          "#8CADE3",
+          "#BDD0EF",
+          "#EAF0FA"
+        ]
+      },
+      "security-paper": {
+        "role": "neutral",
+        "displayName": "보안용지",
+        "canonical": "#EDF1EF",
+        "tonalRamp": [
+          "#212B26",
+          "#3A4B42",
+          "#536A5E",
+          "#6B8A7A",
+          "#8CA699",
+          "#AFC1B8",
+          "#D1DBD6",
+          "#F1F4F2"
+        ]
+      },
+      "paper-deep": {
+        "role": "neutral",
+        "displayName": "짙은 용지",
+        "canonical": "#E3E9E6",
+        "tonalRamp": [
+          "#222B26",
+          "#3A4A42",
+          "#536A5E",
+          "#6C897A",
+          "#8DA599",
+          "#AFC0B8",
+          "#D1DBD6",
+          "#F1F4F2"
+        ]
+      },
+      "form-sheet": {
+        "role": "neutral",
+        "displayName": "양식지",
+        "canonical": "#FFFFFF",
+        "tonalRamp": [
+          "#262626",
+          "#424242",
+          "#5E5E5E",
+          "#7A7A7A",
+          "#999999",
+          "#B8B8B8",
+          "#D6D6D6",
+          "#F2F2F2"
+        ]
+      },
+      "rule-line": {
+        "role": "neutral",
+        "displayName": "괘선",
+        "canonical": "#C6D0CC",
+        "tonalRamp": [
+          "#232A27",
+          "#3C4944",
+          "#556760",
+          "#6F867D",
+          "#8FA39B",
+          "#B1BEB9",
+          "#D2DAD7",
+          "#F1F3F2"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "먹",
+        "canonical": "#18212D",
+        "tonalRamp": [
+          "#1B2532",
+          "#2E3F56",
+          "#425A7B",
+          "#5575A0",
+          "#7A95B8",
+          "#A2B4CD",
+          "#CAD4E3",
+          "#EEF2F6"
+        ]
+      },
+      "ink-muted": {
+        "role": "neutral",
+        "displayName": "보조 글씨",
+        "canonical": "#55606B",
+        "tonalRamp": [
+          "#22262B",
+          "#3B424A",
+          "#545E69",
+          "#6C7A88",
+          "#8D99A5",
+          "#AFB8C0",
+          "#D2D6DB",
+          "#F1F2F4"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "표지 제목",
+        "purpose": "랜딩 표지의 서비스명 한 곳. 금박색 명조."
+      },
+      "headline": {
+        "displayName": "화면 제목",
+        "purpose": "section_title 제목 블록. 3px 겹괘선과 함께."
+      },
+      "title-serif": {
+        "displayName": "문서명",
+        "purpose": "진단서 머리칸의 문서 이름."
+      },
+      "title": {
+        "displayName": "구획 제목",
+        "purpose": "양식 구획 제목, 허브 단계 제목, 판정 문구."
+      },
+      "body": {
+        "displayName": "본문",
+        "purpose": "본문과 입력 글자(16px, iOS 확대 방지)."
+      },
+      "body-small": {
+        "displayName": "설명",
+        "purpose": "설명 칸, 양식 표 내용, 버튼 글씨."
+      },
+      "label": {
+        "displayName": "라벨",
+        "purpose": "위젯 라벨, 양식 표 항목 칸."
+      },
+      "caption": {
+        "displayName": "캡션",
+        "purpose": "캡션, 배지, 태그, 비고란."
+      },
+      "stamp-numeral": {
+        "displayName": "도장 숫자",
+        "purpose": "진단서 도장 안의 점수 하나."
+      },
+      "serial": {
+        "displayName": "발급번호",
+        "purpose": "이어하기 코드·반 코드 같은 번호 값."
+      }
+    },
+    "shadows": [
+      {
+        "name": "shadow-1",
+        "value": "0 1px 0 rgba(20,40,74,0.06)",
+        "purpose": "놓인 종이. 카드 기본 상태."
+      },
+      {
+        "name": "shadow-2",
+        "value": "0 2px 6px rgba(20,40,74,0.10), 0 1px 0 rgba(20,40,74,0.06)",
+        "purpose": "들린 종이. 카드 호버 전용."
+      },
+      {
+        "name": "focus-bleed",
+        "value": "0 0 0 3px rgba(31,78,140,0.16)",
+        "purpose": "입력칸 포커스 번짐."
+      },
+      {
+        "name": "cover-foil-frame",
+        "value": "inset 0 0 0 1px rgba(200,165,94,0.35), inset 0 0 0 7px #14284A, inset 0 0 0 8px rgba(200,165,94,0.55)",
+        "purpose": "랜딩 표지의 금박 겹테두리."
+      },
+      {
+        "name": "topbar-foil-rule",
+        "value": "inset 0 -3px 0 #C8A55E",
+        "purpose": "상단 표지 띠 아래 금박선."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-standard",
+        "value": "160ms cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "모든 상태 전환(테두리·그림자·배경)."
+      },
+      {
+        "name": "stamp",
+        "value": "560ms cubic-bezier(0.16, 1, 0.3, 1); scale(1.22) rotate(-13deg) blur(1.5px) → scale(1) rotate(-7deg)",
+        "purpose": "진단서 점수 도장이 찍히는 유일한 연출."
+      },
+      {
+        "name": "seal-in",
+        "value": "620ms 180ms cubic-bezier(0.16, 1, 0.3, 1); scale(1.25) rotate(20deg) → scale(1) rotate(12deg)",
+        "purpose": "랜딩 표지 '본선 진출' 인장."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "narrow",
+        "value": "380px"
+      },
+      {
+        "name": "mobile",
+        "value": "768px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "주 행동. 표지 네이비, 누르면 1px 눌린다.",
+      "html": "<button class=\"ds-btn-primary\">시작하기</button>",
+      "css": ".ds-btn-primary{font-family:\"Pretendard Variable\", Pretendard, \"Noto Sans KR\", system-ui, sans-serif;background:#14284A;color:#FFFFFF;border:1px solid #14284A;border-radius:4px;min-height:44px;padding:0 24px;font-size:14px;font-weight:800;cursor:pointer;transition:background-color 160ms cubic-bezier(0.16, 1, 0.3, 1),transform 160ms cubic-bezier(0.16, 1, 0.3, 1);} .ds-btn-primary:hover{background:#1C3663;} .ds-btn-primary:active{transform:translateY(1px);} .ds-btn-primary:focus-visible{outline:2px solid #1F4E8C;outline-offset:2px;}"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "보조 행동. 흰 양식지 + 네이비 테두리.",
+      "html": "<button class=\"ds-btn-secondary\">태백중공업 자세히 보기</button>",
+      "css": ".ds-btn-secondary{font-family:\"Pretendard Variable\", Pretendard, \"Noto Sans KR\", system-ui, sans-serif;background:#FFFFFF;color:#14284A;border:1px solid #14284A;border-radius:4px;min-height:44px;padding:0 16px;font-size:14px;font-weight:800;box-shadow:0 1px 0 rgba(20,40,74,0.10);cursor:pointer;transition:background-color 160ms cubic-bezier(0.16, 1, 0.3, 1),transform 160ms cubic-bezier(0.16, 1, 0.3, 1);} .ds-btn-secondary:hover{background:#F2F5F8;} .ds-btn-secondary:active{transform:translateY(1px);box-shadow:none;} .ds-btn-secondary:focus-visible{outline:2px solid #1F4E8C;outline-offset:2px;}"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "양식 기입 칸. 16px 글자, 포커스 시 네이비 테두리.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field-label\">학과/계열</span><input class=\"ds-input\" placeholder=\"이어하기 코드를 입력하세요\"></label>",
+      "css": ".ds-field{display:flex;flex-direction:column;gap:6px;font-family:\"Pretendard Variable\", Pretendard, \"Noto Sans KR\", system-ui, sans-serif;} .ds-field-label{font-size:14px;font-weight:700;color:#18212D;} .ds-input{font-family:\"Pretendard Variable\", Pretendard, \"Noto Sans KR\", system-ui, sans-serif;font-size:16px;min-height:44px;padding:0 12px;color:#18212D;background:#FFFFFF;border:1px solid #C6D0CC;border-radius:4px;outline:none;transition:border-color 160ms cubic-bezier(0.16, 1, 0.3, 1),box-shadow 160ms cubic-bezier(0.16, 1, 0.3, 1);} .ds-input::placeholder{color:#6B7580;} .ds-input:focus-visible{border-color:#14284A;box-shadow:0 0 0 3px rgba(31,78,140,0.16);}"
+    },
+    {
+      "name": "Cover Band + Index Tabs",
+      "kind": "nav",
+      "refersTo": "topbar",
+      "description": "상단 표지 띠와 수첩 색인 탭. 선택된 탭만 네이비.",
+      "html": "<div class=\"ds-nav\"><div class=\"ds-topbar\"><span class=\"ds-brand\">AI Job Pass Finder</span><span class=\"ds-user\">게스트 님</span></div><div class=\"ds-tabs\"><button class=\"ds-tab ds-tab-on\">스펙 진단</button><button class=\"ds-tab\">기업 탐색</button><button class=\"ds-tab\">자소서</button></div></div>",
+      "css": ".ds-nav{font-family:\"Pretendard Variable\", Pretendard, \"Noto Sans KR\", system-ui, sans-serif;} .ds-topbar{display:flex;justify-content:space-between;align-items:center;background:#14284A;color:#E8EDF5;border-radius:4px 4px 0 0;padding:12px 18px;box-shadow:inset 0 -3px 0 #C8A55E;} .ds-brand{font-size:16px;font-weight:800;color:#FFFFFF;} .ds-user{font-size:14px;font-weight:800;color:#FFFFFF;} .ds-tabs{display:flex;gap:4px;background:#E3E9E6;padding:8px 8px 0;border:1px solid #C6D0CC;border-top:none;border-bottom:2px solid #14284A;} .ds-tab{flex:1;min-height:44px;font-family:\"Pretendard Variable\", Pretendard, \"Noto Sans KR\", system-ui, sans-serif;font-weight:700;font-size:14px;background:#FFFFFF;color:#18212D;border:1px solid #C6D0CC;border-bottom:none;border-radius:3px 3px 0 0;cursor:pointer;} .ds-tab:hover{color:#1F4E8C;background:#F7F9F8;} .ds-tab:focus-visible{outline:2px solid #1F4E8C;outline-offset:2px;} .ds-tab-on,.ds-tab-on:hover{background:#14284A;color:#FFFFFF;border-color:#14284A;}"
+    },
+    {
+      "name": "Stamp Badges",
+      "kind": "chip",
+      "refersTo": "stamp-badge",
+      "description": "출처·상태 도장 배지와 태그. 3px 직각 테두리.",
+      "html": "<span class=\"ds-badge\" style=\"background:#1D7447\">LIVE API</span> <span class=\"ds-badge\" style=\"background:#8A5A00\">BACKUP DATA</span> <span class=\"ds-badge\" style=\"background:#55606B\">CURATED</span> <span class=\"ds-tag\">CNC가공</span>",
+      "css": ".ds-badge{display:inline-block;font-family:\"Pretendard Variable\", Pretendard, \"Noto Sans KR\", system-ui, sans-serif;font-size:13px;font-weight:800;color:#FFFFFF;padding:3px 9px;border-radius:3px;letter-spacing:0.02em;line-height:1.45;} .ds-tag{display:inline-block;font-family:\"Pretendard Variable\", Pretendard, \"Noto Sans KR\", system-ui, sans-serif;font-size:13px;padding:2px 8px;border-radius:3px;background:#EDF1EF;border:1px solid #C6D0CC;color:#55606B;}"
+    },
+    {
+      "name": "Form Sheet Card",
+      "kind": "card",
+      "refersTo": "form-sheet-card",
+      "description": "흰 양식지 한 장. 놓인 종이 → 호버 시 들린 종이.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-title\">이어하기 코드 · <span class=\"ds-serial\">K7Q2-9M</span></div><div class=\"ds-card-desc\">다른 기기에서 이 코드로 진행 상황을 이어갈 수 있어요.</div></div>",
+      "css": ".ds-card{font-family:\"Pretendard Variable\", Pretendard, \"Noto Sans KR\", system-ui, sans-serif;background:#FFFFFF;border:1px solid #C6D0CC;border-radius:4px;padding:20px 22px;box-shadow:0 1px 0 rgba(20,40,74,0.06);transition:border-color 160ms cubic-bezier(0.16, 1, 0.3, 1),box-shadow 160ms cubic-bezier(0.16, 1, 0.3, 1);} .ds-card:hover{border-color:#9FB0BE;box-shadow:0 2px 6px rgba(20,40,74,0.10),0 1px 0 rgba(20,40,74,0.06);} .ds-card-title{font-weight:800;color:#18212D;font-size:16px;} .ds-serial{font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:0.12em;font-weight:700;color:#14284A;} .ds-card-desc{margin-top:6px;color:#55606B;font-size:14px;line-height:1.65;}"
+    },
+    {
+      "name": "Form Table",
+      "kind": "custom",
+      "refersTo": "form-sheet-card",
+      "description": "항목 | 내용 괘선 양식 표. 먹 외곽선, 라벨 칸은 보안용지.",
+      "html": "<div class=\"ds-form\"><div class=\"ds-form-row\"><div class=\"ds-form-key\">합격 지수</div><div class=\"ds-form-val\">내신과 전공 자격증을 <b>100점 만점</b>으로 환산합니다.</div></div><div class=\"ds-form-row\"><div class=\"ds-form-key\">기업 탐색</div><div class=\"ds-form-val\">응답하지 않는 소스는 <b>백업 데이터로</b> 전환됩니다.</div></div></div>",
+      "css": ".ds-form{font-family:\"Pretendard Variable\", Pretendard, \"Noto Sans KR\", system-ui, sans-serif;background:#FFFFFF;border:1px solid #18212D;border-radius:2px;} .ds-form-row{display:grid;grid-template-columns:180px 1fr;border-top:1px solid #C6D0CC;} .ds-form-row:first-child{border-top:none;} .ds-form-key{background:#EDF1EF;border-right:1px solid #C6D0CC;padding:16px 18px;font-weight:800;color:#18212D;font-size:14px;} .ds-form-val{padding:16px 20px;color:#55606B;font-size:14px;line-height:1.7;} .ds-form-val b{color:#18212D;}"
+    },
+    {
+      "name": "진단서 Score Stamp",
+      "kind": "custom",
+      "refersTo": "score-stamp",
+      "description": "진단서 양식 + 판정 잉크 도장. 점수가 바뀔 때 한 번 찍힌다.",
+      "html": "<div class=\"ds-score\"><div class=\"ds-score-head\"><span class=\"ds-score-name\">합격 지수 진단서</span><span class=\"ds-score-meta\">기계과 · 내신 3.0등급</span></div><div class=\"ds-score-row\"><div class=\"ds-stamp\"><div class=\"ds-stamp-num\">25.0</div><div class=\"ds-stamp-cap\">/ 100점</div></div><div><div class=\"ds-verdict\">보완 시급</div><div class=\"ds-score-meta\">지금 점수는 출발선일 뿐입니다.</div></div></div></div>",
+      "css": ".ds-score{font-family:\"Pretendard Variable\", Pretendard, \"Noto Sans KR\", system-ui, sans-serif;background:#FFFFFF;border:1px solid #C6D0CC;border-top:6px solid #14284A;border-radius:4px;overflow:hidden;} .ds-score-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:12px 20px;border-bottom:1px solid #C6D0CC;background:#EDF1EF;} .ds-score-name{font-family:\"Nanum Myeongjo\", \"Noto Serif KR\", AppleMyungjo, Batang, serif;font-size:20px;font-weight:800;color:#18212D;letter-spacing:0.04em;} .ds-score-meta{font-size:13px;color:#55606B;margin-top:4px;} .ds-score-row{display:flex;align-items:center;gap:28px;padding:20px 24px;} .ds-stamp{--seal:#B93A26;width:124px;height:124px;border-radius:50%;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--seal);border:3px solid var(--seal);box-shadow:inset 0 0 0 3px #FFFFFF,inset 0 0 0 4.5px var(--seal);transform:rotate(-7deg);mix-blend-mode:multiply;animation:ds-stamp 560ms cubic-bezier(0.16,1,0.3,1) both;} .ds-stamp-num{font-size:42px;font-weight:900;line-height:1;letter-spacing:-0.03em;font-variant-numeric:tabular-nums;} .ds-stamp-cap{font-size:13px;font-weight:800;margin-top:4px;letter-spacing:0.08em;} .ds-verdict{font-size:20px;font-weight:800;color:#B93A26;letter-spacing:-0.02em;} @keyframes ds-stamp{0%{transform:scale(1.22) rotate(-13deg);opacity:.4;filter:blur(1.5px);}55%{transform:scale(.97) rotate(-6deg);opacity:1;filter:blur(0);}100%{transform:scale(1) rotate(-7deg);opacity:1;}} @media (prefers-reduced-motion:reduce){.ds-stamp{animation:none;}}"
+    }
+  ],
+  "narrative": {
+    "northStar": "국가기술자격증 수첩",
+    "overview": "마이스터고 학생이 가장 잘 아는 문서는 자격증 수첩이다. 이 앱은 학생의 스펙을 그 문서처럼 다룬다. 앱의 정체성은 짙은 네이비 수첩 표지와 금박 엠블럼이 지고, 본문은 차가운 민트그레이 보안용지 위에 놓인 흰 양식지다. 점수와 판정은 인주 도장처럼 '찍힌다'. 채용 포털의 흰 카드 + 파란 버튼, 그리고 이전 빌드의 다크 네이비 + 네온 글로우 AI 룩은 이 세계에서 쓰지 않는다.\n\n밝은 바탕은 교실·실습실 형광등 아래 폰으로 보는 화면이라서 고른 것이다. 어두운 화면은 반사광에 묻힌다. 밀도는 공문서 양식 수준으로 중간: 1px 괘선으로 칸을 나누고, 필드 라벨 칸(항목 | 내용)으로 정보를 정리하며, 숫자는 전부 등폭으로 자리를 지킨다. 장식은 문서가 원래 가진 재료(길로셰 보안 무늬, 겹괘선, 금박, 도장)에서만 가져온다.\n\n모션은 도장이 찍히는 순간 한 번뿐이다. 나머지 상태 변화는 160ms 안에 조용히 끝난다.",
+    "keyCharacteristics": [
+      "표지(네이비 + 금박)와 속지(보안용지 + 흰 양식지)의 두 층 구조",
+      "1px 괘선 격자, 직각에 가까운 4px 모서리",
+      "명조 제목 + Pretendard 본문, 모든 숫자는 tabular-nums",
+      "판정은 원형 겹테두리 도장으로 찍히고, 색은 판정 구간을 따른다",
+      "그림자는 종이가 바닥에 놓인 정도(1px)까지만"
+    ],
+    "rules": [
+      {
+        "name": "The Two Layers Rule",
+        "body": "네이비와 금박은 '표지'다. 표지 띠·랜딩 표지·주 행동에만 쓰고, 속지(본문)를 네이비로 칠하지 않는다. 금박은 네이비 위에서만 읽힌다.",
+        "section": "colors"
+      },
+      {
+        "name": "The Semantic Green Rule",
+        "body": "녹색은 브랜드 색이 아니다. LIVE 상태와 합격 안정권에만 쓴다.",
+        "section": "colors"
+      },
+      {
+        "name": "The Ink Follows Verdict Rule",
+        "body": "도장의 잉크는 판정 구간을 따른다: 안정권 pass-green, 도전권 ochre-ink, 보완 필요 seal-vermilion. 판정 문구도 같은 잉크로 쓴다.",
+        "section": "colors"
+      },
+      {
+        "name": "The Six Sizes Rule",
+        "body": "크기는 34 / 26 / 20 / 16 / 14 / 13px 여섯 단(`--mjp-display`…`--mjp-caption`)만 쓴다. 예외는 표지 제목의 clamp와 도장 숫자 42px뿐이다.",
+        "section": "typography"
+      },
+      {
+        "name": "The Tabular Rule",
+        "body": "앱 전체가 tabular-nums다. 점수·통계·코드가 자리마다 흔들리지 않는다.",
+        "section": "typography"
+      },
+      {
+        "name": "The Keep-All Rule",
+        "body": "한글은 어절 단위로 줄을 바꾼다(`word-break: keep-all`). 제목과 표지 문구는 `text-wrap: balance`.",
+        "section": "typography"
+      },
+      {
+        "name": "The Paper Doesn't Float Rule",
+        "body": "쉬는 상태의 표면은 1px 그림자를 넘지 않는다. 더 깊은 그림자는 호버에만, 그리고 shadow-2까지만.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** 새 화면 제목은 명조 26px + 3px 겹괘선 제목 블록(section_title)으로 연다.",
+      "**Do** 정보를 나열할 때는 항목 | 내용 양식 표나 1px 괘선 구획으로 나눈다.",
+      "**Do** 크기는 여섯 단, 여백은 8 / 16 / 32 / 56px 네 단 안에서 고른다.",
+      "**Do** 판정·점수는 원형 도장으로, 판정 구간 잉크(pass-green / ochre-ink / seal-vermilion)로 찍는다.",
+      "**Do** 코드·번호는 mono serial, 숫자는 tabular-nums로 둔다.",
+      "**Do** 예시·백업·큐레이션 데이터는 도장 배지와 비고란으로 그렇다고 표기한다.",
+      "**Do** 모든 터치 타깃 44px, 입력 글자 16px을 지킨다."
+    ],
+    "donts": [
+      "**Don't** 금박을 흰 속지 위에 쓰지 않는다. 금박은 네이비 표지 위에서만 읽힌다.",
+      "**Don't** 둥근 알약 배지나 8px 이상의 둥근 카드를 만들지 않는다. 표면 4px, 도장 테두리 3px.",
+      "**Don't** 녹색을 브랜드·장식 색으로 쓰지 않는다.",
+      "**Don't** 쉬는 상태의 표면에 1px을 넘는 그림자나 글로우를 주지 않는다.",
+      "**Don't** 도장 말고 다른 곳에 연출 모션을 추가하지 않는다. 상태 전환은 160ms `cubic-bezier(0.16, 1, 0.3, 1)`.",
+      "**Don't** 이모지나 문자 기호(★☆)를 아이콘으로 쓰지 않는다. 아이콘은 SVG 라인 아이콘(ui/icons.py)이다."
+    ]
+  }
+}
