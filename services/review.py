@@ -26,6 +26,8 @@ import re
 
 import streamlit as st
 
+from services import premium
+
 MODEL_NAME = "claude-opus-5"
 # 첨삭은 초안 전문을 읽고 답하므로 생성보다 출력이 길 수 있다.
 # 현행 모델은 추론 토큰이 기본 on 이고 그 양도 max_tokens 에 함께 잡힌다.
@@ -292,5 +294,6 @@ def review(draft: str, company: dict | None = None, strengths: list | None = Non
         (draft or "").strip(),
         json.dumps(company, ensure_ascii=False, sort_keys=True, default=str) if company else "",
         json.dumps(sorted(strengths or []), ensure_ascii=False),
-        has_api_key(),
+        # 키가 있어도 프리미엄 회원이 아니면 API 를 부르지 않는다 (services/premium.py)
+        premium.ai_enabled(),
     )

@@ -14,6 +14,7 @@ from core import session as ss
 from data.company_showcase import COMPANY_BY_ID
 from data.roadmap import MILESTONES
 from services import activity
+from services import premium
 from services import store
 from ui import mascot
 from ui.components import back_to_hub, grid_columns, section_title, topbar
@@ -45,6 +46,7 @@ def render() -> None:
                 <div class="mjp-muted" style="margin-top:5px;">
                     {_ROLE_LABEL.get(st.session_state.get('role'), '역할 미선택')}
                     · {_PROVIDER_LABEL.get(ss.provider(), '알 수 없음')}로 로그인
+                    · 요금제 {premium.plan_label()}
                 </div>
                 <div class="mjp-muted" style="margin-top:3px;">
                     가입일 {(saved.get('created_at') or '-')[:10]}

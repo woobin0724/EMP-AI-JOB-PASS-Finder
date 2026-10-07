@@ -25,6 +25,8 @@ import json
 
 import streamlit as st
 
+from services import premium
+
 from services.coverletter import apply_josa
 
 MODEL_NAME = "claude-opus-5"
@@ -268,5 +270,6 @@ def explain(profile: dict, result: dict, company: dict | None = None):
         json.dumps(profile, ensure_ascii=False, sort_keys=True, default=str),
         json.dumps(result, ensure_ascii=False, sort_keys=True, default=str),
         company_name,
-        has_api_key(),
+        # 키가 있어도 프리미엄 회원이 아니면 API 를 부르지 않는다 (services/premium.py)
+        premium.ai_enabled(),
     )

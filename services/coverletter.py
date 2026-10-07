@@ -225,6 +225,22 @@ def build_user_prompt(profile: dict, company: dict | None, options: dict) -> str
     return "\n".join(lines)
 
 
+def build_copy_prompt(profile: dict, company: dict | None, options: dict | None = None) -> str:
+    """
+    무료 경로 — 학생이 무료 AI 채팅에 그대로 붙여넣을 요청문 한 덩어리.
+
+    API 경로와 **같은 지시문**(상투어 금지 · 경험 지어내기 금지 · 분량 · 구성)을
+    쓴다. 그래서 어느 AI 에 붙여넣어도 API 로 쓸 때와 같은 기준의 초안이 나온다.
+    채팅창에는 system 칸이 없으므로 지시문과 재료를 이어 붙인다.
+    """
+    options = normalize_options(options)
+    return (
+        build_system_prompt(options)
+        + "\n\n"
+        + build_user_prompt(profile, company, options)
+    )
+
+
 # ------------------------------------------------------------
 # AI 생성 (공식 Anthropic SDK)
 # ------------------------------------------------------------

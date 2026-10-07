@@ -13,7 +13,10 @@ import streamlit as st
 from core import session as ss
 from core.catalog import all_talent_keywords
 from data.company_showcase import COMPANY_BY_ID, COMPANY_SHOWCASE, all_companies
-from services.coverletter import LENGTH_OPTIONS, TONE_OPTIONS, angle_for, normalize_options
+from services.coverletter import (
+    LENGTH_OPTIONS, TONE_OPTIONS, angle_for, build_copy_prompt, normalize_options,
+)
+from services import premium
 from services import review as review_svc
 from services.llm import (
     clear_cover_letter_cache, cost_guard_caption, current_variation,
@@ -109,13 +112,23 @@ def _render_generator() -> None:
         if st.session_state.get("_cl_input_sig") != input_signature:
             st.session_state["_cl_input_sig"] = input_signature
             reset_variation()
+            # 재료가 바뀌면 이전 요청문은 낡은 재료를 담고 있으므로 지운다
+            st.session_state.pop("cl_copy_prompt", None)
 
-        gen_clicked = st.button("스펙 맞춤형 자기소개서 자동 완성", type="primary",
-                                use_container_width=True)
+        _plan_notice()
+
+        gen_clicked = st.button(
+            "Claude 가 자기소개서 작성" if premium.ai_enabled()
+            else "스펙 맞춤형 자기소개서 자동 완성 (템플릿)",
+            type="primary", use_container_width=True)
         regen_clicked = st.button("다시 생성하기 (다른 구성으로)",
                                   use_container_width=True,
                                   help="같은 재료로 서사 구성을 바꿔 새 초안을 만듭니다. "
                                        "캐시를 우회해 새로 생성합니다.")
+        prompt_clicked = st.button(
+            "AI 에게 맡길 요청문 만들기 (무료)", use_container_width=True,
+            help="입력한 재료로 완성된 요청문을 만듭니다. 무료 AI 채팅에 붙여넣으면 "
+                 "Claude 직접 작성과 같은 기준의 초안을 받을 수 있어요.")
 
         with st.expander("고급"):
             if st.button("캐시 전체 비우기", use_container_width=True):
@@ -133,15 +146,22 @@ def _render_generator() -> None:
         if regen_clicked:
             next_variation()      # 회차 +1 → 캐시 키가 바뀌어 새 구성으로 생성된다
 
+        gen_profile = {
+            "name": name, "target_dept": target_dept, "grade": st.session_state.grade,
+            "story": story, "episode": episode, "motive": motive,
+            "strength": ", ".join(st.session_state.strength_keywords) or story,
+            "certs": st.session_state.user_certs,
+        }
+        gen_options = {"tone": tone, "length": length,
+                       "variation": current_variation()}
+
+        if prompt_clicked:
+            st.session_state["cl_copy_prompt"] = build_copy_prompt(
+                gen_profile, target_company, gen_options)
+        if st.session_state.get("cl_copy_prompt"):
+            _render_copy_prompt(st.session_state["cl_copy_prompt"])
+
         if gen_clicked or regen_clicked:
-            gen_profile = {
-                "name": name, "target_dept": target_dept, "grade": st.session_state.grade,
-                "story": story, "episode": episode, "motive": motive,
-                "strength": ", ".join(st.session_state.strength_keywords) or story,
-                "certs": st.session_state.user_certs,
-            }
-            gen_options = {"tone": tone, "length": length,
-                           "variation": current_variation()}
             with st.spinner("자기소개서 초안을 작성하는 중..."):
                 text, source, cache_hit = generate_cover_letter_cached(
                     gen_profile, target_company, gen_options)
@@ -266,8 +286,9 @@ def _render_review() -> None:
     """)
 
     if source == "rule":
-        st.caption("API 키가 없어 기계가 셀 수 있는 항목만 점검했습니다 — "
-                   "분량·상투어·문장 길이·구체적 근거·인재상 반영 여부.")
+        st.caption("무료 점검 — 기계가 셀 수 있는 항목만 봤습니다: "
+                   "분량·상투어·문장 길이·구체적 근거·인재상 반영 여부. "
+                   "Claude 첨삭은 프리미엄 회원 전용입니다.")
     failure = review_svc.last_failure()
     if failure and source == "rule":
         st.warning(f"API 키는 있으나 첨삭에 실패해 규칙 점검으로 표시했습니다 — {failure}")
@@ -304,3 +325,29 @@ def _render_review() -> None:
             <div style="margin-top:10px; line-height:1.7;">{feedback['example']}</div>
         </div>
         """)
+
+
+# ------------------------------------------------------------
+# 요금제 안내 · 무료 요청문 복사
+# ------------------------------------------------------------
+def _plan_notice() -> None:
+    """생성 버튼 바로 위 — 지금 요금제로 무엇이 동작하는지 한 줄로."""
+    if premium.ai_enabled():
+        st.success("프리미엄 회원 · Claude 가 자기소개서를 직접 작성합니다.")
+        return
+    st.info(premium.lock_reason()
+            + " 아래 '요청문 만들기'로 무료 AI 에 맡기면 같은 기준의 초안을 받을 수 있어요.")
+    with st.expander("요금제 비교 · 프리미엄 안내"):
+        premium.render_plan_info()
+        st.button("프리미엄 시작하기 (결제 연동 준비 중)", disabled=True,
+                  use_container_width=True, key="premium_upgrade")
+
+
+def _render_copy_prompt(prompt: str) -> None:
+    """요청문 + 사용법. st.code 는 오른쪽 위에 복사 버튼이 붙는다."""
+    st.markdown("#### 무료 AI 에 붙여넣을 요청문")
+    st.caption("오른쪽 위 복사 아이콘을 눌러 통째로 복사한 뒤, 무료 AI 채팅에 붙여넣으세요. "
+               "서비스마다 가입 가능 나이가 다르니 확인하고 쓰세요.")
+    st.code(prompt, language=None, wrap_lines=True)
+    st.caption("받은 초안은 위 '내 초안 첨삭' 탭에 붙여넣어 한 번 더 점검할 수 있어요. "
+               "재료(에피소드·동기)를 바꾸면 요청문도 다시 만들어 주세요.")

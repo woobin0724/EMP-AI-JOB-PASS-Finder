@@ -24,6 +24,8 @@ import json
 
 import streamlit as st
 
+from services import premium
+
 from services.coverletter import (
     MODEL_NAME, _claude_cover_letter, _template_cover_letter, normalize_options,
 )
@@ -154,7 +156,8 @@ def generate_cover_letter_cached(profile: dict, company: dict | None = None,
         json.dumps(profile, ensure_ascii=False, sort_keys=True, default=str),
         json.dumps(company, ensure_ascii=False, sort_keys=True, default=str) if company else "",
         json.dumps(options, ensure_ascii=False, sort_keys=True),
-        has_api_key(),
+        # 키가 있어도 프리미엄 회원이 아니면 API 를 부르지 않는다 (services/premium.py)
+        premium.ai_enabled(),
     )
     seen.add(fingerprint)
     return text, source, cache_hit
@@ -196,13 +199,13 @@ def clear_cover_letter_cache():
 
 def cost_guard_caption() -> str:
     """화면에 노출할 비용 방어 상태 안내 문구."""
-    if has_api_key():
+    if premium.ai_enabled():
         return (
-            f"API 키는 st.secrets에서만 읽습니다(코드 내 하드코딩 없음). 모델 {MODEL_NAME}. "
+            f"프리미엄 · API 키는 st.secrets에서만 읽습니다(코드 내 하드코딩 없음). 모델 {MODEL_NAME}. "
             "동일한 입력·동일한 회차면 캐시된 결과가 나오며 API는 재호출되지 않습니다. "
             "'다시 생성하기'를 눌렀을 때만 새로 호출됩니다."
         )
     return (
-        "CLAUDE_API_KEY가 설정되지 않아 규칙 기반 템플릿 생성기로 동작합니다. "
+        "무료 요금제 — 규칙 기반 템플릿 생성기로 동작합니다. "
         "외부 API 호출이 0회이므로 과금이 발생하지 않습니다."
     )
