@@ -36,6 +36,8 @@ FIELDS = [
     ("hire_dept",           "채용 부서",                      "text",   False),
     ("overall_rating",      "종합 별점 (0~5)",                "number", False),
     ("benefit_short",       "복지 요약",                      "area",   False),
+    ("region",              "근무지 (예: 전북 전주)",          "text",   False),
+    ("work_conditions",     "근무 조건 (근무 형태·시간 등)",   "area",   False),
     ("required_certs",      "요구 자격증 (쉼표로 구분)",      "list",   True),
     ("required_skills",     "요구 역량 (쉼표로 구분)",        "list",   False),
     ("ideal_talent",        "인재상 키워드 (쉼표로 구분)",    "list",   True),

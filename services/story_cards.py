@@ -73,8 +73,12 @@ CARD_TOPICS = [
     "카드1: 회사 한 줄 소개",
     "카드2: 하는 일 / 주요 제품·서비스",
     "카드3: 채용 직무, 필요 자격증, 우대 전공",
-    "카드4: 근무지, 근무 조건, 복리후생 (데이터에 없는 항목은 '정보 없음'이라고 쓴다)",
+    "카드4: 근무지, 근무 조건, 복리후생 (데이터에 있는 항목만 쓰고, 없는 항목은 언급하지 않는다)",
 ]
+
+# 카드4 를 만들 근거 항목. 셋 다 비어 있으면 카드4 를 아예 보여주지 않는다
+# ('정보 없음'만 적힌 카드는 학생에게 아무것도 알려주지 않는다).
+CARD4_FIELDS = (("region", "근무지"), ("work_conditions", "근무조건"), ("benefit_short", "복지"))
 DEFAULT_EMOJIS = ["🏢", "🛠️", "📋", "📍", "🎯"]
 
 # 원본 데이터 중 요약에 넘길 항목. 별점·장단점·면접질문은 예시(모의) 데이터라
@@ -160,15 +164,22 @@ def parse_cards(text: str) -> list[dict]:
 # ------------------------------------------------------------
 # 기본 카드 (키 없음 · 무료 요금제 · 실패)
 # ------------------------------------------------------------
+def has_card4(company: dict) -> bool:
+    """근무지 · 근무조건 · 복지 중 하나라도 값이 있는가."""
+    return any(str(company.get(key) or "").strip() for key, _ in CARD4_FIELDS)
+
+
 def basic_cards(company: dict) -> list[dict]:
-    """원본 데이터만으로 만든 카드 4장. 없는 값은 '정보 없음'."""
+    """
+    원본 데이터만으로 만든 카드 4장. 카드4 는 값이 있는 항목만 쓴다
+    (값이 하나도 없으면 make_story_cards 가 카드4 를 뺀다).
+    """
     name = company.get("name") or "이 기업"
     size = company.get("size_tag") or ""
     field = company.get("field_tag") or company.get("category") or ""
     certs = ", ".join(company.get("required_certs") or []) or NO_INFO
-    region = str(company.get("region") or "").strip() or NO_INFO
-    conditions = str(company.get("work_conditions") or "").strip() or NO_INFO
-    benefit = str(company.get("benefit_short") or "").strip() or NO_INFO
+    card4 = " · ".join(f"{label} {str(company.get(key)).strip()}"
+                       for key, label in CARD4_FIELDS if str(company.get(key) or "").strip())
 
     return [
         {"title": _clip(name, TITLE_MAX), "emoji": DEFAULT_EMOJIS[0],
@@ -179,7 +190,7 @@ def basic_cards(company: dict) -> list[dict]:
          "body": _clip(f"{company.get('hire_dept') or '채용 부서 정보 없음'} · 자격증 {certs}"
                        f" · 우대 계열 {company.get('category') or NO_INFO}", BODY_MAX)},
         {"title": "근무 · 복지", "emoji": DEFAULT_EMOJIS[3],
-         "body": _clip(f"근무지 {region} · 근무조건 {conditions} · 복지 {benefit}", BODY_MAX)},
+         "body": _clip(card4 or NO_INFO, BODY_MAX)},
     ]
 
 
@@ -355,5 +366,9 @@ def make_story_cards(company: dict) -> list[dict]:
             premium.ai_enabled(),
         )
     out = [{**card, "source": source} for card in cards]
+    if not has_card4(company):
+        # 근무지·근무조건·복지 데이터가 하나도 없으면 카드4 를 건너뛴다.
+        # (AI 요약은 지정된 형식대로 4장을 받아 저장하고, 보여줄 때만 뺀다)
+        out = out[:3]
     out.append({**score_card(company), "source": "score"})
     return out

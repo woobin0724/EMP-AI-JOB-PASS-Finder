@@ -22,6 +22,7 @@ AI 직접 생성(자소서 · 첨삭 · 점수 설명)은 로그인한 프리미
 
    게스트는 기기를 바꾸면 이어하기 코드만으로 들어오므로 유료 혜택의
    주체가 될 수 없다 — 프리미엄은 소셜 로그인 계정에만 붙는다.
+   예외: 대회 시연용 DEMO_USER_IDS 는 게스트 계정도 프리미엄으로 동작한다.
 
    화면의 '프리미엄 시작하기'는 결제를 받지 않는다. 결제 연동이 준비 중이라는
    사실을 그대로 안내한다 (결제 정보를 입력받는 화면을 만들지 않는다).
@@ -30,6 +31,7 @@ AI 직접 생성(자소서 · 첨삭 · 점수 설명)은 로그인한 프리미
 import streamlit as st
 
 from core import session as ss
+from services import access
 
 # services/llm.py · review.py · score_explain.py 와 같은 키 이름
 _KEY_NAMES = ("CLAUDE_API_KEY", "ANTHROPIC_API_KEY")
@@ -60,24 +62,33 @@ def has_api_key() -> bool:
 
 
 def premium_user_ids() -> set[str]:
+    """st.secrets 의 PREMIUM_USER_IDS (TOML 배열 · 쉼표 문자열 모두 허용)."""
+    return access.id_list("PREMIUM_USER_IDS")
+
+
+def demo_user_ids() -> set[str]:
     """
-    st.secrets 의 PREMIUM_USER_IDS. TOML 배열과 쉼표 구분 문자열 둘 다 받는다
-    (Streamlit Cloud 의 Secrets 편집기에서 배열 문법을 틀리는 경우가 잦다).
+    st.secrets 의 DEMO_USER_IDS — 대회 시연용 계정.
+
+    프리미엄과 달리 게스트 계정도 허용한다. 시연장에서는 소셜 로그인보다
+    이어하기 코드로 들어가는 편이 빠르고 확실하기 때문이다. 대신 그 코드를 아는
+    사람은 누구나 AI(과금) 기능을 쓸 수 있으므로, 시연이 끝나면 목록에서 지운다.
     """
-    raw = _secret("PREMIUM_USER_IDS", [])
-    if isinstance(raw, str):
-        items = raw.split(",")
-    else:
-        try:
-            items = list(raw)
-        except TypeError:
-            items = []
-    return {str(item).strip() for item in items if str(item).strip()}
+    return access.id_list("DEMO_USER_IDS")
+
+
+def is_demo() -> bool:
+    uid = ss.user_id()
+    return bool(uid) and uid in demo_user_ids()
 
 
 def plan() -> str:
     uid = ss.user_id()
-    if uid and ss.provider() not in ("", "guest") and uid in premium_user_ids():
+    if not uid:
+        return PLAN_FREE
+    if uid in demo_user_ids():
+        return PLAN_PREMIUM
+    if ss.provider() not in ("", "guest") and uid in premium_user_ids():
         return PLAN_PREMIUM
     return PLAN_FREE
 

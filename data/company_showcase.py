@@ -21,6 +21,9 @@ ID 는 화면에 나오지 않는 내부 키다.
 - ideal_talent: 캐치 스타일 "인재상 키워드" (자소서 생성 시 학생 강점과 매칭)
 - avg_applicant_grade / avg_applicant_certs: "합격자 평균 스펙" 예시 (비교 서사용)
 - required_skills: 코멘토 스타일 커리큘럼 생성에 쓰이는 직무 핵심 스킬 목록
+- region / work_conditions: 근무지 · 근무 조건. 아래 20건에는 확인된 값이 없어
+  비워 둔다(지어내지 않는다). 팀이 출처와 함께 '기업 데이터 입력' 화면으로 채우면
+  스토리 카드 ④에 나온다. 값이 없으면 카드 ④에는 복지 항목만 나온다.
 """
 
 COMPANY_SHOWCASE = [
@@ -372,7 +375,8 @@ def all_companies() -> list:
     """
     from services.curated import load as _load_curated
 
-    merged = {c["id"]: c for c in COMPANY_SHOWCASE}
+    # 근무지·근무조건 필드를 모든 기업에 둔다(값이 없으면 빈 문자열)
+    merged = {c["id"]: {"region": "", "work_conditions": "", **c} for c in COMPANY_SHOWCASE}
     for row in _load_curated():
         ident = row.get("id")
         if ident:
