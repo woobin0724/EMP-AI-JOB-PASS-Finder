@@ -18,7 +18,7 @@ from services import auth as auth_svc
 from ui import mascot
 from ui.components import back_to_hub, grid_columns, render_html, section_title, topbar
 from ui.icons import icon
-from ui.theme import GOLD, GREEN, MUTED, PURPLE, TEXT
+from ui.theme import GREEN, MUTED, PURPLE, TEXT
 
 
 SHIPPED = "구현 완료"
@@ -41,7 +41,7 @@ def _cut_features() -> list[dict]:
         {
             "icon": "lock", "title": "카카오·네이버·구글 소셜 로그인",
             "when": "구현 완료" if oauth_ready else "준비 중",
-            "status_color": GREEN if oauth_ready else GOLD,
+            "status_color": GREEN if oauth_ready else "#FBBF24",
             "why": "로그인은 '다시 돌아올 이유'가 있을 때 필요합니다. 찜하기·진행 기록처럼 "
                    "재방문해야 값이 생기는 기능이 들어오면서 로그인이 비로소 필요해졌습니다.",
             "trigger": ("세 제공자의 OAuth2 인가 코드 흐름을 모두 구현했고, 게스트모드는 "
@@ -80,16 +80,16 @@ def _cut_features() -> list[dict]:
 
 def _feature_card(f: dict) -> None:
     render_html(f"""
-    <div class="mjp-later">
+    <div class="mjp-later" style="border-left-color:{f['status_color']};">
         <div style="display:flex; align-items:center; gap:10px;">
             <div style="flex:none;">{icon(f["icon"], size=22, color=f["status_color"], stroke=1.8)}</div>
             <div>
                 <div style="font-size:var(--mjp-body); font-weight:800; color:{TEXT};">{f['title']}</div>
-                <span class="mjp-badge" style="background:{f['status_color']}; color:#fff;">{f['when']}</span>
+                <span class="mjp-badge" style="background:{f['status_color']}; color:#0A0E17;">{f['when']}</span>
             </div>
         </div>
         <div class="mjp-muted" style="margin-top:12px; line-height:1.6;">{f['why']}</div>
-        <div style="margin-top:10px; font-size:var(--mjp-caption); color:{GREEN};"><b>착수 조건</b> · {f['trigger']}</div>
+        <div style="margin-top:10px; font-size:var(--mjp-caption); color:{GREEN};">▸ {f['trigger']}</div>
     </div>
     """)
 

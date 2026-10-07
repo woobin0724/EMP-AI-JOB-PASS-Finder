@@ -61,7 +61,7 @@ def render() -> None:
     st.markdown(f"""
     <div style="text-align:center; margin:18px 0 6px;">
         {brand.logo_html(max_px=104, min_px=76, detail="mark")}
-        <div class="mjp-serif" style="font-size:var(--mjp-h1); font-weight:800; color:{TEXT}; margin-top:16px;
+        <div style="font-size:var(--mjp-h1); font-weight:800; color:{TEXT}; margin-top:16px;
                     letter-spacing:-0.03em;">로그인</div>
         <div style="color:{MUTED}; font-size:var(--mjp-small); margin-top:8px;">
             진단 결과와 찜한 기업을 다음에 다시 볼 수 있어요.
@@ -79,7 +79,7 @@ def render() -> None:
         # ---------- 게스트모드 ----------
         nickname = st.text_input(
             "이름 또는 닉네임", key="guest_nickname",
-            placeholder="예: 김우빈",
+            placeholder="예: 김우빈", label_visibility="collapsed",
         )
         if st.button("게스트모드로 바로 시작하기", type="primary",
                      use_container_width=True, key="guest_login_btn"):
@@ -126,7 +126,7 @@ def render() -> None:
                     st.error("해당 코드로 저장된 기록을 찾지 못했습니다. 코드를 다시 확인해주세요.")
 
         st.markdown("<div style='height:8px;'></div>", unsafe_allow_html=True)
-        if st.button("처음 화면으로", use_container_width=True, key="login_back"):
+        if st.button("← 처음 화면으로", use_container_width=True, key="login_back"):
             ss.goto(ss.PAGE_LANDING)
 
     # ---------- 개발자용 설정 현황 ----------

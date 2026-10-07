@@ -157,12 +157,12 @@ def _company_detail(c: dict) -> None:
     pcol1, pcol2 = st.columns(2)
     with pcol1:
         st.markdown(f"""<div class="mjp-card" style="border-color:{GREEN};">
-            <b style="color:{GREEN};">장점 (예시)</b>
+            <b style="color:{GREEN};">● 장점 (예시)</b>
             <div class="mjp-muted" style="margin-top:8px; color:{TEXT};">{c['pros']}</div></div>""",
                     unsafe_allow_html=True)
     with pcol2:
         st.markdown(f"""<div class="mjp-card" style="border-color:{RED};">
-            <b style="color:{RED};">단점/고충 (예시)</b>
+            <b style="color:{RED};">● 단점/고충 (예시)</b>
             <div class="mjp-muted" style="margin-top:8px; color:{TEXT};">{c['cons']}</div></div>""",
                     unsafe_allow_html=True)
 
@@ -179,7 +179,7 @@ def _company_detail(c: dict) -> None:
     st.markdown("##### 예상 기출 면접 질문 3선 (예시)")
     for i, q in enumerate(c["interview_questions"]):
         st.markdown(
-            f'<div class="mjp-interview"><b class="mjp-qno">Q{i + 1}.</b> {q}</div>',
+            f'<div class="mjp-interview"><span class="mjp-qbadge">인터뷰 질문 {i + 1:02d}</span>Q. {q}</div>',
             unsafe_allow_html=True)
 
     st.markdown("##### 코멘토 스타일 4주 맞춤 커리큘럼 (예시)")

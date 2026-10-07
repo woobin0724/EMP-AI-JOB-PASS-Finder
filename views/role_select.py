@@ -37,7 +37,7 @@ ROLES = [
 def render() -> None:
     st.markdown(f"""
     <div style="text-align:center; margin:26px 0 10px;">
-        <div class="mjp-serif" style="font-size:var(--mjp-display); font-weight:800; color:{TEXT}; letter-spacing:-0.01em;">
+        <div style="font-size:var(--mjp-display); font-weight:800; color:{TEXT}; letter-spacing:-0.03em;">
             어떻게 사용하실 건가요?
         </div>
         <div style="color:{MUTED}; font-size:var(--mjp-body); margin-top:12px; line-height:1.6;">

@@ -10,7 +10,3 @@ data/userdata/
 
 # API 키 (OGQ 등) — 절대 커밋하지 않는다
 .env
-
-# impeccable 디자인 검토용 스크린샷·로컬 설정 — 커밋하지 않는다
-.impeccable/review/
-.impeccable/config.local.json

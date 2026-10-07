@@ -158,14 +158,14 @@ def _render_generator() -> None:
 
         badges = ""
         if st.session_state.cover_letter_source == "ai":
-            badges += f'<span class="mjp-badge" style="background:{GREEN}; color:#fff;">AI 생성</span> '
+            badges += f'<span class="mjp-badge" style="background:{GREEN}; color:{BG};">AI 생성</span> '
         elif st.session_state.cover_letter_source == "template":
-            badges += f'<span class="mjp-badge" style="background:{BG}; color:{MUTED}; border:1px solid {CARD_BORDER};">템플릿 생성</span> '
+            badges += f'<span class="mjp-badge" style="background:{CARD_BORDER}; color:{MUTED};">템플릿 생성</span> '
         if st.session_state.cover_letter_cached:
             badges += f'<span class="mjp-badge" style="background:{BLUE}; color:#fff;">캐시 응답 · API 호출 0회</span> '
         opts = st.session_state.get("cover_letter_options")
         if opts:
-            badges += (f'<span class="mjp-badge" style="background:{BG}; color:{MUTED}; border:1px solid {CARD_BORDER};">'
+            badges += (f'<span class="mjp-badge" style="background:{CARD_BORDER}; color:{MUTED};">'
                        f'{opts["tone"]} · {opts["length"]}자 · {opts["variation"] + 1}회차</span>')
 
         # ▣ 들여쓰기 금지
@@ -174,9 +174,10 @@ def _render_generator() -> None:
         #   그대로 노출됐다. 그래서 들여쓰기 없이 조립한다.
         st.markdown(
             '<div class="mjp-card">'
-            '<div style="font-size:var(--mjp-h2); font-weight:800;">'
+            f'<span class="mjp-badge" style="background:{CARD_BORDER}; color:{MUTED};">DRAFT SHEET</span> '
+            f'{badges}'
+            '<div style="font-size:var(--mjp-h2); font-weight:800; margin-top:10px;">'
             '합격 자기소개서 전문 통합 시트</div>'
-            f'<div style="margin-top:8px;">{badges}</div>'
             f'<div class="mjp-muted" style="margin-top:4px;">{target_company["name"]} 인재상: '
             f'{", ".join(target_company["ideal_talent"])}</div>'
             '</div>',

@@ -32,12 +32,11 @@ detail 수준
 
 import itertools
 
-# 금박 램프 — 엠블럼은 언제나 네이비 표지(상단 바·랜딩 표지) 위에 찍힌다.
-# 국가기술자격증 수첩 표지의 금박 문장처럼 보이도록 금색 세 단으로 칠한다.
-INK_LIGHT = "#EAD6A0"   # 금박 하이라이트
-INK_MID = "#C8A55E"     # 금박 기본
-INK_DEEP = "#A8843C"    # 금박 그늘
-GLOW = "#C8A55E"
+# 로고에서 추출한 컬러 램프 (원본의 네이비 잉크를 다크 배경용으로 밝기 반전)
+INK_LIGHT = "#A8CEF5"   # 시안 하이라이트
+INK_MID = "#4C8FE0"     # 일렉트릭 블루 (로고 회로선)
+INK_DEEP = "#2B6BC4"    # 딥 블루
+GLOW = "#3B82F6"
 
 # 엠블럼 인스턴스마다 gradient id가 겹치지 않도록 하는 카운터
 _uid_counter = itertools.count(1)
@@ -113,8 +112,7 @@ def emblem_svg(size: int = 200, detail: str = "full", uid: str | None = None) ->
       </radialGradient>
     </defs>"""
 
-    # 금박은 빛나지 않는다 — 발광 원은 그리지 않는다
-    glow = ""
+    glow = f'<circle cx="120" cy="120" r="108" fill="url(#{uid}_glow)"/>'
     ring_outer = (f'<circle cx="120" cy="120" r="104" fill="none" stroke="{INK_MID}" '
                   f'stroke-width="1" opacity="0.22"/>')
     ring_dashed = (f'<circle cx="120" cy="120" r="96" fill="none" stroke="{INK_LIGHT}" '

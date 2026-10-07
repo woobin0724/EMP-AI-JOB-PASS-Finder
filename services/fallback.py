@@ -237,46 +237,46 @@ def badge_html(tracker: SourceTracker, colors: dict | None = None) -> str:
     한눈에 보이도록 한다.
     """
     colors = colors or {}
-    live_bg = colors.get("live", "#1D7447")
-    backup_bg = colors.get("backup", "#8A5A00")
-    ink = colors.get("ink", "#FFFFFF")
-    muted = colors.get("muted", "#55606B")
+    live_bg = colors.get("live", "#34D399")
+    backup_bg = colors.get("backup", "#FBBF24")
+    ink = colors.get("ink", "#0A0E17")
+    muted = colors.get("muted", "#8A93A6")
 
     if not tracker.entries:
         return (
             f'<div id="{BADGE_CSS_ID}" style="margin:2px 0 14px;">'
-            f'<span style="background:{muted};color:{ink};font-size:12px;font-weight:800;'
-            f'padding:4px 10px;border-radius:3px;">대기</span>'
-            f'<span style="color:{muted};font-size:var(--mjp-caption);margin-left:8px;">'
+            f'<span style="background:{muted};color:{ink};font-size:11px;font-weight:800;'
+            f'padding:4px 10px;border-radius:999px;">STANDBY</span>'
+            f'<span style="color:{muted};font-size:11.5px;margin-left:8px;">'
             f'아직 외부 데이터를 호출하지 않았습니다.</span></div>'
         )
 
-    curated_bg = colors.get("curated", colors.get("muted", "#55606B"))
+    curated_bg = colors.get("curated", colors.get("muted", "#8A93A6"))
 
     chips = []
     for name, info in tracker.entries.items():
         src = info["source"]
         is_live = src == LIVE
         if src == CURATED:
-            bg, text = curated_bg, "CURATED"
+            bg, text, mark = curated_bg, "CURATED", "◆"
         elif is_live:
-            bg, text = live_bg, "LIVE API"
+            bg, text, mark = live_bg, "LIVE API", "●"
         else:
-            bg, text = backup_bg, "BACKUP DATA"
+            bg, text, mark = backup_bg, "BACKUP DATA", "◐"
         ms = f"{info['elapsed_ms']}ms" if info["elapsed_ms"] else ""
         chips.append(
             f'<span style="display:inline-flex;align-items:center;gap:6px;'
-            f'background:{bg};color:{ink};font-size:12px;font-weight:800;'
-            f'padding:4px 10px;border-radius:3px;margin-right:6px;">'
-            f'{text}'
-            f'<span style="font-weight:600;opacity:.92;">{name}{" · " + ms if ms else ""}</span>'
+            f'background:{bg};color:{ink};font-size:11px;font-weight:800;'
+            f'padding:4px 10px;border-radius:999px;margin-right:6px;">'
+            f'{mark} {text}'
+            f'<span style="font-weight:600;opacity:.75;">{name}{" · " + ms if ms else ""}</span>'
             f'</span>'
         )
 
     note = ""
     if tracker.has_fallback():
         note = (
-            f'<div style="color:{muted};font-size:var(--mjp-caption);margin-top:6px;">'
+            f'<div style="color:{muted};font-size:11.5px;margin-top:6px;">'
             f'일부 소스가 응답하지 않아 준비된 백업 마스터 데이터로 전환했습니다 '
             f'({backup_summary()}). 화면 기능은 100% 그대로 동작합니다.</div>'
         )

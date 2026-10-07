@@ -18,7 +18,7 @@ from services import store
 from ui import mascot
 from ui.components import back_to_hub, grid_columns, section_title, topbar
 from ui.icons import icon
-from ui.theme import BRAND, BRAND_DEEP, BRAND_LIGHT, CARD_BORDER, GOLD, GREEN, MUTED, RED, TEXT
+from ui.theme import BRAND, BRAND_LIGHT, CARD_BORDER, GOLD, GREEN, MUTED, RED, TEXT
 
 _PROVIDER_LABEL = {"kakao": "카카오", "naver": "네이버", "google": "Google", "guest": "게스트모드"}
 _ROLE_LABEL = {"student": "학생", "teacher": "선생님"}
@@ -36,10 +36,10 @@ def render() -> None:
     st.markdown(f"""
     <div class="mjp-card">
         <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
-            <div style="width:62px; height:76px; border-radius:2px; flex:none;
-                        background:{BRAND_DEEP}; box-shadow:inset 0 0 0 3px {BRAND_DEEP}, inset 0 0 0 4px {BRAND_LIGHT};
+            <div style="width:62px; height:62px; border-radius:50%; flex:none;
+                        background:linear-gradient(135deg,#3B82F6,#8B5CF6);
                         display:flex; align-items:center; justify-content:center;">
-                        {icon("user", size=28, color=BRAND_LIGHT, stroke=1.8)}</div>
+                        {icon("user", size=28, color="#fff", stroke=1.8)}</div>
             <div style="flex:1; min-width:180px;">
                 <div style="font-size:var(--mjp-h2); font-weight:800; color:{TEXT};">{ss.display_name()}</div>
                 <div class="mjp-muted" style="margin-top:5px;">
@@ -168,7 +168,7 @@ def _class_section(saved: dict) -> None:
         klass = store.get_class(code)
         st.markdown(f"""
         <div class="mjp-card" style="border-color:{GREEN};">
-            <span class="mjp-badge" style="background:{GREEN}; color:#fff;">등록됨</span>
+            <span class="mjp-badge" style="background:{GREEN}; color:#0A0E17;">등록됨</span>
             <div style="font-size:var(--mjp-body); font-weight:800; color:{TEXT}; margin-top:10px;">
                 {store.class_label(klass) or code}</div>
             <div class="mjp-muted" style="margin-top:4px;">반 코드 {code}</div>

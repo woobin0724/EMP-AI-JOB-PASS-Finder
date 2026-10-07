@@ -54,7 +54,7 @@ def render() -> None:
 
     with right:
         st.markdown(f"""
-        <div class="mjp-card">
+        <div class="mjp-card" style="border-left:3px solid {BRAND};">
             <div style="font-weight:800; color:{TEXT};">반을 만들면 이런 걸 볼 수 있어요</div>
             <ul style="color:{MUTED}; font-size:var(--mjp-caption); margin:12px 0 0; padding-left:18px;
                        line-height:1.75;">
@@ -131,7 +131,7 @@ def _render_existing(klass: dict) -> None:
     if st.button("우리 반 현황 보기", type="primary", use_container_width=True,
                  key="cls_to_board"):
         ss.goto(ss.PAGE_CLASS_BOARD)
-    if st.button("메인 허브로", use_container_width=True, key="cls_to_hub"):
+    if st.button("← 메인 허브로", use_container_width=True, key="cls_to_hub"):
         ss.goto(ss.PAGE_HUB)
 
     st.markdown(f'<div style="height:1px;background:{CARD_BORDER};margin:16px 0;"></div>',

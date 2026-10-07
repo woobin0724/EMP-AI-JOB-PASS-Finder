@@ -19,7 +19,7 @@ from services.strong_sme_api import PRIORITY_DEPARTMENTS, prioritize_by_departme
 from ui import mascot
 from ui.components import back_to_hub, disclaimer, grid_columns, render_html, section_title, topbar
 from ui.icons import icon
-from ui.theme import BADGE_COLORS, GREEN, RED, TEXT, render_stars
+from ui.theme import BADGE_COLORS, BG, GREEN, RED, TEXT, render_stars
 
 
 def render() -> None:
@@ -90,7 +90,7 @@ def render() -> None:
                 certs_list = r.get("required_certs") or []
                 cert_str = ", ".join(certs_list) if certs_list else "정보 없음"
                 priority_badge = (
-                    f' <span class="mjp-tag" style="background:{GREEN}; color:#fff;">전공 우선매칭</span>'
+                    f' <span class="mjp-tag" style="background:{GREEN}; color:{BG};">전공 우선매칭</span>'
                     if r.get("company_type") == "강소기업" and r.get("department") in PRIORITY_DEPARTMENTS
                     else ""
                 )
@@ -152,7 +152,7 @@ def render() -> None:
             with col:
                 render_html(f"""
                 <div class="mjp-card" style="border-color:{GREEN};">
-                    <span class="mjp-badge" style="background:{GREEN}; color:#fff;">
+                    <span class="mjp-badge" style="background:{GREEN}; color:{BG};">
                         매칭 {c['match_score']:.0f}점</span>
                     <div style="font-size:var(--mjp-body); font-weight:800; margin-top:10px;">{c['name']}</div>
                     <div class="mjp-muted">{c['size_tag']} · {c['category']}</div>
@@ -186,17 +186,17 @@ def render() -> None:
             heart = (icon("heart", size=15, color=RED, filled=True)
                      if activity.is_bookmarked(c["id"]) else "")
             match_chip = (
-                f'<span class="mjp-badge" style="background:{GREEN}; color:#fff; '
+                f'<span class="mjp-badge" style="background:{GREEN}; color:{BG}; '
                 f'margin-left:6px;">매칭 {c["match_score"]:.0f}</span>'
                 if c.get("match_score") is not None else ""
             )
             render_html(f"""
-            <div class="mjp-card mjp-company">
+            <div class="mjp-card">
                 <span class="mjp-tag">{c['size_tag']} · {c['field_tag']}</span>{match_chip}
                 <span style="float:right; display:inline-flex; align-items:center; gap:6px;">
                     {render_stars(c['overall_rating'])}{heart}
                 </span>
-                <div class="mjp-company-name" title="{c['name']}" style="font-size:var(--mjp-h2); font-weight:800; margin-top:8px;">{c['name']}</div>
+                <div style="font-size:var(--mjp-h2); font-weight:800; margin-top:8px;">{c['name']}</div>
                 <div class="mjp-muted" style="margin-bottom:8px;">{c['description']}</div>
                 <div class="mjp-muted">인재상<br><b style="color:{TEXT};">{', '.join(c['ideal_talent'])}</b></div>
                 <div class="mjp-muted" style="margin-top:6px;">독점 복지 혜택<br>
