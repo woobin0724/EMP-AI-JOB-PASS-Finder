@@ -123,7 +123,7 @@ MOCK_JOBS = [
     {"id": 32, "company": "청정식품가공", "title": "식품가공 생산관리직",
      "department": "식품가공과", "required_cert_codes": ["FD01"],
      "region": "전북 익산", "salary": "2,600~2,900만원", "company_type": "중소기업"},
-    {"id": 33, "company": "삼립베이커리랩", "title": "제과·제빵 생산기술직",
+    {"id": 33, "company": "고소한베이커리랩", "title": "제과·제빵 생산기술직",
      "department": "식품가공과", "required_cert_codes": ["FD02", "FD03"],
      "region": "전북 전주", "salary": "2,700~3,000만원", "company_type": "중견기업"},
     {"id": 34, "company": "익산푸드파크", "title": "식품안전 품질관리 신입",

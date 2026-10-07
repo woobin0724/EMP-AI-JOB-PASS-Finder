@@ -26,6 +26,7 @@ import streamlit as st
 
 from core.catalog import completed_milestones
 from data.roadmap import stage_label
+from data.company_showcase import COMPANY_BY_ID
 from services import store
 
 
@@ -122,7 +123,9 @@ def student_summary(user: dict) -> dict:
         "name": user.get("display_name") or "이름 미입력",
         "dept": profile.get("dept") or "-",
         "grade": profile.get("grade"),
-        "target": profile.get("target_company_name") or "-",
+        # 저장된 이름이 아니라 ID 로 현재 기업명을 찾는다 (기업명이 바뀌어도 일관)
+        "target": (COMPANY_BY_ID.get(profile.get("target_company_id") or "", {}).get("name")
+                   or profile.get("target_company_name") or "-"),
         "score": latest["score"] if latest else None,
         "scored_at": (latest["at"][:10] if latest else "-"),
         "stage": stage_label(done),

@@ -307,7 +307,9 @@ def score_dataframe(series: list[dict]):
         {"회차": i + 1,
          "시각": pd.to_datetime(row["at"]),
          "점수": row["score"],
-         "목표 기업": row.get("company_name") or "일반 진단"}
+         # 저장된 이름이 아니라 ID 로 현재 기업명을 찾는다 (기업명이 바뀌어도 일관)
+         "목표 기업": (COMPANY_BY_ID.get(row.get("company_id") or "", {}).get("name")
+                    or row.get("company_name") or "일반 진단")}
         for i, row in enumerate(series)
     ])
 

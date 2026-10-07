@@ -5,11 +5,16 @@ data/company_showcase.py
 캐치(Catch) 스타일 기업 분석 카드 백업(모의) 데이터 20건.
 
 ※ 중요 안내
-기업명은 학생들이 친숙하게 느낄 수 있도록 실제 대기업/공기업명을 일부
-예시로 사용했지만(삼성전자, SK하이닉스, 현대자동차, 한국전력공사 등),
-별점·복지·인재상·합격자 평균 스펙·선배 리뷰·면접질문 등 세부 내용은 모두
-팀이 구성한 예시(모의) 콘텐츠이며 실제 사실이 아닙니다. 나머지 기업명은
-전부 가상(fictional) 기업입니다. 화면에도 "예시 데이터" 라벨을 노출합니다.
+기업명은 전부 가상(fictional)이다. 별점·복지·인재상·합격자 평균 스펙·
+선배 리뷰·면접질문 등 세부 내용은 팀이 구성한 예시(모의) 콘텐츠이며 실제
+사실이 아니다. 화면에도 "예시 데이터" 라벨을 노출한다.
+
+이전에는 일부 항목에 실제 대기업·공기업명을 썼다. 실제 기업에 팀이 만든
+별점·리뷰·장단점이 붙으면 그 기업의 실제 정보로 오해될 수 있어 가상 이름으로
+바꿨다. 기업 ID(hyundai_motor, kepco 등)는 그대로 둔다 — 찜·관심·열람·점수
+기록이 ID 로 연결돼 있어서, ID 를 바꾸면 학생들의 기존 기록이 끊긴다.
+ID 는 화면에 나오지 않는 내부 키다.
+[팀 확인 필요] 새 가상 기업명이 실존 기업명과 겹치지 않는지.
 
 각 항목 설명
 ------------
@@ -68,7 +73,7 @@ COMPANY_SHOWCASE = [
      "avg_applicant_grade": 2.6, "avg_applicant_certs": 2,
      "required_skills": ["정밀측정 기법", "CAD 도면 해석", "생산자동화 기초", "품질관리 QC 7종 도구"]},
 
-    {"id": "hyundai_motor", "name": "현대자동차", "size_tag": "대기업", "field_tag": "기계",
+    {"id": "hyundai_motor", "name": "한결모빌리티", "size_tag": "대기업", "field_tag": "기계",
      "category": "기계", "description": "완성차 제조 및 조립",
      "overall_rating": 4.7, "hire_dept": "완성차 생산기술부",
      "benefit_short": "신차 구매 지원, 정년 보장, 사내 복지몰 운영 등",
@@ -85,7 +90,7 @@ COMPANY_SHOWCASE = [
      "required_skills": ["자동차 생산공정 이해", "산업용 로봇 기초", "표준작업 절차(SOP)", "품질 이상감지"]},
 
     # ---------------- 전자/전기 ----------------
-    {"id": "samsung_ds", "name": "삼성전자 DS부문", "size_tag": "대기업", "field_tag": "전자/전기",
+    {"id": "samsung_ds", "name": "누리반도체", "size_tag": "대기업", "field_tag": "전자/전기",
      "category": "전자/전기", "description": "반도체 제조 및 설비",
      "overall_rating": 4.8, "hire_dept": "반도체 설비기술부",
      "benefit_short": "사내 대학 학위 지원, 사내식당 무료 제공 등",
@@ -101,7 +106,7 @@ COMPANY_SHOWCASE = [
      "avg_applicant_grade": 1.9, "avg_applicant_certs": 3,
      "required_skills": ["반도체 8대 공정 개요", "설비 회로 분석", "시퀀스 제어(PLC) 기초", "클린룸 작업 수칙"]},
 
-    {"id": "sk_hynix", "name": "SK하이닉스", "size_tag": "대기업", "field_tag": "전자/전기",
+    {"id": "sk_hynix", "name": "새벽메모리테크", "size_tag": "대기업", "field_tag": "전자/전기",
      "category": "전자/전기", "description": "메모리 반도체 생산",
      "overall_rating": 4.7, "hire_dept": "반도체 양산기술부",
      "benefit_short": "가족 의료비 지원, 기숙사 무상 지원, 자녀 학자금 지원 등",
@@ -133,7 +138,7 @@ COMPANY_SHOWCASE = [
      "avg_applicant_grade": 2.9, "avg_applicant_certs": 2,
      "required_skills": ["전기설비 점검 절차", "배전반 구조 이해", "전기안전 기준(KEC)", "측정기기 사용법"]},
 
-    {"id": "kepco", "name": "한국전력공사", "size_tag": "공기업", "field_tag": "전자/전기",
+    {"id": "kepco", "name": "한누리전력공사", "size_tag": "공기업", "field_tag": "전자/전기",
      "category": "전자/전기", "description": "전력 수송 및 배전 설비",
      "overall_rating": 4.9, "hire_dept": "송배전 제어실",
      "benefit_short": "전용 사택 무상 제공, 저리 이주 기금, 학자금 전액 지원 등",
@@ -199,7 +204,7 @@ COMPANY_SHOWCASE = [
      "required_skills": ["서버 기초 운영", "네트워크 모니터링", "장애 대응 절차", "리눅스 기본 명령어"]},
 
     # ---------------- 바이오/화학 ----------------
-    {"id": "hanwha_solutions", "name": "한화솔루션", "size_tag": "중견기업", "field_tag": "바이오/화학",
+    {"id": "hanwha_solutions", "name": "햇살케미칼", "size_tag": "중견기업", "field_tag": "바이오/화학",
      "category": "바이오/화학", "description": "태양광 및 화학 소재",
      "overall_rating": 4.6, "hire_dept": "화학소재 가공 공정제어실",
      "benefit_short": "임직원 정착 저리 주택 대출, 사내 세 끼 무료 식당 등",
@@ -215,7 +220,7 @@ COMPANY_SHOWCASE = [
      "avg_applicant_grade": 2.4, "avg_applicant_certs": 2,
      "required_skills": ["화학공정 안전관리", "위험물 취급기준(MSDS)", "태양광 소재 기초", "공정계측 기초"]},
 
-    {"id": "cosmax", "name": "코스맥스 (COSMAX)", "size_tag": "중견기업", "field_tag": "바이오/화학",
+    {"id": "cosmax", "name": "온새미코스메틱", "size_tag": "중견기업", "field_tag": "바이오/화학",
      "category": "바이오/화학", "description": "글로벌 화장품 연구제조",
      "overall_rating": 4.3, "hire_dept": "생산 가공 공정 보전팀",
      "benefit_short": "화장품 임직원 특가, 자녀 학자금 지원, 가족 건강검진 등",
@@ -264,7 +269,7 @@ COMPANY_SHOWCASE = [
      "avg_applicant_grade": 3.0, "avg_applicant_certs": 1,
      "required_skills": ["스마트팜 센서/환경제어 기초", "작물 생육 관리", "농업 ICT 기초", "데이터 기록·분석 습관"]},
 
-    {"id": "sillip_bakery", "name": "삼립베이커리랩", "size_tag": "중견기업", "field_tag": "농생명",
+    {"id": "sillip_bakery", "name": "고소한베이커리랩", "size_tag": "중견기업", "field_tag": "농생명",
      "category": "농생명", "description": "제과·제빵 생산기술",
      "overall_rating": 4.3, "hire_dept": "생산기술팀",
      "benefit_short": "제품 할인 구매, 명절 상여금, 자격증 수당 등",
