@@ -53,6 +53,16 @@ _LEGACY_SLOTS = {
 
 SLOT_NAMES = tuple(_LEGACY_SLOTS)
 
+# 슬롯 이미지가 없을 때 대신 쓸 슬롯 (가까운 감정 순).
+# ogq_thinking.jpg 는 코드가 찾지만 저장소에 없다 — 출처를 모르는 이미지를
+# 새로 넣는 대신, 이미 있는 마스코트 중 가까운 감정으로 대체한다.
+_SLOT_FALLBACKS = {
+    "thinking": ("encourage", "cheer", "welcome"),
+    "celebrate": ("cheer", "thanks", "welcome"),
+    "comfort": ("encourage", "cheer", "welcome"),
+    "stamp": ("celebrate", "cheer", "welcome"),
+}
+
 
 # ------------------------------------------------------------
 # 매니페스트
@@ -116,12 +126,25 @@ def _api_path(slot: str) -> str | None:
     return path if os.path.exists(path) else None
 
 
-def _legacy_path(slot: str) -> str | None:
+def _legacy_file(slot: str) -> str | None:
     name = _LEGACY_SLOTS.get(slot)
     if not name:
         return None
     path = os.path.join(LEGACY_DIR, name)
     return path if os.path.exists(path) else None
+
+
+def _legacy_path(slot: str) -> str | None:
+    """
+    슬롯 → 실제 파일. 없으면 가까운 감정 → 아무 슬롯 순으로 대체한다.
+    전부 없으면 None (화면은 마스코트 자리를 아예 그리지 않는다).
+    """
+    order = (slot,) + _SLOT_FALLBACKS.get(slot, ()) + SLOT_NAMES
+    for candidate in order:
+        path = _legacy_file(candidate)
+        if path:
+            return path
+    return None
 
 
 # ------------------------------------------------------------
