@@ -115,3 +115,14 @@ class MyBackend:
 
 `services/store.py` 는 이 두 함수만 부르므로 나머지 코드는 건드리지 않아도
 됩니다.
+
+## 사용 기록 문서 (usage)
+
+`services/usage_log.py` 가 쌓는 사용 기록(접속일 · 화면 이동 · 스토리 반응)은
+같은 `app_state` 테이블의 **`usage` 행**에 저장된다. 테이블을 새로 만들 필요는 없다.
+Supabase 가 없으면 `data/userdata/usage.json` 에 쓴다(.gitignore 대상).
+
+- 사용자는 user_id 의 sha256 해시 앞 16자로만 남는다. 이름·학교·입력 내용은 남지 않는다.
+- `APP_ENV = "production"` 이 아닌 환경과 관리자·데모·테스트 계정의 기록은 `is_test` 로 표시된다.
+- 이벤트는 최근 20,000건까지만 보관한다.
+

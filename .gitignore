@@ -13,3 +13,6 @@ data/userdata/
 
 # 기업 스토리 반응 기록 — 학생 식별값이 들어가므로 커밋하지 않는다
 data/reactions.json
+
+# 사용 기록(접속일·화면 이동·반응) — 해시 ID 만 있지만 운영 데이터이므로 커밋하지 않는다
+data/userdata/usage.json

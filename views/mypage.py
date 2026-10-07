@@ -113,9 +113,15 @@ def render() -> None:
     # 팀 관리자 진입구 — ADMIN_USER_IDS 에 등록된 계정에만 보인다.
     # (화면 쪽에서도 다시 검사하므로 URL 로 직접 들어와도 막힌다)
     if access.is_admin():
-        if st.button("기업 데이터 입력 (팀 관리자)", use_container_width=True,
-                     key="mypage_admin_data"):
-            ss.goto(ss.PAGE_ADMIN_DATA)
+        acol1, acol2 = st.columns(2)
+        with acol1:
+            if st.button("기업 데이터 입력 (팀 관리자)", use_container_width=True,
+                         key="mypage_admin_data"):
+                ss.goto(ss.PAGE_ADMIN_DATA)
+        with acol2:
+            if st.button("사용 통계 (팀 관리자)", use_container_width=True,
+                         key="mypage_admin_stats"):
+                ss.goto(ss.PAGE_ADMIN_STATS)
 
     st.caption(f"저장소 현황: {store.store_summary()}")
     st.caption("Streamlit Community Cloud는 재배포·슬립 해제 시 파일시스템이 초기화됩니다. "

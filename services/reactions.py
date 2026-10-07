@@ -21,6 +21,7 @@ from datetime import datetime
 import streamlit as st
 
 from core import session as ss
+from services import usage_log
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 REACTIONS_PATH = os.path.join(BASE_DIR, "data", "reactions.json")
@@ -92,6 +93,8 @@ def record(company_id: str, reaction: str) -> None:
     if state.get(company_id) == reaction:
         return
     state[company_id] = reaction
+    # 통계용 사용 기록에도 남긴다 (해시 ID · Supabase 연결 시 재배포 후에도 보존)
+    usage_log.log_reaction(company_id, reaction)
     _append({
         "student": student_key(),
         "company_id": company_id,

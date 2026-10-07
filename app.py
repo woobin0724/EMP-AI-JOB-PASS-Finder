@@ -42,9 +42,10 @@ st.set_page_config(
 
 from core import session as ss                      # noqa: E402
 from services import auth as auth_svc               # noqa: E402
+from services import usage_log                      # noqa: E402
 from ui.theme import inject_css                     # noqa: E402
 from views import (                                 # noqa: E402
-    admin_data, class_board, class_join, class_setup, hub, landing, login, mypage,
+    admin_data, admin_stats, class_board, class_join, class_setup, hub, landing, login, mypage,
     role_select,
     tab_explore, tab_guide, tab_next, tab_resume, tab_spec,
 )
@@ -93,6 +94,11 @@ ROUTES = {
     ss.PAGE_RESUME: tab_resume.render,
     ss.PAGE_NEXT: tab_next.render,
     ss.PAGE_ADMIN_DATA: admin_data.render,
+    ss.PAGE_ADMIN_STATS: admin_stats.render,
 }
+
+# 사용 기록 — 접속일(세션당 하루 1번)과 화면 이동(화면이 바뀔 때만).
+# 로그인 전에는 남기지 않는다. 실패해도 화면은 그대로 그린다.
+usage_log.track(ss.current_page())
 
 ROUTES.get(ss.current_page(), landing.render)()

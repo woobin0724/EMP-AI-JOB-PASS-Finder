@@ -47,6 +47,16 @@ STORE_PATH = os.path.join(STORE_DIR, "store.json")
 TABLE = "app_state"
 ROW_KEY = "main"
 
+# 문서 이름 → (로컬 파일, Supabase 행 키).
+# main  : 사용자·반·활동기록 (services/store.py)
+# usage : 사용 기록 — 접속일·화면 이동·스토리 반응 (services/usage_log.py)
+# 같은 app_state 테이블에 행만 하나 더 생긴다. 스키마 변경이 없다.
+USAGE_PATH = os.path.join(STORE_DIR, "usage.json")
+DOCS = {
+    "main": (None, ROW_KEY),          # None = STORE_PATH (테스트가 바꿔 끼울 수 있게 늦게 읽는다)
+    "usage": (USAGE_PATH, "usage"),
+}
+
 REQUEST_TIMEOUT = 8.0
 MAX_RETRIES = 3          # 낙관적 잠금 충돌 시 재시도 횟수
 
@@ -65,7 +75,9 @@ def last_error() -> str:
 
 
 # 문서 최상위의 '레코드 모음' 키들. 이 안은 id → 레코드 구조라 키 단위로 합칠 수 있다.
-_COLLECTIONS = ("users", "classes")
+_COLLECTIONS = ("users", "classes", "visitors")
+# 문서 최상위의 '목록' 키들. 각 항목이 고유 "id" 를 가져 합집합으로 합칠 수 있다.
+_LIST_COLLECTIONS = ("events",)
 
 
 def _merge(fresh: dict, mine: dict) -> dict:
@@ -81,11 +93,27 @@ def _merge(fresh: dict, mine: dict) -> dict:
     """
     merged = dict(fresh)
     for key in _COLLECTIONS:
+        if key not in fresh and key not in mine:
+            continue
         base = dict(fresh.get(key) or {})
         base.update(mine.get(key) or {})
         merged[key] = base
+    for key in _LIST_COLLECTIONS:
+        if key not in fresh and key not in mine:
+            continue
+        # 이벤트 로그는 추가만 한다 — 양쪽 항목을 id 로 합치고 시간순으로 정렬
+        seen, items = set(), []
+        for item in list(fresh.get(key) or []) + list(mine.get(key) or []):
+            ident = item.get("id") if isinstance(item, dict) else None
+            if ident in seen:
+                continue
+            seen.add(ident)
+            items.append(item)
+        items.sort(key=lambda e: e.get("at", "") if isinstance(e, dict) else "")
+        merged[key] = items
+    skip = set(_COLLECTIONS) | set(_LIST_COLLECTIONS) | {"_meta"}
     for key, value in mine.items():
-        if key not in _COLLECTIONS and key != "_meta":
+        if key not in skip:
             merged[key] = value
     merged["_meta"] = mine.get("_meta", fresh.get("_meta", {}))
     return merged
@@ -115,22 +143,29 @@ class LocalJsonBackend:
     name = "로컬 파일"
     durable = False
 
+    def __init__(self, path: str | None = None):
+        self.path = path
+
+    def _path(self) -> str:
+        return self.path or STORE_PATH
+
     def read(self, empty_doc):
         try:
-            with open(STORE_PATH, "r", encoding="utf-8") as f:
+            with open(self._path(), "r", encoding="utf-8") as f:
                 return json.load(f)
         except Exception:
             return empty_doc()
 
     def write(self, doc) -> bool:
         try:
-            os.makedirs(STORE_DIR, exist_ok=True)
+            folder = os.path.dirname(self._path())
+            os.makedirs(folder, exist_ok=True)
             with _LOCK:
-                fd, tmp = tempfile.mkstemp(dir=STORE_DIR, suffix=".tmp")
+                fd, tmp = tempfile.mkstemp(dir=folder, suffix=".tmp")
                 try:
                     with os.fdopen(fd, "w", encoding="utf-8") as f:
                         json.dump(doc, f, ensure_ascii=False, indent=2)
-                    os.replace(tmp, STORE_PATH)
+                    os.replace(tmp, self._path())
                 except Exception:
                     if os.path.exists(tmp):
                         os.remove(tmp)
@@ -160,7 +195,10 @@ class SupabaseBackend:
     name = "Supabase"
     durable = True
 
-    def __init__(self, url: str, key: str):
+    def __init__(self, url: str, key: str, row_key: str = ROW_KEY,
+                 local: "LocalJsonBackend | None" = None):
+        self.row_key = row_key
+        self._local = local or LocalJsonBackend()   # 실패 시 내려갈 로컬 사본
         self.base = url.rstrip("/") + f"/rest/v1/{TABLE}"
         self.headers = {
             "apikey": key,
@@ -172,7 +210,7 @@ class SupabaseBackend:
     def _get(self):
         res = requests.get(
             self.base,
-            params={"key": f"eq.{ROW_KEY}", "select": "doc,version"},
+            params={"key": f"eq.{self.row_key}", "select": "doc,version"},
             headers=self.headers, timeout=REQUEST_TIMEOUT,
         )
         res.raise_for_status()
@@ -192,7 +230,7 @@ class SupabaseBackend:
         except Exception as exc:
             _last_error = f"{type(exc).__name__}: {exc}"[:200]
             # 읽기 실패 시 로컬에 남아 있는 것이라도 보여준다
-            return LocalJsonBackend().read(empty_doc)
+            return self._local.read(empty_doc)
 
     def write(self, doc) -> bool:
         global _last_error
@@ -202,7 +240,7 @@ class SupabaseBackend:
                     row = self._get()
                     self._version = int(row.get("version") or 0) if row else 0
 
-                payload = {"key": ROW_KEY, "doc": doc,
+                payload = {"key": self.row_key, "doc": doc,
                            "version": self._version + 1, "updated_at": _now()}
 
                 if self._version == 0:
@@ -215,7 +253,7 @@ class SupabaseBackend:
                 else:
                     res = requests.patch(
                         self.base,
-                        params={"key": f"eq.{ROW_KEY}",
+                        params={"key": f"eq.{self.row_key}",
                                 "version": f"eq.{self._version}"},
                         headers={**self.headers, "Prefer": "return=representation"},
                         json=payload, timeout=REQUEST_TIMEOUT,
@@ -227,7 +265,7 @@ class SupabaseBackend:
                     self._version = int(changed[0].get("version") or self._version + 1)
                     # 로컬에도 같은 내용을 남겨둔다 — 다음에 Supabase 가
                     # 응답하지 않아도 마지막 상태를 보여줄 수 있다.
-                    LocalJsonBackend().write(doc)
+                    self._local.write(doc)
                     return True
 
                 # 갱신된 행이 0개 = 그 사이 다른 사람이 썼다.
@@ -246,28 +284,34 @@ class SupabaseBackend:
                 break
 
         # 외부 저장에 실패했어도 로컬에는 남긴다. 세션은 계속 살아 있어야 한다.
-        return LocalJsonBackend().write(doc)
+        return self._local.write(doc)
 
 
 # ------------------------------------------------------------
 # 선택
 # ------------------------------------------------------------
-_backend = None
+_backends: dict = {}
 
 
-def get_backend():
-    """secrets 설정에 따라 백엔드를 고른다. 한 번 고르면 재사용한다."""
-    global _backend
-    if _backend is None:
+def get_backend(doc: str = "main"):
+    """
+    secrets 설정에 따라 백엔드를 고른다. 문서별로 한 번 고르면 재사용한다.
+    doc: "main"(사용자·반) | "usage"(사용 기록)
+    """
+    if doc not in _backends:
+        path, row_key = DOCS[doc]
+        local = LocalJsonBackend(path)
         url, key = _secret("SUPABASE_URL"), _secret("SUPABASE_KEY")
-        _backend = SupabaseBackend(url, key) if (url and key) else LocalJsonBackend()
-    return _backend
+        _backends[doc] = (SupabaseBackend(url, key, row_key=row_key, local=local)
+                          if (url and key) else local)
+    return _backends[doc]
 
 
 def reset_backend() -> None:
     """테스트용 — 백엔드 선택을 다시 하게 한다."""
-    global _backend, _last_error
-    _backend, _last_error = None, ""
+    global _last_error
+    _backends.clear()
+    _last_error = ""
 
 
 def status() -> dict:
