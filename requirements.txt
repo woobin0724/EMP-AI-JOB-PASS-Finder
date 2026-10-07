@@ -1,4 +1,8 @@
-streamlit>=1.41.0
+# 1.64 부터 화면 코드가 Array.toSorted 를 폴리필 없이 쓴다. 학교 PC 처럼
+# 업데이트가 막힌 구형 브라우저에서는 입력을 바꿀 때마다
+# "Bad message format: Object.keys(...).toSorted is not a function" 이 뜬다.
+# 1.63 은 같은 계열 함수(Promise.withResolvers)를 스스로 폴리필하므로 안전하다.
+streamlit>=1.41.0,<1.64
 pandas>=2.2.0
 requests>=2.31.0
 # 자기소개서 생성 — 공식 Anthropic SDK
