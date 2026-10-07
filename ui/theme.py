@@ -615,6 +615,12 @@ div[data-testid="stWidgetLabel"] label, label[data-testid="stWidgetLabel"] {{
         font-size:var(--mjp-caption); padding-left: 4px; padding-right: 4px;
         white-space: nowrap; overflow: hidden;
     }}
+    /* 기업 스토리 [이전 / 관심 / 패스·다음] 줄은 라벨이 길어 390px 에서 말줄임된다.
+       이 줄만 두 줄 줄바꿈을 허용한다 (버튼 높이 48px 안에 두 줄이 들어간다). */
+    div.st-key-mjp_row_story_nav .stButton > button,
+    div.st-key-mjp_row_story_nav .stButton > button p {{
+        white-space: normal !important; line-height: 1.25; word-break: keep-all;
+    }}
 
     /* 표/데이터프레임 가로 스크롤 허용 (레이아웃을 밀어내지 않도록) */
     div[data-testid="stDataFrame"] {{ overflow-x: auto; }}

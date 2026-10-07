@@ -15,11 +15,14 @@ from core import company_filter as cf
 from data.company_showcase import all_companies
 from services import activity
 from services import fallback as fb
+from services import reactions
+from services import story_cards
 from services.strong_sme_api import PRIORITY_DEPARTMENTS, prioritize_by_department
 from ui import mascot
 from ui.components import back_to_hub, disclaimer, grid_columns, render_html, section_title, topbar
 from ui.icons import icon
-from ui.theme import BADGE_COLORS, BG, GREEN, RED, TEXT, render_stars
+from ui.story_viewer import render_story
+from ui.theme import BADGE_COLORS, BG, GREEN, MUTED, RED, TEXT, render_stars
 
 
 def render() -> None:
@@ -31,6 +34,10 @@ def render() -> None:
 
     disclaimer("기업 카드(별점·복지 등)는 예시(모의) 데이터입니다. "
                "하단 '실시간 채용공고'는 실제 API 연동을 시도하고, 실패 시 백업 데이터로 전환됩니다.")
+
+    # 기업 스토리 — 카드 한 장씩 넘기며 훑어보는 진입점이라 맨 위에 둔다
+    _render_story_section()
+    st.divider()
 
     tracker = st.session_state.tracker
 
@@ -232,3 +239,105 @@ def render() -> None:
             st.session_state.explore_show_all = True
             st.rerun()
 
+
+# ------------------------------------------------------------
+# 기업 스토리 (ui/story_viewer.py · services/story_cards.py · services/reactions.py)
+# ------------------------------------------------------------
+_STORY_IDX = "story_idx"
+
+
+def _story_companies() -> list:
+    """
+    스토리 순서. 아래 기업 목록과 같은 데이터·같은 점수(score_all)를 쓰고,
+    스펙 진단을 했으면 매칭 점수순, 아니면 별점순으로 보여준다.
+    """
+    profile = cf.student_profile(st.session_state)
+    companies = cf.score_all(all_companies(), profile)
+    return cf.sort_companies(companies, cf.SORT_MATCH)
+
+
+def _move_story(step: int, total: int) -> None:
+    st.session_state[_STORY_IDX] = (st.session_state.get(_STORY_IDX, 0) + step) % total
+
+
+def _render_story_section() -> None:
+    st.markdown("#### 기업 스토리로 빠르게 훑어보기")
+    st.caption("카드 한 장에 5초. 왼쪽을 탭하면 이전, 오른쪽을 탭하면 다음 카드예요. "
+               "꾹 누르고 있으면 멈춰요.")
+
+    companies = _story_companies()
+    if not companies:
+        st.info("보여줄 기업 데이터가 없습니다.")
+        return
+
+    total = len(companies)
+    idx = st.session_state.get(_STORY_IDX, 0) % total
+    company = companies[idx]
+
+    cards = story_cards.make_story_cards(company)
+    render_story(company["name"], cards)
+
+    sources = {c["source"] for c in cards if c["source"] != "score"}
+    if sources & {"ai", "cache"}:
+        source_note = "AI 요약 (원본 데이터만 근거)"
+    else:
+        source_note = "원본 데이터로 만든 기본 요약 · AI 요약은 프리미엄 회원 전용"
+    mine = reactions.reaction_of(company["id"])
+    mine_note = {"like": " · 내 반응: ❤️ 관심", "pass": " · 내 반응: 👎 패스"}.get(mine, "")
+    st.caption(f"{idx + 1} / {total} · {source_note}{mine_note}")
+
+    failure = story_cards.last_failure()
+    if failure and "basic" in sources:
+        st.warning(f"AI 요약에 실패해 기본 요약으로 표시했습니다 — {failure}")
+
+    # 모바일에서도 가로 한 줄 유지 (theme.py 의 mjp_row 예외 규칙)
+    with st.container(key="mjp_row_story_nav"):
+        b1, b2, b3 = st.columns([1, 1, 1.5])
+        with b1:
+            if st.button("◀ 이전 기업", key="story_prev", use_container_width=True):
+                _move_story(-1, total)
+                st.rerun()
+        with b2:
+            if st.button("❤️ 관심", key="story_like", use_container_width=True,
+                         type="primary" if mine == reactions.LIKE else "secondary"):
+                reactions.record(company["id"], reactions.LIKE)
+                st.toast(f"{company['name']} — 관심 기업에 담았어요")
+                _move_story(1, total)
+                st.rerun()
+        with b3:
+            if st.button("👎 패스 / 다음 기업 ▶", key="story_pass", use_container_width=True):
+                reactions.record(company["id"], reactions.PASS)
+                _move_story(1, total)
+                st.rerun()
+
+    _render_liked(companies)
+
+
+def _render_liked(companies: list) -> None:
+    """❤️ 누른 기업과 매칭 점수."""
+    liked = reactions.liked_ids()
+    by_id = {c["id"]: c for c in companies}
+    liked = [by_id[cid] for cid in liked if cid in by_id]
+
+    with st.expander(f"관심 기업 모아보기 ({len(liked)})", expanded=bool(liked)):
+        if not liked:
+            st.caption("스토리를 보다가 ❤️ 관심을 누르면 여기에 모여요.")
+            return
+        for c in liked:
+            score = c.get("match_score")
+            score_html = (f'<b style="color:{GREEN};">매칭 {score:.0f}점</b>' if score is not None
+                          else f'<span style="color:{MUTED};">스펙 진단 후 점수 표시</span>')
+            with st.container(key=f"mjp_row_liked_{c['id']}"):
+                lc, rc = st.columns([3, 1.2])
+                with lc:
+                    render_html(f"""
+                    <div style="padding:6px 0;">
+                        <div style="font-weight:800; color:{TEXT};">{c['name']}</div>
+                        <div class="mjp-muted">{c['size_tag']} · {c['category']} · {score_html}</div>
+                    </div>
+                    """)
+                with rc:
+                    if st.button("스토리 보기", key=f"liked_view_{c['id']}",
+                                 use_container_width=True):
+                        st.session_state[_STORY_IDX] = companies.index(c)
+                        st.rerun()

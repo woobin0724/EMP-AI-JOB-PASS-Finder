@@ -10,3 +10,6 @@ data/userdata/
 
 # API 키 (OGQ 등) — 절대 커밋하지 않는다
 .env
+
+# 기업 스토리 반응 기록 — 학생 식별값이 들어가므로 커밋하지 않는다
+data/reactions.json
