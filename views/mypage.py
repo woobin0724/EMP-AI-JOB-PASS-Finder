@@ -13,6 +13,7 @@ import streamlit as st
 from core import session as ss
 from data.company_showcase import COMPANY_BY_ID
 from data.roadmap import MILESTONES
+from services import access
 from services import activity
 from services import premium
 from services import store
@@ -109,11 +110,12 @@ def render() -> None:
         if st.button("로그아웃", use_container_width=True, key="mypage_logout"):
             ss.logout()
 
-    # 팀 전용 진입구. 학생에게도 보이지만 데이터를 넣는 화면이라 숨길 이유는
-    # 없고, 출처 없이 저장되지 않으므로 오염 위험도 낮다.
-    if st.button("기업 데이터 입력 (팀 전용)", use_container_width=True,
-                 key="mypage_admin_data"):
-        ss.goto(ss.PAGE_ADMIN_DATA)
+    # 팀 관리자 진입구 — ADMIN_USER_IDS 에 등록된 계정에만 보인다.
+    # (화면 쪽에서도 다시 검사하므로 URL 로 직접 들어와도 막힌다)
+    if access.is_admin():
+        if st.button("기업 데이터 입력 (팀 관리자)", use_container_width=True,
+                     key="mypage_admin_data"):
+            ss.goto(ss.PAGE_ADMIN_DATA)
 
     st.caption(f"저장소 현황: {store.store_summary()}")
     st.caption("Streamlit Community Cloud는 재배포·슬립 해제 시 파일시스템이 초기화됩니다. "

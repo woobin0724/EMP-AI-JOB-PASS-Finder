@@ -22,6 +22,7 @@ import json
 import streamlit as st
 
 from data.company_showcase import COMPANY_CATEGORIES
+from services import access
 from services import api_registry as reg
 from services import curated
 from services import storage_backend
@@ -201,6 +202,10 @@ def _transfer(rows: list[dict]) -> None:
 def render() -> None:
     topbar()
     back_to_hub()
+    # 메뉴를 숨기는 것만으로는 URL(?page=admin_data) 직접 진입을 막지 못한다.
+    # 이 화면 자체가 권한을 확인하는 실제 방어선이다 (services/access.py).
+    if access.deny_if_not_admin():
+        return
     section_title("기업 데이터 입력", icon_name="clipboard", sub=
                   "팀이 직접 조사한 기업 정보를 넣는 화면입니다. 스크래핑하지 않고 "
                   "사람이 확인한 값만 들어갑니다 — 그래서 <b>출처 기록이 필수</b>입니다.")
