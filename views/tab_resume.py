@@ -23,14 +23,14 @@ from services.llm import (
     generate_cover_letter_cached, last_api_failure, next_variation, reset_variation,
 )
 from ui import mascot
-from ui.components import back_to_hub, render_html, section_title, topbar
-from ui.theme import BG, BLUE, BRAND, CARD_BORDER, GOLD, GREEN, MUTED
+from ui.components import back_to_hub, render_html, section_title, status_chip, topbar
+from ui.theme import BG, BLUE, GOLD, GREEN, MUTED, TEXT
 
 
 def render() -> None:
     topbar(active=ss.PAGE_RESUME)
     back_to_hub()
-    section_title("합격 이력서 & 자소서", icon_name="file", sub=
+    section_title("합격 이력서 & 자소서", icon_name="file", eyebrow="자소서", sub=
                   "스펙으로 <b>새로 쓰거나</b>, 직접 쓴 초안을 <b>첨삭받거나</b>. "
                   "둘 다 같은 화면에서 합니다.")
 
@@ -178,14 +178,14 @@ def _render_generator() -> None:
 
         badges = ""
         if st.session_state.cover_letter_source == "ai":
-            badges += f'<span class="mjp-badge" style="background:{GREEN}; color:{BG};">AI 생성</span> '
+            badges += f'<span class="mjp-badge" style="background:{GREEN}; color:#FFFFFF;">AI 생성</span> '
         elif st.session_state.cover_letter_source == "template":
-            badges += f'<span class="mjp-badge" style="background:{CARD_BORDER}; color:{MUTED};">템플릿 생성</span> '
+            badges += f'<span class="mjp-badge" style="background:{BG}; color:{MUTED};">템플릿 생성</span> '
         if st.session_state.cover_letter_cached:
             badges += f'<span class="mjp-badge" style="background:{BLUE}; color:#fff;">캐시 응답 · API 호출 0회</span> '
         opts = st.session_state.get("cover_letter_options")
         if opts:
-            badges += (f'<span class="mjp-badge" style="background:{CARD_BORDER}; color:{MUTED};">'
+            badges += (f'<span class="mjp-badge" style="background:{BG}; color:{MUTED};">'
                        f'{opts["tone"]} · {opts["length"]}자 · {opts["variation"] + 1}회차</span>')
 
         # ▣ 들여쓰기 금지
@@ -194,9 +194,9 @@ def _render_generator() -> None:
         #   그대로 노출됐다. 그래서 들여쓰기 없이 조립한다.
         st.markdown(
             '<div class="mjp-card">'
-            f'<span class="mjp-badge" style="background:{CARD_BORDER}; color:{MUTED};">DRAFT SHEET</span> '
+            f'<span class="mjp-badge" style="background:{BG}; color:{MUTED};">초안 시트</span> '
             f'{badges}'
-            '<div style="font-size:var(--mjp-h2); font-weight:800; margin-top:10px;">'
+            f'<div style="font-size:var(--mjp-h2); font-weight:700; color:{TEXT}; margin-top:12px;">'
             '합격 자기소개서 전문 통합 시트</div>'
             f'<div class="mjp-muted" style="margin-top:4px;">{target_company["name"]} 인재상: '
             f'{", ".join(target_company["ideal_talent"])}</div>'
@@ -276,8 +276,8 @@ def _render_review() -> None:
 
     source = st.session_state.get("review_source", "rule")
     badge = "AI 첨삭" if source == "ai" else "규칙 기반 점검"
-    badge_bg = BLUE if source == "ai" else CARD_BORDER
-    badge_fg = "#fff" if source == "ai" else MUTED
+    badge_bg = BLUE if source == "ai" else "#F2F4F6"
+    badge_fg = "#FFFFFF" if source == "ai" else MUTED
 
     render_html(f"""
     <div style="margin-bottom:12px;">
@@ -302,9 +302,9 @@ def _render_review() -> None:
         items = "".join(f"<li style='margin-bottom:8px;'>{g}</li>"
                         for g in feedback["good"])
         render_html(f"""
-        <div class="mjp-card" style="border-color:{GREEN};">
-            <div style="font-weight:800; color:{GREEN};">잘된 점</div>
-            <ul style="margin:10px 0 0; padding-left:20px; line-height:1.7;">{items}</ul>
+        <div class="mjp-tcard" style="margin-bottom:12px;">
+            {status_chip("잘된 점", GREEN)}
+            <ul style="margin:12px 0 0; padding-left:20px; line-height:1.7;">{items}</ul>
         </div>
         """)
 
@@ -312,17 +312,17 @@ def _render_review() -> None:
         items = "".join(f"<li style='margin-bottom:10px;'>{g}</li>"
                         for g in feedback["improve"])
         render_html(f"""
-        <div class="mjp-card" style="border-color:{GOLD};">
-            <div style="font-weight:800; color:{GOLD};">이렇게 고쳐보세요</div>
-            <ul style="margin:10px 0 0; padding-left:20px; line-height:1.7;">{items}</ul>
+        <div class="mjp-tcard" style="margin-bottom:12px;">
+            {status_chip("이렇게 고쳐보세요", GOLD)}
+            <ul style="margin:12px 0 0; padding-left:20px; line-height:1.7;">{items}</ul>
         </div>
         """)
 
     if feedback.get("example"):
         render_html(f"""
-        <div class="mjp-card" style="border-color:{BRAND};">
-            <div style="font-weight:800; color:{BRAND};">예시 문장</div>
-            <div style="margin-top:10px; line-height:1.7;">{feedback['example']}</div>
+        <div class="mjp-tcard" style="margin-bottom:12px;">
+            <span class="mjp-chiptag" style="margin-bottom:0;">예시 문장</span>
+            <div style="margin-top:12px; line-height:1.75; color:{TEXT};">{feedback['example']}</div>
         </div>
         """)
 

@@ -19,8 +19,8 @@ from data.roadmap import MILESTONES, stage_label
 from services import activity
 from services.curriculum import generate_curriculum
 from services.pdf_report import build_success_report_pdf
-from ui.components import back_to_hub, disclaimer, section_title, topbar
-from ui.theme import CARD_BORDER, GREEN, MUTED, RED, TEXT, render_stars
+from ui.components import back_to_hub, disclaimer, render_html, section_title, status_chip, topbar
+from ui.theme import CARD, GREEN, MUTED, RED, render_stars
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -43,7 +43,7 @@ MILESTONE_CHEER = {
 def render() -> None:
     topbar(active=ss.PAGE_GUIDE)
     back_to_hub()
-    section_title("채용 대비 가이드 & 커리큘럼", icon_name="wrench", sub=
+    section_title("채용 대비 가이드 & 커리큘럼", icon_name="wrench", eyebrow="가이드", sub=
                   "목표 기업의 면접 기출·필기 키워드·4주 커리큘럼을 확인하고, "
                   "커리어 로드맵 3단계를 스탬프로 관리하세요.")
 
@@ -70,7 +70,7 @@ def render() -> None:
 # 커리어 로드맵 — 3단계 마일스톤 + OGQ 스탬프
 # ------------------------------------------------------------
 def _roadmap(company: dict) -> None:
-    st.markdown("### 나의 커리어 로드맵")
+    st.markdown("#### 나의 커리어 로드맵")
     done = completed_milestones(st.session_state.milestones)
     st.progress(done / len(MILESTONES), text=f"{done} / {len(MILESTONES)} 단계 완료")
 
@@ -95,10 +95,11 @@ def _roadmap(company: dict) -> None:
                     f'font-weight:700; margin-top:6px;">{MILESTONE_CHEER[key]}</div>',
                     unsafe_allow_html=True)
             else:
+                # v2: 점선 상자 대신 회색 면 — 테두리로 구분하지 않는다
                 st.markdown(
-                    f'<div style="height:126px; border:1px dashed {CARD_BORDER}; border-radius:12px;'
+                    f'<div style="height:126px; background:{CARD}; border-radius:20px;'
                     f'display:flex; align-items:center; justify-content:center; color:{MUTED};'
-                    f'font-size:var(--mjp-caption);">달성하면 마스코트가 축하해요</div>', unsafe_allow_html=True)
+                    f'font-size:var(--mjp-small);">달성하면 마스코트가 축하해요</div>', unsafe_allow_html=True)
 
     # [Phase 2] 로드맵 진행 단계 저장 — 체크박스 3개를 모두 반영한 뒤 한 번만 호출한다.
     # 루프 안에서 부르면 한 번의 rerun 에 세 번 저장하게 된다.
@@ -122,15 +123,21 @@ def _roadmap(company: dict) -> None:
 # 기업 상세 + 커리큘럼
 # ------------------------------------------------------------
 def _company_detail(c: dict) -> None:
-    st.markdown(f"""
-    <div class="mjp-card">
-        <span class="mjp-tag">{c['size_tag']} · {c['field_tag']} 타깃</span>
-        <div style="font-size:var(--mjp-h1); font-weight:800; margin-top:8px;">{c['name']}</div>
-        <div class="mjp-muted">{c['description']} · 고졸 채용 종합 만족도 예시 {render_stars(c['overall_rating'])}</div>
-        <div class="mjp-muted" style="margin-top:6px;">인재상: <b style="color:{TEXT};">{', '.join(c['ideal_talent'])}</b>
-        &nbsp;|&nbsp; 예시 합격자 평균 스펙: 내신 {c['avg_applicant_grade']}등급 · 자격증 {c['avg_applicant_certs']}개</div>
+    # v2: 기업 머리 — 칩 + 큰 기업명 + 설명, 아래에 핵심 숫자 두 칸
+    render_html(f"""
+    <div class="mjp-tcard" style="margin-bottom:12px;">
+        <span class="mjp-chiptag">{c['size_tag']} · {c['field_tag']} 타깃</span>
+        <div class="mjp-section-title" style="font-size:var(--mjp-h1);">{c['name']}</div>
+        <p style="margin-top:8px !important;">{c['description']} · 고졸 채용 종합 만족도 예시 {render_stars(c['overall_rating'])}</p>
+        <p class="mjp-muted" style="margin-top:8px !important;">인재상 <b>{', '.join(c['ideal_talent'])}</b></p>
+        <div class="mjp-tiles" style="margin-top:16px;">
+            <div class="mjp-tile" style="background:#FFFFFF;"><div class="mjp-tile-label">예시 합격자 평균 내신</div>
+                <div class="mjp-tile-value">{c['avg_applicant_grade']}등급</div></div>
+            <div class="mjp-tile" style="background:#FFFFFF;"><div class="mjp-tile-label">예시 합격자 평균 자격증</div>
+                <div class="mjp-tile-value">{c['avg_applicant_certs']}개</div></div>
+        </div>
     </div>
-    """, unsafe_allow_html=True)
+    """)
 
     with st.container(key="mjp_row_guide_actions"):
         gb1, gb2 = st.columns([1, 1.6])
@@ -146,7 +153,7 @@ def _company_detail(c: dict) -> None:
                          use_container_width=True, key="guide_to_resume"):
                 ss.goto(ss.PAGE_RESUME)
 
-    st.markdown("##### 고졸 출신 선배들의 직무별 세부 평점 (예시)")
+    st.markdown("#### 고졸 출신 선배들의 직무별 세부 평점 (예시)")
     rcols = st.columns(3)
     for i, (label, val) in enumerate(c["ratings"].items()):
         with rcols[i]:
@@ -156,33 +163,28 @@ def _company_detail(c: dict) -> None:
 
     pcol1, pcol2 = st.columns(2)
     with pcol1:
-        st.markdown(f"""<div class="mjp-card" style="border-color:{GREEN};">
-            <b style="color:{GREEN};">● 장점 (예시)</b>
-            <div class="mjp-muted" style="margin-top:8px; color:{TEXT};">{c['pros']}</div></div>""",
-                    unsafe_allow_html=True)
+        render_html(f"""<div class="mjp-tcard" style="margin-bottom:12px;">
+            {status_chip("장점 (예시)", GREEN)}<p style="margin-top:12px !important;">{c['pros']}</p></div>""")
     with pcol2:
-        st.markdown(f"""<div class="mjp-card" style="border-color:{RED};">
-            <b style="color:{RED};">● 단점/고충 (예시)</b>
-            <div class="mjp-muted" style="margin-top:8px; color:{TEXT};">{c['cons']}</div></div>""",
-                    unsafe_allow_html=True)
+        render_html(f"""<div class="mjp-tcard" style="margin-bottom:12px;">
+            {status_chip("단점/고충 (예시)", RED)}<p style="margin-top:12px !important;">{c['cons']}</p></div>""")
 
     kcol1, kcol2 = st.columns(2)
     with kcol1:
         tags = "".join(f'<span class="mjp-tag">{ct}</span>' for ct in c["required_certs"])
-        st.markdown(f'<div class="mjp-card"><b>필수 우대 자격증</b><br><br>{tags}</div>',
-                    unsafe_allow_html=True)
+        render_html(f'<div class="mjp-tcard" style="margin-bottom:12px;"><h4>필수 우대 자격증</h4>'
+                    f'<div style="margin-top:12px;">{tags}</div></div>')
     with kcol2:
-        st.markdown(f"""<div class="mjp-card"><b>전공 필기시험 핵심 키워드</b>
-            <div class="mjp-muted" style="margin-top:8px; color:{TEXT};">{c['exam_keywords']}</div></div>""",
-                    unsafe_allow_html=True)
+        render_html(f"""<div class="mjp-tcard" style="margin-bottom:12px;"><h4>전공 필기시험 핵심 키워드</h4>
+            <p style="margin-top:10px !important;">{c['exam_keywords']}</p></div>""")
 
-    st.markdown("##### 예상 기출 면접 질문 3선 (예시)")
+    st.markdown("#### 예상 기출 면접 질문 3선 (예시)")
     for i, q in enumerate(c["interview_questions"]):
         st.markdown(
             f'<div class="mjp-interview"><span class="mjp-qbadge">인터뷰 질문 {i + 1:02d}</span>Q. {q}</div>',
             unsafe_allow_html=True)
 
-    st.markdown("##### 코멘토 스타일 4주 맞춤 커리큘럼 (예시)")
+    st.markdown("#### 코멘토 스타일 4주 맞춤 커리큘럼 (예시)")
     curriculum = generate_curriculum(c)
     st.session_state.last_curriculum = curriculum
     for wk in curriculum:

@@ -16,9 +16,9 @@ from core import session as ss
 from data import ogq_assets as ogq
 from services import auth as auth_svc
 from ui import mascot
-from ui.components import back_to_hub, grid_columns, render_html, section_title, topbar
+from ui.components import back_to_hub, grid_columns, render_html, section_title, status_chip, topbar
 from ui.icons import icon
-from ui.theme import GOLD, GREEN, MUTED, PURPLE, TEXT
+from ui.theme import BRAND, GOLD, GREEN, MUTED
 
 
 SHIPPED = "구현 완료"
@@ -53,7 +53,7 @@ def _cut_features() -> list[dict]:
         {
             "icon": "school", "title": "선생님용 우리 반 현황 대시보드",
             "when": "구현 완료",
-            "status_color": PURPLE,
+            "status_color": GREEN,
             "why": "선생님 대시보드는 학생 데이터가 쌓여야 값이 채워집니다. 역할 선택과 "
                    "반 코드 체계가 먼저 있어야 '누구의 데이터인지'가 성립합니다.",
             "trigger": "역할 선택(학생/선생님) 구현으로 전제 조건이 충족되어 착수했습니다.",
@@ -79,17 +79,18 @@ def _cut_features() -> list[dict]:
 
 
 def _feature_card(f: dict) -> None:
+    # v2: 왼쪽 색띠 대신 상태 칩. 아이콘은 연한 블루 타일 한 가지 색으로 통일한다.
     render_html(f"""
-    <div class="mjp-later" style="border-left-color:{f['status_color']};">
-        <div style="display:flex; align-items:center; gap:10px;">
-            <div style="flex:none;">{icon(f["icon"], size=22, color=f["status_color"], stroke=1.8)}</div>
-            <div>
-                <div style="font-size:var(--mjp-body); font-weight:800; color:{TEXT};">{f['title']}</div>
-                <span class="mjp-badge" style="background:{f['status_color']}; color:#FFFFFF;">{f['when']}</span>
+    <div class="mjp-tcard" style="margin-bottom:12px;">
+        <div style="display:flex; align-items:center; gap:12px;">
+            <div class="mjp-row-icon">{icon(f["icon"], size=22, color=BRAND, stroke=1.8)}</div>
+            <div style="flex:1; min-width:0;">
+                <h4 style="margin:0 0 4px !important;">{f['title']}</h4>
+                {status_chip(f['when'], f['status_color'])}
             </div>
         </div>
-        <div class="mjp-muted" style="margin-top:12px; line-height:1.6;">{f['why']}</div>
-        <div style="margin-top:10px; font-size:var(--mjp-caption); color:{GREEN};">▸ {f['trigger']}</div>
+        <p style="margin-top:14px !important;">{f['why']}</p>
+        <p class="mjp-muted" style="margin-top:10px !important;"><b>열림 조건</b> · {f['trigger']}</p>
     </div>
     """)
 
@@ -100,7 +101,7 @@ def render() -> None:
 
     tcol1, tcol2 = st.columns([2.4, 1])
     with tcol1:
-        section_title("서비스 로드맵", icon_name="route", sub=
+        section_title("서비스 로드맵", icon_name="route", eyebrow="로드맵", sub=
                       "지금 <b>바로 쓸 수 있는 기능</b>과, 이어서 준비하고 있는 기능을 "
                       "구분해 적었습니다.")
     with tcol2:
@@ -108,7 +109,7 @@ def render() -> None:
 
     features = _cut_features()
 
-    st.markdown("### 지금 남긴 것 (현재 범위)")
+    st.markdown("#### 지금 남긴 것 (현재 범위)")
     kept = [
         ("스펙 진단", "100점 만점 합격 점수 — 서비스의 존재 이유. 이것 하나가 안 되면 나머지는 무의미합니다."),
         ("공고 탐색", "실시간 API + 백업 이중화 — 시연 중에도 절대 멈추지 않는 데이터 파이프라인."),
@@ -118,14 +119,14 @@ def render() -> None:
     kcols = st.columns(4)
     for i, (title, desc) in enumerate(kept):
         with kcols[i]:
-            st.markdown(f"""<div class="mjp-card" style="border-color:{GREEN}; height:100%;">
-                <div style="font-weight:800; color:{TEXT};">{title}</div>
-                <div class="mjp-muted" style="margin-top:8px; line-height:1.55;">{desc}</div>
-            </div>""", unsafe_allow_html=True)
+            render_html(f"""<div class="mjp-tcard" style="height:100%; padding:24px; margin-bottom:12px;">
+                <h4>{title}</h4>
+                <p>{desc}</p>
+            </div>""")
 
     shipped = _shipped(features)
     if shipped:
-        st.markdown("### 최근 추가된 기능")
+        st.markdown("#### 최근 추가된 기능")
         for col, f in zip(grid_columns(len(shipped), 2), shipped):
             with col:
                 _feature_card(f)
