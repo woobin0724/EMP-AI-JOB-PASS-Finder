@@ -45,7 +45,8 @@ BLUE = "#3B82F6"
 # 세 값을 공유하므로 로고·엠블럼·UI가 한 벌로 붙는다.
 BRAND_LIGHT = "#A8CEF5"   # 시안 하이라이트
 BRAND = "#4C8FE0"         # 일렉트릭 블루 (로고 회로선)
-BRAND_DEEP = "#2B6BC4"    # 딥 블루
+BRAND_DEEP = "#2B6BC4"    # 딥 블루 (primary 버튼 면 — 흰 글자 5.25:1)
+BRAND_PRESS = "#1E5BB8"   # primary 버튼 호버 (흰 글자 6.47:1)
 
 # ▣ 색의 역할을 분리한다
 #   브랜드 블루 = 정체성 (로고 · 내비 · 히어로 · 카드 호버)
@@ -427,6 +428,25 @@ div[data-testid="stButton"] button:active,
 div[data-testid="stFormSubmitButton"] button:active {{
     transform: translateY(0); box-shadow: var(--mjp-shadow-1);
 }}
+/* primary 버튼 대비 보정.
+   config.toml 의 primaryColor(BRAND #4C8FE0) 위 흰 글자는 3.33:1 로 본문 크기
+   기준(4.5:1)에 못 미친다. primaryColor 를 바꾸면 슬라이더·포커스·라디오 색까지
+   함께 바뀌므로, primary 버튼 면만 BRAND_DEEP(#2B6BC4, 흰 글자 5.25:1)으로 덮는다.
+   호버는 더 짙게(BRAND_PRESS, 6.47:1) — 밝아지면 대비가 다시 떨어진다. */
+button[data-testid="stBaseButton-primary"],
+button[data-testid="stBaseButton-primaryFormSubmit"],
+button[kind="primary"], button[kind="primaryFormSubmit"] {{
+    background-color: {BRAND_DEEP} !important;
+    border-color: {BRAND_DEEP} !important;
+    color: #FFFFFF !important;
+}}
+button[data-testid="stBaseButton-primary"]:hover,
+button[data-testid="stBaseButton-primaryFormSubmit"]:hover,
+button[kind="primary"]:hover, button[kind="primaryFormSubmit"]:hover {{
+    background-color: {BRAND_PRESS} !important;
+    border-color: {BRAND_LIGHT} !important;
+}}
+
 /* 키보드 포커스 링 — 마우스 클릭에는 뜨지 않는다 */
 .stButton > button:focus-visible,
 div[data-testid="stButton"] button:focus-visible {{
