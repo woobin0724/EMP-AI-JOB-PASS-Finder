@@ -5,6 +5,10 @@ views/tab_spec.py
 
 원본 app.py 의 TAB 1 블록을 그대로 이관했다. 점수 산출 로직(core/matching.py)은
 손대지 않았다 — 이번 단계의 목표는 '진입 방식 변경'이지 '계산 변경'이 아니다.
+
+[v2] 화면의 핵심은 점수 하나다. 맨 위에 큰 숫자 + 판정 칩 + 100점 눈금 막대를
+두고, 세부 점수 4줄은 회색 면 한 장에 목록으로 묶었다. 입력은 STEP 1·2·3 으로
+나눠 무엇부터 넣으면 되는지 순서가 보이게 했다. (위젯 key·동작은 그대로)
 """
 
 import streamlit as st
@@ -22,7 +26,7 @@ from data.departments import (
 )
 from ui import mascot
 from ui.components import back_to_hub, disclaimer, note, render_html, section_title, topbar
-from ui.theme import BG, BLUE, CARD_BORDER, GREEN, GOLD, MUTED, RED, TEXT, render_stars, score_bar
+from ui.theme import BLUE, CARD, GREEN, GOLD, MUTED, RED, STATUS_SOFT, STATUS_VIVID, render_stars, score_bar
 
 
 # 점수 구간 → 마스코트 감정 슬롯
@@ -39,6 +43,11 @@ _TOUCHED = "spec_touched"
 
 def _mark_touched() -> None:
     st.session_state[_TOUCHED] = True
+
+
+def _step(no: int, title: str) -> None:
+    """입력 단계 머리 — 'STEP 1  학과와 내신'."""
+    render_html(f'<div class="mjp-stephead"><b>STEP {no}</b><span>{title}</span></div>')
 
 
 def render() -> None:
@@ -68,6 +77,7 @@ def render() -> None:
     in_left, in_right = st.columns(2)
 
     with in_left:
+        _step(1, "학과와 내신")
         dept = st.selectbox("학과/계열 (하이파이브 분류 기준)", DEPARTMENT_LIST,
                             index=DEPARTMENT_LIST.index(st.session_state.dept),
                             key="dept_widget", on_change=_mark_touched)
@@ -84,6 +94,7 @@ def render() -> None:
         st.session_state.grade = grade
 
     with in_right:
+        _step(2, "자격증과 강점")
         dept_certs = certs_for_department(dept)
         cert_options = sorted(set(dept_certs) | set(all_cert_names))
         certs = st.multiselect(
@@ -106,6 +117,7 @@ def render() -> None:
         )
         st.session_state.strength_keywords = strengths
 
+        _step(3, "목표 기업 (선택)")
         company_names = ["선택 안 함 (일반 진단)"] + [c["name"] for c in COMPANY_SHOWCASE]
         pick = st.selectbox("정밀 진단할 목표 기업 (선택)", company_names, key="target_company_widget", on_change=_mark_touched)
         target_company = None
@@ -113,7 +125,7 @@ def render() -> None:
             target_company = next(c for c in COMPANY_SHOWCASE if c["name"] == pick)
             st.session_state.selected_company_id = target_company["id"]
 
-        st.caption("※ 입력값을 바꾸면 오른쪽 점수가 **즉시** 갱신됩니다.")
+        st.caption("※ 입력값을 바꾸면 위 점수가 **즉시** 갱신됩니다.")
 
     # ------------------------------------------------------------
     # 점수 (순수 로컬 연산, 과금 0원)
@@ -137,34 +149,23 @@ def render() -> None:
     else:
         sticker_key = ogq.sticker_key_for_score(result["final_score"])
         verdict, verdict_msg = ogq.SCORE_STICKER_MESSAGES[sticker_key]
-        ring_color = {"success": GREEN, "cheer": GOLD, "comfort": RED}[sticker_key]
+        color = {"success": GREEN, "cheer": GOLD, "comfort": RED}[sticker_key]
+        title = target_company["name"] if target_company else "일반 진단"
 
         # 화면 맨 위에 잡아둔 자리에 점수를 채운다 (배치 의도는 위 주석 참조)
         with score_slot:
+            rows = "".join([
+                score_bar("내신 성취도", result["grade_score"], 30),
+                score_bar("자격증 가산점", result["cert_score"], 40),
+                score_bar("전공 적합성", result["fit_score"], 20),
+                score_bar("인재상 일치도", result["talent_score"], 10),
+            ])
             render_html(f"""
-            <div class="mjp-scorecard">
-                <span class="mjp-badge" style="background:{ring_color}; color:{BG};">SPEC DIAGNOSIS · 실시간</span>
-                <div class="mjp-scorecard-row">
-                    <div class="mjp-scorering" style="background:{ring_color};">
-                        <div class="mjp-scorering-num">{result['final_score']}</div>
-                        <div class="mjp-scorering-cap">100점 만점</div>
-                    </div>
-                    <div style="flex:1; min-width:210px;">
-                        <div class="mjp-verdict" style="color:{ring_color};">{verdict}</div>
-                        <div class="mjp-muted" style="margin-top:6px;">{verdict_msg}</div>
-                    </div>
-                </div>
+            <div class="mjp-score-grid">
+                {_score_hero(result["final_score"], color, verdict, verdict_msg, title)}
+                <div class="mjp-break">{rows}</div>
             </div>
             """)
-
-            # 세부 점수 4개는 점수 바로 아래. 가로 2열로 놓아 세로 길이를 줄인다.
-            bar_l, bar_r = st.columns(2)
-            with bar_l:
-                st.markdown(score_bar("내신 성취도", result["grade_score"], 30), unsafe_allow_html=True)
-                st.markdown(score_bar("자격증 가산점", result["cert_score"], 40), unsafe_allow_html=True)
-            with bar_r:
-                st.markdown(score_bar("전공 적합성", result["fit_score"], 20), unsafe_allow_html=True)
-                st.markdown(score_bar("인재상 일치도", result["talent_score"], 10), unsafe_allow_html=True)
 
             if result["cert_details"]:
                 with st.expander("자격증 인정 비율 상세 보기", expanded=False):
@@ -186,22 +187,21 @@ def render() -> None:
         explanation, explain_source = score_explain.explain(
             explain_profile, result, target_company)
 
+        st.markdown("#### 왜 이 점수인가요")
         tip_l, tip_r = st.columns([1, 3])
         with tip_l:
             st.markdown(mascot.html(_MASCOT_BY_SCORE[sticker_key], size=128),
                         unsafe_allow_html=True)
         with tip_r:
             badge = ("AI 설명" if explain_source == "ai" else "규칙 기반 설명")
-            badge_bg = BLUE if explain_source == "ai" else CARD_BORDER
-            badge_fg = "#fff" if explain_source == "ai" else MUTED
+            # 설명 카드가 회색 면이라 규칙 기반 배지는 흰 칩으로 둔다
+            badge_bg = BLUE if explain_source == "ai" else "#FFFFFF"
+            badge_fg = "#FFFFFF" if explain_source == "ai" else MUTED
             render_html(f"""
-            <div class="mjp-card" style="margin-bottom:10px;">
+            <div class="mjp-explain" style="margin-bottom:10px;">
                 <span class="mjp-badge" style="background:{badge_bg}; color:{badge_fg};">{badge}</span>
-                <div style="margin-top:10px; line-height:1.7;">{explanation['explanation']}</div>
-                <div style="margin-top:12px; padding-top:12px; border-top:1px solid {CARD_BORDER};
-                            color:{GREEN}; font-weight:700;">
-                    다음 한 걸음 · {explanation['suggestion']}
-                </div>
+                <div class="mjp-explain-body">{explanation['explanation']}</div>
+                <div class="mjp-explain-next"><b>다음 한 걸음</b>{explanation['suggestion']}</div>
             </div>
             """)
 
@@ -248,22 +248,48 @@ def render() -> None:
                     ss.goto(ss.PAGE_GUIDE)
 
 
+def _score_hero(score, color: str, verdict: str, message: str, title: str) -> str:
+    """
+    점수 히어로 HTML — 큰 숫자 · 판정 칩 · 한 줄 설명 · 100점 눈금 막대.
+
+    눈금 50 · 80 은 판정 구간 경계(data/ogq_assets.sticker_key_for_score)와 같다.
+    score 가 None 이면 '입력 전' 상태로 그린다.
+    """
+    waiting = score is None
+    # 큰 글씨의 대시(—)는 긴 막대처럼 보여 '점수 없음'으로 읽히지 않는다 → 물음표
+    num = "?" if waiting else f"{score}"
+    pct = 0 if waiting else max(0.0, min(100.0, float(score)))
+    soft = STATUS_SOFT.get(color, CARD)
+    vivid = STATUS_VIVID.get(color, color)   # 큰 숫자·막대는 밝은 톤, 칩 글자는 진한 톤
+    return f"""
+    <div class="mjp-score">
+        <div class="mjp-score-label">내 합격 지수 · {title}</div>
+        <div class="mjp-score-line">
+            <span class="mjp-score-num" style="color:{vivid};">{num}</span>
+            <span class="mjp-score-unit">/ 100점</span>
+            <span class="mjp-score-chip" style="background:{soft}; color:{color};">{verdict}</span>
+        </div>
+        <div class="mjp-score-msg">{message}</div>
+        <div class="mjp-meter">
+            <div class="mjp-meter-track">
+                <div class="mjp-meter-fill" style="width:{pct:.0f}%; background:{vivid};"></div>
+            </div>
+            <div class="mjp-meter-tick" style="left:50%;"></div>
+            <div class="mjp-meter-tick" style="left:80%;"></div>
+        </div>
+        <div class="mjp-meter-labels">
+            <span style="left:0;">0</span>
+            <span style="left:50%;">50<em> · 분발 필요</em></span>
+            <span style="left:80%;">80<em> · 합격 안정권</em></span>
+            <span style="left:100%;">100</span>
+        </div>
+    </div>"""
+
+
 def _render_waiting() -> None:
     """입력 전 중립 상태 — 점수·판정 대신 무엇을 넣으면 되는지만 알려준다."""
     render_html(f"""
-    <div class="mjp-scorecard">
-        <span class="mjp-badge" style="background:{CARD_BORDER}; color:{MUTED};">SPEC DIAGNOSIS · 입력 전</span>
-        <div class="mjp-scorecard-row">
-            <div class="mjp-scorering" style="background:{CARD_BORDER}; color:{MUTED};">
-                <div class="mjp-scorering-num">—</div>
-                <div class="mjp-scorering-cap">100점 만점</div>
-            </div>
-            <div style="flex:1; min-width:210px;">
-                <div class="mjp-verdict" style="color:{TEXT};">아직 입력 전이에요</div>
-                <div class="mjp-muted" style="margin-top:6px;">
-                    아래에서 학과·내신 등급·자격증을 고르면 100점 만점 점수가 바로 계산돼요.
-                </div>
-            </div>
-        </div>
+    <div class="mjp-score-grid mjp-score-grid-single">
+        {_score_hero(None, MUTED, "입력 전", "아래 STEP 1·2·3 에서 학과·내신 등급·자격증을 고르면 100점 만점 점수가 바로 계산돼요.", "일반 진단")}
     </div>
     """)
