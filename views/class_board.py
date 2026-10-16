@@ -48,9 +48,11 @@ def render() -> None:
         _render_empty_class(klass)
         return
 
+    # '누구를 먼저 도울지'가 이 화면의 목적이라 우선순위 목록을 표보다 위에 둔다.
+    # (예전에는 맨 아래라 폰에서 네 화면쯤 내려가야 보였다)
+    _render_attention(rows)
     _render_summary(rows)
     _render_table(rows)
-    _render_attention(rows)
 
 
 # ------------------------------------------------------------
