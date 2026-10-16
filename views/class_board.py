@@ -25,7 +25,7 @@ from services import store
 from services.activity import student_summary
 from ui import mascot
 from ui.components import back_to_hub, grid_columns, section_title, topbar
-from ui.theme import BRAND, CARD_BORDER, GOLD, GREEN, MUTED, RED, TEXT
+from ui.theme import CARD_BORDER, GOLD, GREEN, MUTED, RED, TEXT
 
 
 def render() -> None:
@@ -119,12 +119,27 @@ def _render_summary(rows: list[dict]) -> None:
     started = sum(1 for r in rows if r["active"])
     finished = sum(1 for r in rows if r["stage_done"] == len(MILESTONES))
 
+    # 색은 값에 따라 정한다 (상태색은 '좋음/주의/위험' 신호이므로 고정하면 안 된다).
+    #   평균 점수 — 학생 카드와 같은 구간: 80↑ 그린 · 50↑ 골드 · 그 아래 레드 · 진단 없음 회색
+    #   진단 시작 — 전원 그린 · 일부 골드 · 0명 회색
+    #   로드맵 완주 — 1명 이상 그린 · 0명 회색 (아직 안 했을 뿐 경고할 일은 아니다)
+    if avg is None:
+        avg_color = MUTED
+    elif avg >= 80:
+        avg_color = GREEN
+    elif avg >= 50:
+        avg_color = GOLD
+    else:
+        avg_color = RED
+    started_color = GREEN if started == len(rows) else (GOLD if started else MUTED)
+    finished_color = GREEN if finished else MUTED
+
     cards = [
-        ("반 평균 매칭 점수", f"{avg}점" if avg is not None else "—", GREEN,
+        ("반 평균 매칭 점수", f"{avg}점" if avg is not None else "—", avg_color,
          f"{len(scored)}명 진단 완료"),
-        ("진단 시작", f"{started} / {len(rows)}", BRAND,
+        ("진단 시작", f"{started} / {len(rows)}", started_color,
          f"미시작 {len(rows) - started}명"),
-        ("로드맵 완주", f"{finished}명", GOLD,
+        ("로드맵 완주", f"{finished}명", finished_color,
          f"{len(MILESTONES)}단계 모두 완료"),
     ]
 
