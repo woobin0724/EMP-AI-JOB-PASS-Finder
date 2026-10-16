@@ -190,6 +190,7 @@ fonts/                 NanumGothic.ttf + OFL.txt (PDF 한글용)
 | PDF 한글 폰트 `fonts/NanumGothic.ttf` | Google Fonts 배포본, SIL Open Font License 1.1 (`fonts/OFL.txt`). [팀 확인 필요] 공식 OFL.txt 원문으로 교체 |
 | 마스코트 이미지 `assets/ogq/*.jpg` (11장) | **[팀 확인 필요]** 제작자와 사용 허락 범위. 코드 주석은 'NAVER OGQ마켓 캐릭터 스티커'로, 이전 README 의 W3 절은 '팀 자체 제작'으로 적고 있어 서로 다릅니다. 대회 공식 OGQ API 로 받는 도구(`scripts/fetch_mascot.py`)는 있으나 아직 실행 기록이 없습니다. |
 | 팀 로고 · 엠블럼 | 팀 로고를 코드로 다시 그린 벡터(`ui/emblem.py`) |
+| Impeccable 디자인 스킬 (pbakaus/impeccable, Apache-2.0, 개발 도구로만 사용) | `.claude/skills/impeccable/` (라이선스 `LICENSE` 동봉). 서비스 코드에서 호출하지 않음 |
 
 ---
 
