@@ -168,28 +168,84 @@ def note(markup: str) -> None:
     st.markdown(f'<div class="mjp-note">{markup}</div>', unsafe_allow_html=True)
 
 
-def section_title(title: str, sub: str = "", icon_name: str = "") -> None:
+def section_title(title: str, sub: str = "", icon_name: str = "", eyebrow: str = "") -> None:
     """
-    화면 상단 제목 블록 — 큰 타이포 + 여백 (참고 디자인 톤).
+    화면 머리 — [작은 파란 라벨] + 큰 제목 + 설명 (v2 · 포트폴리오 섹션 머리와 같은 언어).
 
-    icon_name 을 주면 제목 왼쪽에 라인 아이콘이 붙는다. 이모지 대신 쓰는 자리라
-    색은 브랜드 블루로 고정해 마스코트(컬러풀)와 톤이 겹치지 않게 했다.
+    v2 에서는 제목 옆 아이콘을 그리지 않는다. 화면의 가장 큰 요소는 제목 하나여야
+    하고, 아이콘은 목록 행·카드 안에서만 쓴다. icon_name 은 기존 호출부 호환용으로 남겼다.
     """
-    from ui.theme import BRAND
-    mark = (f'<span style="flex:none; display:inline-flex; padding-top:3px;">'
-            f'{icon(icon_name, size=26, color=BRAND, stroke=1.8)}</span>') if icon_name else ""
-    st.markdown(f"""
-    <div style="margin:4px 0 18px;">
-        <div style="display:flex; align-items:flex-start; gap:12px;">
-            {mark}<div class="mjp-section-title">{title}</div>
-        </div>
+    del icon_name   # v2: 제목 옆 아이콘 없음
+    render_html(f"""
+    <div class="mjp-screen-head">
+        {f'<span class="mjp-eyebrow">{eyebrow}</span>' if eyebrow else ''}
+        <div class="mjp-section-title">{title}</div>
         {f'<div class="mjp-section-sub">{sub}</div>' if sub else ''}
     </div>
-    """, unsafe_allow_html=True)
+    """)
 
 
 def pill(text: str, color: str = GREEN) -> str:
     return f'<span class="mjp-badge" style="background:{color}; color:{BG};">{text}</span>'
+
+
+# ------------------------------------------------------------
+# v2 공통 부품 — 면 기반 (테두리·색띠 없음)
+# ------------------------------------------------------------
+def status_chip(text: str, color: str) -> str:
+    """상태 칩 HTML — 연한 상태색 면 + 진한 상태색 글자 (예: '등록 완료', '준비 중')."""
+    from ui.theme import BG, MUTED, STATUS_SOFT
+    # 상태색이 아니면(회색 '준비 중' 등) 흰 칩 — 칩이 놓이는 카드가 회색 면이라서
+    soft = STATUS_SOFT.get(color, BG)
+    fg = color if color in STATUS_SOFT else MUTED
+    return f'<span class="mjp-schip" style="background:{soft}; color:{fg};">{text}</span>'
+
+
+def stat_tiles(items: list[tuple]) -> None:
+    """
+    큰 숫자 타일 묶음. items: [(라벨, 값, 보조문구, 색 | None), ...]
+
+    색이 상태색이면 큰 숫자는 밝은 톤(STATUS_VIVID)으로 그린다 — 큰 글자 기준 3:1.
+    """
+    from ui.theme import STATUS_VIVID, TEXT
+    tiles = "".join(f"""
+        <div class="mjp-tile">
+            <div class="mjp-tile-label">{label}</div>
+            <div class="mjp-tile-value" style="color:{STATUS_VIVID.get(color, color or TEXT)};">{value}</div>
+            {f'<div class="mjp-tile-note">{note}</div>' if note else ''}
+        </div>""" for label, value, note, color in items)
+    render_html(f'<div class="mjp-tiles">{tiles}</div>')
+
+
+def list_row(icon_name: str, title: str, desc: str = "", right: str = "") -> str:
+    """목록 행 HTML — 연한 블루 아이콘 타일 + 제목/설명 + 오른쪽 보조 정보."""
+    from ui.theme import BRAND
+    mark = (f'<div class="mjp-row-icon">{icon(icon_name, size=22, color=BRAND, stroke=1.8)}</div>'
+            if icon_name else "")
+    return f"""
+    <div class="mjp-row">
+        {mark}
+        <div class="mjp-row-main">
+            <div class="mjp-row-title">{title}</div>
+            {f'<div class="mjp-row-desc">{desc}</div>' if desc else ''}
+        </div>
+        {f'<div class="mjp-row-right">{right}</div>' if right else ''}
+    </div>"""
+
+
+def code_display(label: str, code: str, desc: str = "") -> None:
+    """반 코드·이어하기 코드 — 크게, 글자 사이를 띄워 칠판에 옮겨 적기 쉽게."""
+    render_html(f"""
+    <div class="mjp-codebox">
+        <div class="mjp-codebox-label">{label}</div>
+        <div class="mjp-codebox-code">{code}</div>
+        {f'<div class="mjp-codebox-desc">{desc}</div>' if desc else ''}
+    </div>
+    """)
+
+
+def or_divider(text: str = "또는") -> None:
+    render_html(f'<div class="mjp-or"><span></span><b>{text}</b><span></span></div>')
 
 
 # ------------------------------------------------------------

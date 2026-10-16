@@ -257,29 +257,26 @@ def speech(slot: str, message: str, tone: str = "brand", size: int = 92) -> None
     """
     마스코트 + 말풍선. 축하·환영·위로처럼 '감정을 전하는' 자리에 쓴다.
 
-    tone: brand | success | warn — 말풍선 테두리 색만 달라진다.
+    v2: 회색 면 한 장 (테두리·색띠 없음). tone 은 호환용으로 남겼고, 성공·주의
+    톤일 때만 면을 연한 상태색으로 바꾼다.
     """
-    from ui.theme import BRAND, CARD, CARD_BORDER, GOLD, GREEN, TEXT
+    from ui.theme import CARD, GOLD_SOFT, GREEN_SOFT
 
-    color = {"brand": BRAND, "success": GREEN, "warn": GOLD}.get(tone, BRAND)
+    bg = {"success": GREEN_SOFT, "warn": GOLD_SOFT}.get(tone, CARD)
     markup = html(slot, size)
 
     if not markup:
         # 마스코트가 없으면 말풍선만 (문구는 전달돼야 한다)
         st.markdown(
-            f'<div class="mjp-card" style="border-left:3px solid {color};">'
-            f'<div style="color:{TEXT}; line-height:1.6;">{message}</div></div>',
+            f'<div class="mjp-speech" style="background:{bg};">'
+            f'<div class="mjp-speech-text">{message}</div></div>',
             unsafe_allow_html=True,
         )
         return
 
     st.markdown(f"""
-    <div class="mjp-mascot-row" style="display:flex; align-items:center; gap:14px;
-                background:{CARD}; border:1px solid {CARD_BORDER};
-                border-left:3px solid {color}; border-radius:14px;
-                padding:14px 18px; margin-bottom:16px; flex-wrap:wrap;">
+    <div class="mjp-mascot-row mjp-speech" style="background:{bg};">
         <div style="flex:none;">{markup}</div>
-        <div style="flex:1; min-width:180px; color:{TEXT}; font-size:var(--mjp-small);
-                    line-height:1.65;">{message}</div>
+        <div class="mjp-speech-text">{message}</div>
     </div>
     """, unsafe_allow_html=True)

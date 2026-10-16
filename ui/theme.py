@@ -436,6 +436,70 @@ div[data-testid="stDataFrame"] {{ border-radius: 16px; overflow: hidden; }}
 /* 레거시 마스코트 스티커 — 원래 배경색(RGB 37,41,42) 타일 위에 원본 그대로 (ui/mascot.py) */
 .mjp-mascot-legacy {{ background: #25292A; border-radius: 22px; padding: 8px; box-sizing: border-box; }}
 
+/* ===== 5-1. v2 공통 부품 (ui/components.py) ===== */
+.mjp-screen-head {{ margin: 8px 0 28px; }}
+.mjp-schip {{
+    display: inline-block; font-size: var(--mjp-caption); font-weight: 700;
+    padding: 4px 10px; border-radius: 8px; white-space: nowrap;
+}}
+.mjp-tiles {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 4px 0 var(--mjp-s2); }}
+.mjp-tile {{ background: {CARD}; border-radius: var(--mjp-radius-card); padding: 22px 22px 20px; }}
+.mjp-tile-label {{ font-size: var(--mjp-small); color: {MUTED}; font-weight: 600; }}
+.mjp-tile-value {{
+    font-size: clamp(28px, 3.2vw, 36px); font-weight: 800; letter-spacing: -0.03em;
+    line-height: 1.2; margin-top: 6px; font-variant-numeric: tabular-nums;
+}}
+.mjp-tile-note {{ font-size: var(--mjp-small); color: {MUTED}; margin-top: 4px; }}
+.mjp-row {{
+    display: flex; align-items: center; gap: 16px; background: {CARD};
+    border-radius: 20px; padding: 18px 20px; margin-bottom: 10px;
+}}
+.mjp-row-icon {{
+    flex: none; width: 44px; height: 44px; border-radius: 14px; background: {BRAND_LIGHT};
+    display: flex; align-items: center; justify-content: center;
+}}
+.mjp-row-main {{ flex: 1; min-width: 0; }}
+.mjp-row-title {{ font-size: 17px; font-weight: 700; color: {TEXT}; line-height: 1.4; }}
+.mjp-row-desc {{ font-size: var(--mjp-small); color: {BODY}; line-height: 1.6; margin-top: 2px; }}
+.mjp-row-right {{ flex: none; text-align: right; font-size: var(--mjp-small); color: {MUTED}; }}
+.mjp-codebox {{ background: {CARD}; border-radius: var(--mjp-radius-card); padding: 24px 28px; margin-bottom: var(--mjp-s2); }}
+.mjp-codebox-label {{ font-size: var(--mjp-small); color: {MUTED}; font-weight: 600; }}
+.mjp-codebox-code {{
+    font-size: clamp(32px, 5vw, 44px); font-weight: 800; color: {TEXT};
+    letter-spacing: 0.18em; margin: 6px 0 8px; font-variant-numeric: tabular-nums;
+}}
+.mjp-codebox-desc {{ font-size: var(--mjp-small); color: {BODY}; line-height: 1.65; }}
+.mjp-or {{ display: flex; align-items: center; gap: 12px; margin: 8px 0; }}
+.mjp-or span {{ flex: 1; height: 1px; background: {CARD_BORDER}; }}
+.mjp-or b {{ color: {MUTED}; font-size: var(--mjp-small); font-weight: 500; }}
+.mjp-speech {{
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    border-radius: var(--mjp-radius-card); padding: 18px 22px; margin-bottom: var(--mjp-s2);
+}}
+.mjp-speech-text {{ flex: 1; min-width: 180px; color: {TEXT}; font-size: var(--mjp-body); line-height: 1.7; }}
+/* 체크 목록 — 블루 체크 표시 + 본문 */
+.mjp-checklist {{ list-style: none; margin: 16px 0 0; padding: 0; }}
+.mjp-checklist li {{ position: relative; padding-left: 26px; margin-top: 8px; color: {BODY}; font-size: var(--mjp-body); line-height: 1.6; }}
+.mjp-checklist li::before {{
+    content: ""; position: absolute; left: 2px; top: 6px; width: 12px; height: 7px;
+    border-left: 2.5px solid {BRAND}; border-bottom: 2.5px solid {BRAND}; transform: rotate(-45deg);
+}}
+.mjp-role, .mjp-hubcard {{ margin-bottom: 10px; }}
+.mjp-tcard .mjp-muted {{ font-size: var(--mjp-small); }}
+/* 좁은 가운데 칼럼 (로그인·반 등록) */
+.mjp-narrow {{ max-width: 440px; margin: 0 auto; }}
+div[class*="st-key-mjp_narrow"] {{ max-width: 440px; margin: 0 auto; }}
+/* st.metric 을 타일처럼 */
+div[data-testid="stMetric"] {{ background: {CARD}; border-radius: var(--mjp-radius-card); padding: 18px 22px; }}
+div[data-testid="stMetricLabel"] p {{ font-size: var(--mjp-small) !important; color: {MUTED} !important; font-weight: 600; }}
+div[data-testid="stMetricValue"] {{ font-size: 32px !important; font-weight: 800; color: {TEXT}; }}
+/* 탭 — 굵은 글자, 밑줄은 primaryColor */
+button[data-baseweb="tab"] p, button[role="tab"] p {{ font-size: var(--mjp-body) !important; font-weight: 600; }}
+/* 체크박스·라디오 글자 */
+div[data-testid="stCheckbox"] label p, div[data-testid="stRadio"] label p {{ font-size: var(--mjp-body); color: {TEXT}; }}
+/* 진행 막대 */
+div[data-testid="stProgress"] div[role="progressbar"] > div {{ border-radius: 999px; }}
+
 /* ===== 6. 랜딩 ===== */
 .mjp-landing-hero {{ text-align: center; padding: 56px 8px 24px; }}
 .mjp-landing-mark {{ width: 72px; height: 72px; margin: 0 auto 28px; }}
@@ -552,6 +616,11 @@ div[class*="st-key-mjp_cta_landing"] button {{ min-height: 56px; font-size: 17px
     .mjp-feature-desc {{ min-height: 0; }}
     .mjp-break {{ padding: 4px 20px; }}
     .mjp-score-grid {{ grid-template-columns: 1fr; gap: 24px; }}
+    .mjp-tiles {{ grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }}
+    .mjp-tile {{ padding: 18px 16px; }}
+    .mjp-row {{ padding: 16px; gap: 12px; }}
+    .mjp-codebox {{ padding: 20px; }}
+    .mjp-screen-head {{ margin-bottom: 20px; }}
     .mjp-meter-labels em {{ display: none; }}   /* 폰에서는 눈금 숫자만 — 구간 이름은 칩이 말한다 */
     .mjp-explain {{ padding: 20px; }}
     .mjp-score-chip {{ transform: translateY(-6px); }}
