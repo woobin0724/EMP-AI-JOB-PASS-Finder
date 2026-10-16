@@ -37,6 +37,8 @@ VIEWER_HEIGHT = 600   # iframe 높이. 카드 폭은 높이 × 9/16 (폰 세로 
 _TEMPLATE = """<!doctype html>
 <html lang="ko"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- iframe 은 부모 페이지의 글꼴을 물려받지 않는다 → 앱과 같은 Pretendard 를 따로 싣는다 -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; background: transparent; overflow: hidden; }
@@ -44,7 +46,7 @@ _TEMPLATE = """<!doctype html>
          font-family: "Pretendard Variable", Pretendard, -apple-system, "Apple SD Gothic Neo",
                       "Malgun Gothic", "Noto Sans KR", sans-serif; }
   #story { position: relative; height: 100%; aspect-ratio: 9 / 16; max-width: 100%;
-           border-radius: 18px; overflow: hidden; color: #fff;
+           border-radius: 24px; overflow: hidden; color: #fff;
            user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
            touch-action: manipulation; cursor: pointer;
            box-shadow: 0 10px 30px rgba(0,0,0,.35); transition: background .35s ease; }
@@ -67,13 +69,13 @@ _TEMPLATE = """<!doctype html>
   #score { margin-top: 18px; font-size: 64px; font-weight: 900; letter-spacing: -.03em; display: none; }
   #score small { font-size: 20px; font-weight: 700; opacity: .8; margin-left: 4px; }
   #hint { position: absolute; bottom: 14px; left: 0; right: 0; text-align: center;
-          font-size: 12px; opacity: .75; }
+          font-size: 13px; opacity: .9; text-shadow: 0 1px 2px rgba(0,0,0,.35); }
   #end { position: absolute; inset: 0; z-index: 4; display: none; flex-direction: column;
          justify-content: center; align-items: center; text-align: center; gap: 12px;
          background: rgba(10,14,23,.78); padding: 24px; }
   #end b { font-size: 22px; }
   #end span { font-size: 15px; opacity: .9; line-height: 1.6; word-break: keep-all; }
-  #end .arrow { font-size: 34px; animation: bob 1.2s ease-in-out infinite; }
+  #end .arrow { width: 34px; height: 34px; animation: bob 1.2s ease-in-out infinite; }
   @keyframes bob { 50% { transform: translateY(6px); } }
   @media (prefers-reduced-motion: reduce) { #end .arrow { animation: none; } #story { transition: none; } }
 </style></head>
@@ -90,8 +92,9 @@ _TEMPLATE = """<!doctype html>
   <div id="hint">왼쪽 탭: 이전 · 오른쪽 탭: 다음 · 꾹 누르면 멈춤</div>
   <div id="end">
     <b>다음 기업 보기</b>
-    <span>아래 버튼으로 ❤️ 관심 또는 👎 패스를 누르면<br>다음 기업 스토리가 시작돼요.</span>
-    <div class="arrow">👇</div>
+    <span>아래 버튼으로 '관심 있어요' 또는 '패스'를 누르면<br>다음 기업 스토리가 시작돼요.</span>
+    <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"
+         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="m6 13 6 6 6-6"/></svg>
   </div>
 </div>
 <script>

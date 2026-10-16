@@ -30,7 +30,7 @@ from ui.theme import BADGE_COLORS, BG, GREEN, MUTED, RED, TEXT, render_stars
 def render() -> None:
     topbar(active=ss.PAGE_EXPLORE)
     back_to_hub()
-    section_title("실시간 기업 탐색기", icon_name="search", sub=
+    section_title("실시간 기업 탐색기", icon_name="search", eyebrow="기업 탐색", sub=
                   "공공·민간 채용 포털을 동시에 호출합니다. 응답하지 않는 소스는 "
                   "즉시 백업 마스터 데이터로 전환되어 화면이 비지 않습니다.")
 
@@ -286,7 +286,7 @@ def _render_story_section() -> None:
     else:
         source_note = "원본 데이터로 만든 기본 요약 · AI 요약은 프리미엄 회원 전용"
     mine = reactions.reaction_of(company["id"])
-    mine_note = {"like": " · 내 반응: ❤️ 관심", "pass": " · 내 반응: 👎 패스"}.get(mine, "")
+    mine_note = {"like": " · 내 반응: 관심", "pass": " · 내 반응: 패스"}.get(mine, "")
     st.caption(f"{idx + 1} / {total} · {source_note}{mine_note}")
 
     failure = story_cards.last_failure()
@@ -297,18 +297,18 @@ def _render_story_section() -> None:
     with st.container(key="mjp_row_story_nav"):
         b1, b2, b3 = st.columns([1, 1, 1.5])
         with b1:
-            if st.button("◀ 이전 기업", key="story_prev", use_container_width=True):
+            if st.button("← 이전 기업", key="story_prev", use_container_width=True):
                 _move_story(-1, total)
                 st.rerun()
         with b2:
-            if st.button("❤️ 관심", key="story_like", use_container_width=True,
+            if st.button("관심 있어요", key="story_like", use_container_width=True,
                          type="primary" if mine == reactions.LIKE else "secondary"):
                 reactions.record(company["id"], reactions.LIKE)
                 st.toast(f"{company['name']} — 관심 기업에 담았어요")
                 _move_story(1, total)
                 st.rerun()
         with b3:
-            if st.button("👎 패스 / 다음 기업 ▶", key="story_pass", use_container_width=True):
+            if st.button("패스 · 다음 기업 →", key="story_pass", use_container_width=True):
                 reactions.record(company["id"], reactions.PASS)
                 _move_story(1, total)
                 st.rerun()
@@ -317,14 +317,14 @@ def _render_story_section() -> None:
 
 
 def _render_liked(companies: list) -> None:
-    """❤️ 누른 기업과 매칭 점수."""
+    """'관심 있어요'를 누른 기업과 매칭 점수."""
     liked = reactions.liked_ids()
     by_id = {c["id"]: c for c in companies}
     liked = [by_id[cid] for cid in liked if cid in by_id]
 
     with st.expander(f"관심 기업 모아보기 ({len(liked)})", expanded=bool(liked)):
         if not liked:
-            st.caption("스토리를 보다가 ❤️ 관심을 누르면 여기에 모여요.")
+            st.caption("스토리를 보다가 '관심 있어요'를 누르면 여기에 모여요.")
             return
         for c in liked:
             score = c.get("match_score")
