@@ -18,9 +18,11 @@ from services import activity
 from services import premium
 from services import store
 from ui import mascot
-from ui.components import back_to_hub, grid_columns, section_title, topbar
+from ui.components import (
+    back_to_hub, code_display, grid_columns, list_row, render_html, section_title, status_chip, topbar,
+)
 from ui.icons import icon
-from ui.theme import BRAND, CARD_BORDER, GOLD, GREEN, MUTED, RED, TEXT
+from ui.theme import BRAND, BRAND_LIGHT, CARD_BORDER, GOLD, GREEN, MUTED, RED, STATUS_VIVID, TEXT
 
 _PROVIDER_LABEL = {"kakao": "카카오", "naver": "네이버", "google": "Google", "guest": "게스트모드"}
 _ROLE_LABEL = {"student": "학생", "teacher": "선생님"}
@@ -29,19 +31,19 @@ _ROLE_LABEL = {"student": "학생", "teacher": "선생님"}
 def render() -> None:
     topbar(active=ss.PAGE_MYPAGE)
     back_to_hub()
-    section_title("마이페이지", "계정 정보와 활동 기록을 확인합니다.", icon_name="user")
+    section_title("마이페이지", "계정 정보와 활동 기록을 확인합니다.", icon_name="user", eyebrow="내 정보")
 
     uid = ss.user_id()
     saved = store.get_user(uid) or {}
 
     # ---------- 계정 카드 ----------
+    # v2: 그라데이션 원 대신 연한 블루 타일 (블루는 한 가지)
     st.markdown(f"""
-    <div class="mjp-card">
+    <div class="mjp-tcard" style="margin-bottom:16px;">
         <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
-            <div style="width:62px; height:62px; border-radius:50%; flex:none;
-                        background:linear-gradient(135deg,#3B82F6,#8B5CF6);
+            <div style="width:60px; height:60px; border-radius:20px; flex:none; background:{BRAND_LIGHT};
                         display:flex; align-items:center; justify-content:center;">
-                        {icon("user", size=28, color="#fff", stroke=1.8)}</div>
+                        {icon("user", size=28, color=BRAND, stroke=1.8)}</div>
             <div style="flex:1; min-width:180px;">
                 <div style="font-size:var(--mjp-h2); font-weight:800; color:{TEXT};">{ss.display_name()}</div>
                 <div class="mjp-muted" style="margin-top:5px;">
@@ -60,23 +62,15 @@ def render() -> None:
     # ---------- 이어하기 코드 ----------
     if ss.provider() == "guest":
         code = st.session_state.get("resume_code") or uid.replace("guest_", "")
-        st.markdown(f"""
-        <div class="mjp-card" style="border-color:{BRAND};">
-            <div style="font-weight:800; color:{TEXT}; display:flex; align-items:center; gap:8px;">{icon("key", size=17, color=BRAND)} 이어하기 코드</div>
-            <div style="color:{BRAND}; font-size:var(--mjp-h1); font-weight:800;
-                        letter-spacing:0.2em; margin:8px 0 6px;">{code}</div>
-            <div class="mjp-muted">
-                다른 기기에서 로그인 화면의 '이어하기 코드가 있어요'에 이 코드를 넣으면
-                지금까지의 기록을 그대로 볼 수 있습니다. 화면을 캡처해두세요.
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        code_display(
+            "이어하기 코드", code,
+            "다른 기기에서 로그인 화면의 '이어하기 코드가 있어요'에 이 코드를 넣으면 "
+            "지금까지의 기록을 그대로 볼 수 있습니다. 화면을 캡처해두세요.",
+        )
 
     # ---------- [Phase 2] 반 정보 ----------
 
     # ---------- [Phase 3] 나의 활동 기록 ----------
-    st.markdown(f'<div style="height:1px;background:{CARD_BORDER};margin:18px 0;"></div>',
-                unsafe_allow_html=True)
     st.markdown("#### 나의 활동 기록")
 
     # st.tabs 라벨도 텍스트 전용이다 (SVG 불가) → 이모지를 빼고 단어만 남긴다
@@ -95,8 +89,6 @@ def render() -> None:
     _class_section(saved)
 
     # ---------- 계정 관리 ----------
-    st.markdown(f'<div style="height:1px;background:{CARD_BORDER};margin:18px 0;"></div>',
-                unsafe_allow_html=True)
     st.markdown("#### 계정 관리")
 
     mcol1, mcol2 = st.columns(2)
@@ -140,8 +132,6 @@ def _class_section(saved: dict) -> None:
     반 등록은 선택 기능이므로, 미등록 학생에게도 경고가 아니라
     '원하면 하세요' 톤으로만 안내한다.
     """
-    st.markdown(f'<div style="height:1px;background:{CARD_BORDER};margin:18px 0;"></div>',
-                unsafe_allow_html=True)
     st.markdown("#### 반 정보")
 
     uid = ss.user_id()
@@ -156,14 +146,8 @@ def _class_section(saved: dict) -> None:
             return
 
         count = len(store.class_students(klass["class_code"]))
-        st.markdown(f"""
-        <div class="mjp-card" style="border-color:{BRAND};">
-            <div style="font-size:var(--mjp-h2); font-weight:800; color:{TEXT};">
-                {store.class_label(klass)}</div>
-            <div class="mjp-muted" style="margin-top:6px;">등록 학생 {count}명 ·
-                개설일 {klass.get('created_at', '')[:10]}</div>
-        </div>
-        """, unsafe_allow_html=True)
+        render_html(list_row("school", store.class_label(klass),
+                             f"등록 학생 {count}명 · 개설일 {klass.get('created_at', '')[:10]}"))
         st.caption("반 코드 (눌러서 복사)")
         st.code(klass["class_code"], language=None)
 
@@ -176,17 +160,16 @@ def _class_section(saved: dict) -> None:
     code = saved.get("class_code")
     if code:
         klass = store.get_class(code)
-        st.markdown(f"""
-        <div class="mjp-card" style="border-color:{GREEN};">
-            <span class="mjp-badge" style="background:{GREEN}; color:#FFFFFF;">등록됨</span>
-            <div style="font-size:var(--mjp-body); font-weight:800; color:{TEXT}; margin-top:10px;">
-                {store.class_label(klass) or code}</div>
-            <div class="mjp-muted" style="margin-top:4px;">반 코드 {code}</div>
-            <div class="mjp-muted" style="margin-top:8px; line-height:1.55;">
+        render_html(f"""
+        <div class="mjp-tcard" style="margin-bottom:12px;">
+            {status_chip("등록됨", GREEN)}
+            <h4 style="margin-top:12px !important;">{store.class_label(klass) or code}</h4>
+            <p class="mjp-muted">반 코드 {code}</p>
+            <p style="margin-top:8px !important;">
                 진단 결과와 로드맵 진행 상황이 선생님의 '우리 반 현황'에 표시됩니다.
-            </div>
+            </p>
         </div>
-        """, unsafe_allow_html=True)
+        """)
         with st.expander("반에서 나가기"):
             st.caption("나가면 이후 활동은 선생님 화면에 표시되지 않습니다. "
                        "이미 기록된 내 데이터는 마이페이지에 그대로 남습니다.")
@@ -196,15 +179,15 @@ def _class_section(saved: dict) -> None:
                 st.rerun()
         return
 
-    st.markdown(f"""
-    <div class="mjp-card" style="border-style:dashed;">
-        <div style="font-weight:800; color:{TEXT};">소속된 반이 없습니다</div>
-        <div class="mjp-muted" style="margin-top:6px; line-height:1.6;">
+    render_html("""
+    <div class="mjp-tcard" style="margin-bottom:12px;">
+        <h4>소속된 반이 없습니다</h4>
+        <p>
             반 등록은 <b>선택</b>이에요. 등록하지 않아도 모든 기능을 그대로 쓸 수 있습니다.
             선생님께 반 코드를 받았다면 아래에서 등록해보세요.
-        </div>
+        </p>
     </div>
-    """, unsafe_allow_html=True)
+    """)
     if st.button("반 코드 입력하기", use_container_width=True, key="mypage_join_class"):
         ss.goto(ss.PAGE_CLASS_JOIN)
 
@@ -269,22 +252,19 @@ def _score_section(saved: dict) -> None:
     else:
         delta_html = '<div class="mjp-muted">직전과 동일</div>'
 
-    st.markdown(f"""
-    <div class="mjp-card" style="display:flex; align-items:center; gap:22px; flex-wrap:wrap;">
-        <div>
-            <div class="mjp-muted">최근 매칭 점수</div>
-            <div style="font-size:var(--mjp-display); font-weight:800; color:{tone}; line-height:1.1;">{latest}
-                <span style="font-size:var(--mjp-body); color:{MUTED}; font-weight:700;">/ 100</span></div>
-            {delta_html}
+    # v2: 스펙 진단 점수 히어로와 같은 언어 — 큰 숫자(VIVID) + '/ 100점' + 판정 칩
+    render_html(f"""
+    <div class="mjp-tcard" style="margin-bottom:12px;">
+        <div class="mjp-score-label">최근 매칭 점수</div>
+        <div class="mjp-score-line">
+            <span class="mjp-score-num" style="color:{STATUS_VIVID[tone]}; font-size:clamp(48px, 7vw, 64px);">{latest}</span>
+            <span class="mjp-score-unit">/ 100점</span>
+            {status_chip(verdict, tone)}
         </div>
-        <div style="width:1px; height:56px; background:{CARD_BORDER};"></div>
-        <div>
-            <div class="mjp-muted">판정</div>
-            <div style="font-size:var(--mjp-h2); font-weight:800; color:{tone}; margin-top:4px;">{verdict}</div>
-            <div class="mjp-muted" style="margin-top:4px;">기록 {len(series)}회</div>
-        </div>
+        <div style="margin-top:6px;">{delta_html}</div>
+        <div class="mjp-muted" style="margin-top:4px;">기록 {len(series)}회</div>
     </div>
-    """, unsafe_allow_html=True)
+    """)
 
     if len(series) < 2:
         st.caption("진단을 한 번 더 하면 점수 변화 그래프가 나타납니다.")
@@ -393,16 +373,14 @@ def _roadmap_section() -> None:
     for col, (key, label, desc) in zip(grid_columns(total, 3), MILESTONES):
         with col:
             checked = bool(milestones.get(key))
-            color = GREEN if checked else CARD_BORDER
-            mark = icon("check-circle", size=20, color=GREEN) if checked else icon("clipboard", size=20, color=MUTED)
-            st.markdown(f"""
-            <div class="mjp-card" style="border-color:{color};">
-                <div style="line-height:1;">{mark}</div>
-                <div style="font-weight:800; color:{TEXT if checked else MUTED};
-                            margin-top:8px;">{label}</div>
-                <div class="mjp-muted" style="margin-top:6px; line-height:1.5;">{desc}</div>
+            chip = status_chip("완료", GREEN) if checked else status_chip("진행 전", MUTED)
+            render_html(f"""
+            <div class="mjp-tcard" style="padding:24px; margin-bottom:12px;">
+                {chip}
+                <h4 style="margin-top:12px !important; color:{TEXT if checked else MUTED} !important;">{label}</h4>
+                <p class="mjp-muted">{desc}</p>
             </div>
-            """, unsafe_allow_html=True)
+            """)
 
     if done == total:
         st.success("세 단계를 모두 완료했습니다. 이제 실제 지원서를 넣을 준비가 끝났어요.")
@@ -476,14 +454,7 @@ def _viewed_section(saved: dict) -> None:
     for item in viewed:
         company = COMPANY_BY_ID[item["company_id"]]
         marked = icon("heart", size=14, color=RED, filled=True) if activity.is_bookmarked(company["id"]) else ""
-        st.markdown(f"""
-        <div class="mjp-card" style="padding:12px 16px; display:flex; align-items:center;
-                    gap:12px; flex-wrap:wrap;">
-            <div style="flex:1; min-width:160px;">
-                <div style="font-weight:800; color:{TEXT};">{company['name']}
-                    <span style="color:{RED};">{marked}</span></div>
-                <div class="mjp-muted">{company['size_tag']} · {company['description']}</div>
-            </div>
-            <div class="mjp-muted">{item.get('at', '')[:10]}</div>
-        </div>
-        """, unsafe_allow_html=True)
+        render_html(list_row(
+            "", f"{company['name']} <span style='color:{RED};'>{marked}</span>",
+            f"{company['size_tag']} · {company['description']}", right=item.get('at', '')[:10],
+        ))

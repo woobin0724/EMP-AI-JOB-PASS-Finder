@@ -27,7 +27,7 @@ from services import api_registry as reg
 from services import curated
 from services import storage_backend
 from ui.components import back_to_hub, render_html, section_title, topbar
-from ui.theme import BRAND, MUTED
+from ui.theme import BRAND_DEEP, MUTED, TEXT
 
 
 def _widget(key: str, label: str, kind: str, required: bool, value):
@@ -127,7 +127,7 @@ def _list(rows: list[dict]) -> None:
         render_html(f"""
         <div class="mjp-card">
             <span class="mjp-tag">{r.get('size_tag','')} · {r.get('category','')}</span>
-            <div style="font-size:var(--mjp-h2); font-weight:800; margin-top:8px;">{r.get('name','')}</div>
+            <div style="font-size:var(--mjp-h3); font-weight:700; color:{TEXT}; margin-top:8px;">{r.get('name','')}</div>
             <div class="mjp-muted">{r.get('description','')}</div>
             <div class="mjp-muted" style="margin-top:8px;">
                 자격증: {', '.join(r.get('required_certs') or []) or '-'} ·
@@ -136,7 +136,7 @@ def _list(rows: list[dict]) -> None:
             <div style="margin-top:10px; font-size:var(--mjp-caption); color:{MUTED};">
                 출처 {r.get('source_type','')} ·
                 <a href="{r.get('source_url','')}" target="_blank"
-                   style="color:{BRAND};">{r.get('source_url','')}</a><br>
+                   style="color:{BRAND_DEEP};">{r.get('source_url','')}</a><br>
                 {r.get('checked_by','')} · {r.get('checked_at','')}
             </div>
         </div>
@@ -206,7 +206,7 @@ def render() -> None:
     # 이 화면 자체가 권한을 확인하는 실제 방어선이다 (services/access.py).
     if access.deny_if_not_admin():
         return
-    section_title("기업 데이터 입력", icon_name="clipboard", sub=
+    section_title("기업 데이터 입력", icon_name="clipboard", eyebrow="팀 관리자", sub=
                   "팀이 직접 조사한 기업 정보를 넣는 화면입니다. 스크래핑하지 않고 "
                   "사람이 확인한 값만 들어갑니다 — 그래서 <b>출처 기록이 필수</b>입니다.")
 

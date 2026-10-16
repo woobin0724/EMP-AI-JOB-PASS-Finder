@@ -23,7 +23,7 @@ def render() -> None:
     back_to_hub()
     if access.deny_if_not_admin():
         return
-    section_title("사용 통계", icon_name="chart", sub=
+    section_title("사용 통계", icon_name="chart", eyebrow="팀 관리자", sub=
                   "로그인한 사용자의 접속일·화면 이동·스토리 반응 기록입니다. "
                   "이름·학교 같은 개인 정보는 남기지 않고, 사용자는 해시 ID 로만 구분합니다.")
 
