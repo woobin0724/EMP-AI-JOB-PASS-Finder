@@ -146,6 +146,13 @@ code, pre, kbd, samp, .stCode, [data-testid="stCode"] * {{
 
 .stApp {{ font-size: var(--mjp-body); }}
 
+/* 한국어 줄바꿈 — 브라우저 기본값은 음절 단위로 끊어 "건가/요?", "무/료" 처럼
+   단어가 쪼개진다. keep-all 로 어절 단위로만 끊고, 어절 하나가 칸보다 길 때만
+   anywhere 로 강제로 끊어 가로 넘침을 막는다.
+   Streamlit 이 마크다운 <p> 에 word-break: break-word 를 직접 걸어 상속만으로는
+   덮이지 않으므로(실측) 하위 요소 전체에 !important 로 건다. */
+.stApp, .stApp * {{ word-break: keep-all !important; overflow-wrap: anywhere !important; }}
+
 /* ===== 0. 기본 바탕 ===== */
 .stApp {{ background: {BG}; }}
 h1, h2, h3, h4, h5 {{ color: {TEXT}; letter-spacing: -0.02em; }}
