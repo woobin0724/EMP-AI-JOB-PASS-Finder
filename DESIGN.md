@@ -73,8 +73,8 @@ components:
 > 2. **토스 앱식 원칙** — 흰 바탕과 연회색 면, 테두리 대신 여백·면 색, 큰 굵은 제목과 큰 숫자, 한 화면에 핵심 하나,
 >    둥근 카드, 폰에서 하단 꽉 찬 주요 버튼. 토스의 로고·아이콘·전용 글꼴(Toss Product Sans)은 쓰지 않는다. 글꼴은 Pretendard.
 >
-> 구현: `.streamlit/config.toml` (Streamlit 테마) + `ui/theme.py` (토큰 · 전역 CSS) + `ui/components.py`.
-> 시범 적용 화면: 랜딩(`views/landing.py`), 스펙 진단(`views/tab_spec.py`). 나머지 13개 화면은 새 토큰 색만 따라오고 구조는 아직 v1 이다.
+> 구현: `.streamlit/config.toml` (Streamlit 테마) + `ui/theme.py` (토큰 · 전역 CSS) + `ui/components.py` (공통 부품).
+> 적용 범위: 15개 화면 전부. 랜딩·스펙 진단에서 시범 적용한 뒤 나머지 13개 화면에 같은 언어로 넓혔다.
 
 ## 1. Overview
 
@@ -177,6 +177,16 @@ components:
 | 예시 데이터 안내 | `disclaimer()` / `.mjp-disclaimer` | 연한 블루 면 + 본문색 14px. **v1(13px 회색 글자 + 점선) 보다 덜 눈에 띄면 안 된다** |
 | 안내 줄 | `note()` / `.mjp-note` | 본문 16px. 예시·백업 안내가 캡션으로 작아지지 않게 |
 | 데이터 출처 배지 | `services/fallback.badge_html` + `BADGE_COLORS` | LIVE / BACKUP / CURATED — 위 2장 규칙 |
+| 화면 머리 | `section_title(title, sub, eyebrow=)` | 작은 파란 라벨(선택) + h1 제목 + 설명. v2 에서 제목 옆 아이콘은 그리지 않는다 |
+| 상태 칩 | `status_chip(text, color)` / `.mjp-schip` | 상태색 SOFT 면 + 진한 글자. 상태색이 아니면 흰 칩 + 보조 글자. 왼쪽 색띠 대신 쓴다 |
+| 숫자 타일 | `stat_tiles([(라벨, 값, 보조, 색)])` / `.mjp-tiles` | 회색 면 타일 묶음, 값은 28–36px 굵게(상태색이면 VIVID). 폰 2열 |
+| 목록 행 | `list_row(icon, title, desc, right)` / `.mjp-row` | 연한 블루 아이콘 타일 + 제목·설명 + 오른쪽 보조. 허브 보조 진입구·열람 이력·반 정보 |
+| 코드 표시 | `code_display(label, code, desc)` / `.mjp-codebox` | 반 코드·이어하기 코드. 크게, 자간 0.18em |
+| 또는 구분선 | `or_divider()` / `.mjp-or` | 두 선택지 사이 |
+| 체크 목록 | `ul.mjp-checklist` | 블루 체크 + 본문. 역할 카드·반 만들기 안내 |
+| 마스코트 말풍선 | `mascot.speech()` / `.mjp-speech` | 회색 면(성공·주의 톤은 연한 상태색 면), 테두리 없음 |
+| 좁은 칼럼 | 컨테이너 key `mjp_narrow_*` | 로그인·반 등록처럼 입력 하나가 주인공인 화면은 최대 440px 가운데 |
+| st.metric · 탭 · 체크박스 | 전역 CSS | metric 은 숫자 타일처럼, 탭·체크박스 글자는 본문 크기 |
 | 기존 카드 | `.mjp-card`, `.mjp-feature` | v1 클래스 유지, 회색 면·테두리 없음으로 바뀜 |
 
 **Streamlit 기본 크롬 처리**: 상단 헤더 바·툴바·장식 띠·푸터 숨김, 제목 앵커 아이콘 숨김, 선택 영역·캐럿·스크롤바 색을 팔레트로.
@@ -189,12 +199,15 @@ components:
 - 구분은 면 색과 여백으로. 카드 안에 카드를 넣지 않는다.
 - 화면마다 제일 큰 요소를 하나만 둔다.
 - 폰에서 그 화면의 주요 행동이 하나라면 `st.container(key="mjp_cta_...")` 로 하단 고정한다.
+  현재: 랜딩(시작하기) · 로그인(게스트모드로 바로 시작하기) · 반 등록(우리 반에 등록하기 / 기능 선택하러 가기) ·
+  반 만들기(우리 반 만들고 코드 받기 / 우리 반 현황 보기). 한 화면에 고정 버튼은 하나만.
 - 상태색은 글자 = 진한 값, 큰 숫자·막대 = VIVID, 칩 면 = SOFT.
 - 예시 데이터 안내와 LIVE / BACKUP / CURATED 배지는 지금 이상으로 보이게 둔다.
 - 변경 후 `docs/qa_mobile.py` 로 390px·1440px 실측 (가로 넘침 0, 버튼 44px+, 입력 16px+, 11px 미만 글자 0).
 
 **Don't**
-- 카드에 테두리·두꺼운 왼쪽 색띠(1px 초과)를 두르지 않는다. 그림자로 띄우지 않는다.
+- 카드에 테두리·두꺼운 왼쪽 색띠(1px 초과)를 두르지 않는다. 그림자로 띄우지 않는다. 심각도는 `status_chip` 으로.
+- 역할·기능마다 다른 색을 칠하지 않는다 (예: 학생 = 초록, 선생님 = 보라). 블루 한 가지 + 상태색만.
 - 그라데이션 글자, 유리(blur) 장식, 이모지 아이콘을 쓰지 않는다.
 - `BRAND(#3182F6)` 를 작은 글자색이나 흰 글자 버튼 면으로 쓰지 않는다 (대비 부족) — `BRAND_DEEP` 을 쓴다.
 - `MUTED` 대신 포트폴리오의 `#8B95A1` 을 글자에 쓰지 않는다.
