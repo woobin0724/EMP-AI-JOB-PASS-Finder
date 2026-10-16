@@ -82,8 +82,8 @@ async def run(device, vw, vh, mobile):
         # 빈 화면을 측정해 '문제 없음'으로 통과해 버린다(실제로 그랬다).
         await pg.goto(URL, wait_until="networkidle")
         await pg.get_by_role("button", name="시작하기").first.wait_for(state="visible", timeout=60000)
-        # 랜딩 맨 아래 요소(팀·예시 데이터 안내)까지 그려졌는지 확인 (v2 랜딩 기준)
-        await pg.locator(".mjp-footer").first.wait_for(state="visible", timeout=60000)
+        # 랜딩 맨 아래 요소(게스트모드 안내)까지 그려졌는지 확인 — 랜딩은 히어로 하나
+        await pg.locator(".mjp-landing-note").first.wait_for(state="visible", timeout=60000)
         await probe(pg, f"{device}_1_landing", results)
 
         await pg.get_by_role("button", name="시작하기").first.click(); await pg.wait_for_timeout(2200)

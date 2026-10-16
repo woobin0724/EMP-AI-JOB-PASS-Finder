@@ -524,6 +524,41 @@ div[class*="st-key-mjp_cta_landing"] button {{ min-height: 56px; font-size: 17px
 }}
 .mjp-footer .mjp-disclaimer {{ display: inline-block; margin: 12px 0 0; color: {BODY}; }}
 
+/* ===== 6-1. 시작하기 다음 화면 (views/login.py · views/login_guide.py) ===== */
+.mjp-login-intro {{ text-align: center; max-width: 560px; margin: 0 auto; padding: 24px 0 36px; }}
+.mjp-login-intro .mjp-section-sub {{ margin: 10px auto 0; }}
+/* '바로 로그인하기 ↓' — 앵커 링크를 주요 버튼 모양으로 (Streamlit 버튼은 앵커 이동을 못 한다) */
+.stApp a.mjp-jump {{
+    display: inline-flex; align-items: center; justify-content: center;
+    min-height: 52px; padding: 0 28px; margin-top: 22px; border-radius: var(--mjp-radius-btn);
+    background: {BRAND_DEEP}; color: #FFFFFF !important; font-size: 17px; font-weight: 600;
+    text-decoration: none !important; transition: background-color var(--mjp-ease), transform var(--mjp-ease);
+}}
+.stApp a.mjp-jump:hover {{ background: {BRAND_PRESS}; }}
+.stApp a.mjp-jump:active {{ transform: scale(0.98); }}
+.stApp a.mjp-jump:focus-visible {{ outline: 2px solid {BRAND}; outline-offset: 2px; }}
+/* 앵커로 이동할 때 부드럽게, 목적지는 위에 여백을 두고 멈춘다 */
+[data-testid="stMain"], [data-testid="stAppViewContainer"], section.main, html {{ scroll-behavior: smooth; }}
+.mjp-anchor {{ height: 1px; scroll-margin-top: 24px; }}
+/* 사용법·FAQ 띠 — 연회색 면을 화면 끝까지, 내용은 가운데 720px */
+div[class*="st-key-mjp_guide"] {{
+    max-width: 720px; margin: 0 auto 56px; padding: 56px 0;
+    background: {BG_SOFT}; box-shadow: 0 0 0 100vmax {BG_SOFT}; clip-path: inset(0 -100vmax);
+}}
+div[class*="st-key-mjp_guide"] div[data-testid="stExpander"] details {{ background: {BG}; }}
+div[class*="st-key-mjp_guide"] div[data-testid="stExpander"] summary p {{
+    font-size: var(--mjp-body) !important; font-weight: 600; color: {TEXT};
+}}
+.mjp-guide-head {{ text-align: center; margin-bottom: 20px; }}
+.mjp-guide-sub {{ font-size: var(--mjp-h3); font-weight: 700; color: {TEXT}; margin: 28px 0 4px; letter-spacing: -0.02em; }}
+.mjp-faq-a {{ color: {BODY}; font-size: var(--mjp-body); line-height: 1.75; }}
+.mjp-tiles-4 {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
+.mjp-guide-next {{ text-align: center; font-size: var(--mjp-h3); font-weight: 700; color: {TEXT}; margin-top: 28px; }}
+/* 랜딩은 히어로 하나 — 데스크톱에서 화면 세로 가운데 */
+@media (min-width: {MOBILE_BREAKPOINT + 1}px) {{
+    div[class*="st-key-mjp_landing_solo"] {{ min-height: calc(100vh - 140px); justify-content: center; }}
+}}
+
 /* ===== 7. 스펙 진단 점수 ===== */
 /* 데스크톱: 왼쪽 큰 점수 · 오른쪽 세부 4줄. 폰: 위아래 */
 .mjp-score-grid {{
@@ -617,6 +652,9 @@ div[class*="st-key-mjp_cta_landing"] button {{ min-height: 56px; font-size: 17px
     .mjp-break {{ padding: 4px 20px; }}
     .mjp-score-grid {{ grid-template-columns: 1fr; gap: 24px; }}
     .mjp-tiles {{ grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }}
+    .mjp-login-intro {{ padding: 16px 0 28px; }}
+    .stApp a.mjp-jump {{ display: flex; width: 100%; min-height: 52px; }}
+    div[class*="st-key-mjp_guide"] {{ padding: 40px 0; margin-bottom: 40px; }}
     .mjp-tile {{ padding: 18px 16px; }}
     .mjp-row {{ padding: 16px; gap: 12px; }}
     .mjp-codebox {{ padding: 20px; }}

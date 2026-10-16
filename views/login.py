@@ -22,11 +22,14 @@ import streamlit as st
 from core import session as ss
 from services import auth as auth_svc
 from services import store
-from ui import brand
+from ui import brand, mascot
 from ui.icons import brand_symbol
 from ui.components import or_divider, render_html
-from ui.emblem import emblem_svg
 from ui.theme import CARD, MUTED, TEXT
+from views import login_guide
+
+# '바로 로그인하기 ↓' 가 스크롤해 갈 앵커 id
+LOGIN_ANCHOR = "mjp-login-area"
 
 
 def _provider_anchor(key: str) -> str:
@@ -59,12 +62,26 @@ def _provider_disabled(key: str) -> str:
 
 
 def render() -> None:
-    # v2: 가운데 좁은 칼럼 하나. 제일 큰 것은 '로그인' 제목, 주요 행동은 게스트 시작.
-    render_html(f"""
-    <div class="mjp-narrow" style="text-align:center; padding:24px 0 8px;">
-        <div class="mjp-landing-mark" style="background:{TEXT}; border-radius:20px; padding:6px;
-             width:64px; height:64px; margin-bottom:24px;">{emblem_svg(64, detail="mark", uid="loginmark")}</div>
-        <span class="mjp-eyebrow">{brand.SERVICE_NAME}</span>
+    """
+    [화면 구성] 시작하기 다음 화면
+      1. 맨 위 안내 — '처음이라면 사용법부터' + '바로 로그인하기 ↓' (로그인 영역으로 앵커 이동)
+      2. 사용법 · 핵심 기능 · FAQ — 연회색 띠 (views/login_guide.py)
+      3. 로그인 영역 — 게스트 시작 · 소셜 로그인 · 이어하기 코드 (동작은 예전과 같다)
+      4. 마스코트 인사 · 팀 안내 (예전 랜딩 맨 아래에 있던 것)
+    """
+    # 소셜 로그인이 실패해 돌아온 경우의 오류는 화면 맨 위에 보여준다.
+    # 로그인 영역은 사용법 아래에 있어서, 거기에만 띄우면 처음 화면에서 보이지 않는다.
+    if st.session_state.get("login_error"):
+        st.error(st.session_state["login_error"])
+        st.session_state["login_error"] = ""
+
+    _render_intro()
+    login_guide.render()
+
+    # 앵커 — '바로 로그인하기 ↓' 와 FAQ 끝 '이제 시작해볼까요? ↓' 가 여기로 온다
+    render_html(f'<div id="{LOGIN_ANCHOR}" class="mjp-anchor"></div>')
+    render_html("""
+    <div class="mjp-narrow" style="text-align:center; padding:8px 0 8px;">
         <div class="mjp-section-title">로그인</div>
         <div class="mjp-section-sub" style="margin:10px auto 0;">
             진단 결과와 찜한 기업을 다음에 다시 볼 수 있어요.
@@ -73,21 +90,18 @@ def render() -> None:
     """)
 
     with st.container(key="mjp_narrow_login"):
-        if st.session_state.get("login_error"):
-            st.error(st.session_state["login_error"])
-            st.session_state["login_error"] = ""
 
         # ---------- 게스트모드 ----------
         # 라벨을 숨기면 무엇을 적는 칸인지 placeholder 로만 알 수 있다 → 보이게 둔다
         nickname = st.text_input(
             "이름 또는 닉네임 (선택)", key="guest_nickname", placeholder="예: 김우빈",
         )
-        # 폰에서는 이 버튼이 화면 하단에 꽉 차게 고정된다 (key 가 mjp_cta_ 로 시작)
-        with st.container(key="mjp_cta_login"):
-            if st.button("게스트모드로 바로 시작하기", type="primary",
-                         use_container_width=True, key="guest_login_btn"):
-                user = auth_svc.guest_login(nickname)
-                ss.login(user)
+        # 이 화면은 위쪽이 사용법이라 하단 고정 버튼을 두지 않는다 — 고정하면 사용법을 읽는
+        # 내내 '게스트 시작'이 떠 있어 맨 위 '바로 로그인하기 ↓' 와 행동 유도가 둘이 된다.
+        if st.button("게스트모드로 바로 시작하기", type="primary",
+                     use_container_width=True, key="guest_login_btn"):
+            user = auth_svc.guest_login(nickname)
+            ss.login(user)
 
         render_html(
             '<div class="mjp-muted" style="margin:4px 0 8px; line-height:1.65;">'
@@ -135,6 +149,38 @@ def render() -> None:
     # ---------- 개발자용 설정 현황 ----------
     with st.container(key="mjp_narrow_setup"):
         _setup_panel()
+
+    _render_closing()
+
+
+def _render_intro() -> None:
+    """맨 위 짧은 안내 + 로그인 영역으로 건너뛰는 버튼 (폰 첫 화면 안에 들어오게 짧게)."""
+    render_html(f"""
+    <div class="mjp-login-intro">
+        <span class="mjp-eyebrow">{brand.SERVICE_NAME}</span>
+        <div class="mjp-section-title">처음이라면<br>사용법부터 살펴보세요</div>
+        <div class="mjp-section-sub">로그인은 아래에 있어요.</div>
+        <a class="mjp-jump" href="#{LOGIN_ANCHOR}" target="_self">바로 로그인하기 ↓</a>
+    </div>
+    """)
+
+
+def _render_closing() -> None:
+    """마스코트 인사 + 팀 안내 — 예전 랜딩 맨 아래에 있던 것 (마스코트는 같은 크기·한 곳)."""
+    m_html = mascot.html("welcome", size=104)
+    if m_html:
+        render_html(f"""
+        <div class="mjp-mascot-hello">
+            {m_html}
+            <p>안녕하세요! 저는 여러분의 취업 준비를 함께할 <b>마스코트</b>예요.<br>
+               진단부터 자소서까지 옆에서 응원할게요.</p>
+        </div>
+        """)
+    render_html(f"""
+    <div class="mjp-footer">
+        {brand.TEAM_NAME} · 김우빈 · 김정수 · 오상명 · 이건희
+    </div>
+    """)
 
 
 def _setup_panel() -> None:
