@@ -24,8 +24,10 @@ from data.roadmap import MILESTONES
 from services import store
 from services.activity import student_summary
 from ui import mascot
-from ui.components import back_to_hub, grid_columns, section_title, topbar
-from ui.theme import CARD_BORDER, GOLD, GREEN, MUTED, RED, TEXT
+from ui.components import (
+    back_to_hub, grid_columns, render_html, section_title, stat_tiles, status_chip, topbar,
+)
+from ui.theme import GOLD, GREEN, MUTED, RED, STATUS_VIVID, TEXT
 
 
 def render() -> None:
@@ -37,7 +39,7 @@ def render() -> None:
         _render_no_class()
         return
 
-    section_title("우리 반 현황", store.class_label(klass), icon_name="school")
+    section_title("우리 반 현황", store.class_label(klass), icon_name="school", eyebrow="선생님")
 
     students = store.class_students(klass["class_code"])
     rows = [student_summary(u) for u in students]
@@ -59,32 +61,19 @@ def render() -> None:
 # 상단 — 반 코드 안내
 # ------------------------------------------------------------
 def _render_code_strip(klass: dict, count: int) -> None:
-    st.markdown(f"""
-    <div class="mjp-card" style="display:flex; align-items:center; gap:18px; flex-wrap:wrap;">
-        <div>
-            <div class="mjp-muted">반 코드</div>
-            <div style="color:{GOLD}; font-size:var(--mjp-h1); font-weight:800;
-                        letter-spacing:0.2em;">{klass['class_code']}</div>
-        </div>
-        <div style="width:1px; height:40px; background:{CARD_BORDER};"></div>
-        <div>
-            <div class="mjp-muted">등록 학생</div>
-            <div style="color:{TEXT}; font-size:var(--mjp-h1); font-weight:800;">{count}명</div>
-        </div>
-        <div style="flex:1; min-width:180px;">
-            <div class="mjp-muted" style="line-height:1.6;">
-                학생이 마이페이지에서 이 코드를 입력하면 아래 표에 나타납니다.
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    # v2: 반 코드와 학생 수를 같은 무게의 타일 두 장으로
+    stat_tiles([
+        ("반 코드", f'<span style="letter-spacing:0.14em;">{klass["class_code"]}</span>', "", None),
+        ("등록 학생", f"{count}명", "", None),
+    ])
+    st.caption("학생이 마이페이지에서 이 코드를 입력하면 아래 표에 나타납니다.")
 
 
 # ------------------------------------------------------------
 # 빈 상태
 # ------------------------------------------------------------
 def _render_no_class() -> None:
-    section_title("우리 반 현황", "아직 반을 만들지 않으셨어요.", icon_name="school")
+    section_title("우리 반 현황", "아직 반을 만들지 않으셨어요.", icon_name="school", eyebrow="선생님")
     c1, c2 = st.columns([1, 2.4])
     with c1:
         st.markdown(mascot.html("thinking", size=120), unsafe_allow_html=True)
@@ -143,23 +132,14 @@ def _render_summary(rows: list[dict]) -> None:
          f"{len(MILESTONES)}단계 모두 완료"),
     ]
 
-    cols = st.columns(3)
-    for col, (label, value, color, sub) in zip(cols, cards):
-        with col:
-            st.markdown(f"""
-            <div class="mjp-card" style="text-align:center;">
-                <div class="mjp-muted">{label}</div>
-                <div style="font-size:var(--mjp-h1); font-weight:800; color:{color}; margin:6px 0 4px;">{value}</div>
-                <div class="mjp-muted" style="font-size:11px;">{sub}</div>
-            </div>
-            """, unsafe_allow_html=True)
+    stat_tiles([(label, value, sub, color) for label, value, color, sub in cards])
 
 
 # ------------------------------------------------------------
 # 학생 목록
 # ------------------------------------------------------------
 def _render_table(rows: list[dict]) -> None:
-    st.markdown("##### 학생별 진행 현황")
+    st.markdown("#### 학생별 진행 현황")
 
     view = st.radio("보기", ["표로 보기", "카드로 보기"], horizontal=True,
                     label_visibility="collapsed", key="board_view")
@@ -204,24 +184,24 @@ def _render_cards(rows: list[dict]) -> None:
 
             pct = int((r["stage_done"] / len(MILESTONES)) * 100)
 
-            st.markdown(f"""
-            <div class="mjp-card">
-                <div style="display:flex; align-items:center; gap:12px;">
-                    <div style="flex:1;">
-                        <div style="font-size:var(--mjp-body); font-weight:800; color:{TEXT};">{r['name']}</div>
-                        <div class="mjp-muted">{r['dept']}
-                            {f" · 내신 {r['grade']}등급" if r['grade'] is not None else ""}</div>
+            render_html(f"""
+            <div class="mjp-tcard" style="padding:24px; margin-bottom:12px;">
+                <div style="display:flex; align-items:flex-start; gap:12px;">
+                    <div style="flex:1; min-width:0;">
+                        <h4>{r['name']}</h4>
+                        <div class="mjp-muted">{r['dept']}{f" · 내신 {r['grade']}등급" if r['grade'] is not None else ""}</div>
                     </div>
                     <div style="text-align:right;">
-                        <div style="font-size:var(--mjp-h2); font-weight:800; color:{color};">{score_text}</div>
-                        <div class="mjp-muted" style="font-size:11px;">{r['scored_at']}</div>
+                        <div style="font-size:24px; font-weight:800; color:{STATUS_VIVID.get(color, color)};
+                                    letter-spacing:-0.02em;">{score_text}</div>
+                        <div class="mjp-muted" style="font-size:var(--mjp-caption);">{r['scored_at']}</div>
                     </div>
                 </div>
-                <div class="mjp-muted" style="margin-top:10px;">목표 기업
+                <div class="mjp-muted" style="margin-top:12px;">목표 기업
                     <b style="color:{TEXT};">{r['target']}</b></div>
-                <div style="margin-top:10px;">
-                    <div style="display:flex; justify-content:space-between; font-size:11px;
-                                color:{MUTED}; margin-bottom:4px;">
+                <div style="margin-top:12px;">
+                    <div style="display:flex; justify-content:space-between; font-size:var(--mjp-caption);
+                                color:{MUTED}; margin-bottom:6px;">
                         <span>{r['stage']}</span><span>{r['stage_done']}/{len(MILESTONES)}</span>
                     </div>
                     <div class="mjp-bar-track">
@@ -229,7 +209,7 @@ def _render_cards(rows: list[dict]) -> None:
                     </div>
                 </div>
             </div>
-            """, unsafe_allow_html=True)
+            """)
 
 
 # ------------------------------------------------------------
@@ -248,7 +228,7 @@ def _render_attention(rows: list[dict]) -> None:
         st.success("모든 학생이 진단을 시작했고, 점수 보완이 시급한 학생도 없습니다.")
         return
 
-    st.markdown("##### 먼저 챙겨보면 좋을 학생")
+    st.markdown("#### 먼저 챙겨보면 좋을 학생")
     acols = st.columns(3)
     groups = [
         ("아직 시작 안 함", not_started, MUTED, "접속은 했지만 진단을 한 번도 하지 않았습니다."),
@@ -259,11 +239,12 @@ def _render_attention(rows: list[dict]) -> None:
         with col:
             names = ", ".join(r["name"] for r in group[:6]) or "해당 없음"
             more = f" 외 {len(group) - 6}명" if len(group) > 6 else ""
-            st.markdown(f"""
-            <div class="mjp-card" style="border-left:3px solid {color};">
-                <div style="font-weight:800; color:{TEXT};">{title}
-                    <span style="color:{color};">{len(group)}명</span></div>
-                <div class="mjp-muted" style="margin-top:6px; line-height:1.55;">{desc}</div>
-                <div style="color:{TEXT}; font-size:var(--mjp-caption); margin-top:8px;">{names}{more}</div>
+            # v2: 왼쪽 색띠 대신 상태 칩으로 심각도를 표시한다
+            render_html(f"""
+            <div class="mjp-tcard" style="padding:24px; margin-bottom:12px;">
+                {status_chip(f"{len(group)}명", color)}
+                <h4 style="margin-top:12px !important;">{title}</h4>
+                <p class="mjp-muted">{desc}</p>
+                <p style="margin-top:10px !important; font-weight:600; color:{TEXT};">{names}{more}</p>
             </div>
-            """, unsafe_allow_html=True)
+            """)

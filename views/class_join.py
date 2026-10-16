@@ -14,58 +14,44 @@ import streamlit as st
 
 from core import session as ss
 from services import store
-from ui.components import section_title, topbar
-from ui.theme import BRAND, CARD_BORDER, GREEN, MUTED, TEXT
+from ui.components import or_divider, render_html, section_title, status_chip, topbar
+from ui.theme import GREEN
 
 
 def render() -> None:
     topbar(active=ss.PAGE_CLASS_JOIN)
-    section_title("반 등록", icon_name="school", sub=
-                  "선생님께 반 코드를 받았다면 입력해주세요. "
-                  "없어도 괜찮습니다 — 모든 기능을 그대로 쓸 수 있어요.")
 
     current = store.get_user(ss.user_id()) or {}
     if current.get("class_code"):
+        section_title("반 등록", icon_name="school")
         _render_joined(current["class_code"])
         return
 
-    left, center, right = st.columns([1, 1.5, 1])
+    with st.container(key="mjp_narrow_join"):
+        section_title("반 코드를<br>입력해주세요", icon_name="school", eyebrow="반 등록 (선택)", sub=
+                      "선생님께 반 코드를 받았다면 입력해주세요. "
+                      "없어도 괜찮습니다 — 모든 기능을 그대로 쓸 수 있어요.")
 
-    with center:
-        st.markdown(f"""
-        <div class="mjp-card" style="border-left:3px solid {BRAND};">
-            <div style="font-weight:800; color:{TEXT};">반 코드는 6자리예요</div>
-            <div class="mjp-muted" style="margin-top:6px; line-height:1.6;">
-                선생님이 알려준 영문·숫자 6자리를 입력하세요.
-                대소문자는 구분하지 않습니다.
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        # 라벨을 숨기면 무엇을 적는 칸인지 placeholder 로만 알 수 있다 → 보이게 둔다
+        code = st.text_input("반 코드 (영문·숫자 6자리, 대소문자 구분 없음)", key="join_code",
+                             max_chars=10, placeholder="예: K7M2QX")
 
-        code = st.text_input("반 코드", key="join_code", max_chars=10,
-                             placeholder="예: K7M2QX", label_visibility="collapsed")
+        # 폰에서는 화면 하단에 꽉 차게 고정된다 (key 가 mjp_cta_ 로 시작)
+        with st.container(key="mjp_cta_join"):
+            if st.button("우리 반에 등록하기", type="primary",
+                         use_container_width=True, key="join_submit"):
+                _join(code)
 
-        if st.button("우리 반에 등록하기", type="primary",
-                     use_container_width=True, key="join_submit"):
-            _join(code)
-
-        st.markdown(f"""
-        <div style="display:flex; align-items:center; gap:12px; margin:16px 0 12px;">
-            <div style="flex:1; height:1px; background:{CARD_BORDER};"></div>
-            <div style="color:{MUTED}; font-size:var(--mjp-caption);">또는</div>
-            <div style="flex:1; height:1px; background:{CARD_BORDER};"></div>
-        </div>
-        """, unsafe_allow_html=True)
+        or_divider()
 
         if st.button("혼자 사용할게요", use_container_width=True, key="join_skip"):
             store.skip_class(ss.user_id())
             ss.goto(ss.PAGE_HUB)
 
-        st.markdown(
-            f'<div style="color:{MUTED}; font-size:var(--mjp-caption); margin-top:8px; line-height:1.65;">'
-            f'반 등록을 하지 않아도 진단·기업 탐색·자소서 생성까지 모든 기능이 똑같이 동작합니다. '
-            f'나중에 코드를 받으면 <b style="color:{TEXT};">마이페이지</b>에서 등록할 수 있어요.</div>',
-            unsafe_allow_html=True,
+        render_html(
+            '<div class="mjp-muted" style="margin-top:8px; line-height:1.65;">'
+            '반 등록을 하지 않아도 진단·기업 탐색·자소서 생성까지 모든 기능이 똑같이 동작합니다. '
+            '나중에 코드를 받으면 <b>마이페이지</b>에서 등록할 수 있어요.</div>'
         )
 
 
@@ -89,20 +75,21 @@ def _render_joined(code: str) -> None:
         st.success(message)
         st.balloons()
 
-    st.markdown(f"""
-    <div class="mjp-card" style="border-color:{GREEN};">
-        <span class="mjp-badge" style="background:{GREEN}; color:#FFFFFF;">등록 완료</span>
-        <div style="font-size:var(--mjp-h2); font-weight:800; color:{TEXT}; margin-top:12px;">{label}</div>
-        <div class="mjp-muted" style="margin-top:6px;">반 코드 {code}</div>
-        <div class="mjp-muted" style="margin-top:10px; line-height:1.6;">
+    render_html(f"""
+    <div class="mjp-tcard">
+        {status_chip("등록 완료", GREEN)}
+        <h4 style="margin-top:14px !important;">{label}</h4>
+        <p class="mjp-muted">반 코드 {code}</p>
+        <p style="margin-top:10px !important;">
             이제 진단 결과와 로드맵 진행 상황이 선생님의 '우리 반 현황'에 표시됩니다.
-        </div>
+        </p>
     </div>
-    """, unsafe_allow_html=True)
+    """)
 
-    if st.button("기능 선택하러 가기", type="primary", use_container_width=True,
-                 key="joined_hub"):
-        ss.goto(ss.PAGE_HUB)
+    with st.container(key="mjp_cta_joined"):
+        if st.button("기능 선택하러 가기", type="primary", use_container_width=True,
+                     key="joined_hub"):
+            ss.goto(ss.PAGE_HUB)
 
     with st.expander("반을 잘못 등록했어요"):
         st.caption("반에서 나가면 이후 활동은 선생님 화면에 표시되지 않습니다.")
