@@ -78,7 +78,11 @@ async def run(device, vw, vh, mobile):
                                   is_mobile=mobile, has_touch=mobile)
         pg = await ctx.new_page()
 
-        await pg.goto(URL, wait_until="networkidle"); await pg.wait_for_timeout(2600)
+        # 랜딩이 다 그려진 뒤에 잰다. 서버 첫 실행은 수 초 걸리는데 고정 대기만 두면
+        # 빈 화면을 측정해 '문제 없음'으로 통과해 버린다(실제로 그랬다).
+        await pg.goto(URL, wait_until="networkidle")
+        await pg.get_by_role("button", name="시작하기").first.wait_for(state="visible", timeout=60000)
+        await pg.locator(".mjp-feature").first.wait_for(state="visible", timeout=60000)
         await probe(pg, f"{device}_1_landing", results)
 
         await pg.get_by_role("button", name="시작하기").first.click(); await pg.wait_for_timeout(2200)
