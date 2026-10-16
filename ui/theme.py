@@ -653,15 +653,22 @@ div[data-testid="stWidgetLabel"] label, label[data-testid="stWidgetLabel"] {{
 
 
 def score_bar(label: str, value: float, maximum: int) -> str:
-    """점수 막대 HTML. 여러 화면에서 재사용되므로 테마 모듈에 둔다."""
+    """
+    점수 막대 HTML. 여러 화면에서 재사용되므로 테마 모듈에 둔다.
+
+    채움 색은 비율로 정한다 — 총점 판정과 같은 구간(80↑ 그린 · 50↑ 골드 ·
+    그 아래 레드). 그린 고정이면 15/30 이 '보완 시급' 옆에서 초록으로 떠
+    '초록 = 좋음' 신호와 어긋난다.
+    """
     pct = 0 if not maximum else min(100, value / maximum * 100)
+    fill = GREEN if pct >= 80 else (GOLD if pct >= 50 else RED)
     return f"""
     <div style="margin-bottom:10px;">
       <div style="display:flex; justify-content:space-between; font-size:var(--mjp-caption); color:{MUTED};">
         <span>{label}</span><span style="color:{TEXT}; font-weight:700;">{value} / {maximum}</span>
       </div>
       <div class="mjp-bar-track" style="margin-top:5px;">
-        <div class="mjp-bar-fill" style="width:{pct:.0f}%;"></div>
+        <div class="mjp-bar-fill" style="width:{pct:.0f}%; background:{fill};"></div>
       </div>
     </div>"""
 
