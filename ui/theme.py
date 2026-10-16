@@ -209,6 +209,16 @@ hr, div[data-testid="stDivider"] {{
 div[data-testid="stCaptionContainer"], .stCaption, small {{
     font-size: var(--mjp-caption) !important; line-height: 1.6;
 }}
+/* st.caption 안의 <p> 는 위 .stMarkdown p(본문 16px) 규칙을 먼저 받아
+   캡션이 본문과 같은 크기로 나왔다(실측: 컨테이너 13px · 문단 16px).
+   문단까지 캡션 크기로 내려야 본문/캡션 위계가 생긴다. */
+div[data-testid="stCaptionContainer"] p,
+div[data-testid="stCaptionContainer"] li {{
+    font-size: var(--mjp-caption) !important; line-height: 1.6;
+}}
+/* 예시 데이터·백업 전환 안내 줄. 캡션을 13px 로 내리면서 이 안내까지 작아지지
+   않도록 따로 둔다 — 본문 크기 그대로, 색만 보조색. ui.components.note() 가 쓴다. */
+.mjp-note {{ color: {MUTED}; font-size: var(--mjp-body); line-height: 1.6; margin-bottom: var(--mjp-s1); }}
 
 /* ===== 1. 공통 카드 ===== */
 .mjp-card {{

@@ -158,6 +158,16 @@ def disclaimer(text: str) -> None:
     st.markdown(f'<div class="mjp-disclaimer">{text}</div>', unsafe_allow_html=True)
 
 
+def note(markup: str) -> None:
+    """
+    예시 데이터·백업 전환 안내 한 줄 (본문 크기 · 보조색).
+
+    st.caption 은 13px 캡션이라, '예시'·'백업' 안내를 캡션으로 두면 눈에 덜 띈다.
+    이런 안내는 이 함수로 넣어 본문 크기를 유지한다. markup 은 HTML 이다.
+    """
+    st.markdown(f'<div class="mjp-note">{markup}</div>', unsafe_allow_html=True)
+
+
 def section_title(title: str, sub: str = "", icon_name: str = "") -> None:
     """
     화면 상단 제목 블록 — 큰 타이포 + 여백 (참고 디자인 톤).

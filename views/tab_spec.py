@@ -21,7 +21,7 @@ from data.departments import (
     DEPARTMENT_LIST, get_category, get_employment_rate, get_majors_for_department,
 )
 from ui import mascot
-from ui.components import back_to_hub, render_html, section_title, topbar
+from ui.components import back_to_hub, disclaimer, note, render_html, section_title, topbar
 from ui.theme import BG, BLUE, CARD_BORDER, GREEN, GOLD, MUTED, RED, render_stars, score_bar
 
 
@@ -65,7 +65,8 @@ def render() -> None:
 
         majors = get_majors_for_department(dept)
         emp_rate = get_employment_rate(dept)
-        st.caption(f"세부 전공 예시: {', '.join(majors)}  ·  계열 평균 취업률(예시): **{emp_rate}%**")
+        # '예시' 안내가 섞인 줄이라 캡션(13px)이 아니라 본문 크기 note 로 둔다
+        note(f"세부 전공 예시: {', '.join(majors)}  ·  계열 평균 취업률(예시): <b>{emp_rate}%</b>")
 
         grade = st.slider("내신 성적 등급 (마이스터고 5등급 성취평가제)", 1.0, 5.0,
                           st.session_state.grade, 0.1, key="grade_widget",
@@ -213,7 +214,7 @@ def render() -> None:
             for cert in certs:
                 st.markdown(f"- **{cert}** → {size_for_bonus} 예시 가산점 "
                             f"**+{get_bonus_points(cert, size_for_bonus)}점**")
-            st.caption("※ 실제 공식 가산점 규정이 아닌 예시 데이터입니다.")
+            disclaimer("※ 실제 공식 가산점 규정이 아닌 예시 데이터입니다.")
 
     with gcol2:
         st.markdown("**매칭 기업 탐색 (실시간 반영)**")

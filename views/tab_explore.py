@@ -7,6 +7,8 @@ views/tab_explore.py
 모바일 레이아웃(기업 카드 3단 → 폰에서 1단)만 조정했다.
 """
 
+import html
+
 import streamlit as st
 
 from core import session as ss
@@ -19,7 +21,7 @@ from services import reactions
 from services import story_cards
 from services.strong_sme_api import PRIORITY_DEPARTMENTS, prioritize_by_department
 from ui import mascot
-from ui.components import back_to_hub, disclaimer, grid_columns, render_html, section_title, topbar
+from ui.components import back_to_hub, disclaimer, grid_columns, note, render_html, section_title, topbar
 from ui.icons import icon
 from ui.story_viewer import render_story
 from ui.theme import BADGE_COLORS, BG, GREEN, MUTED, RED, TEXT, render_stars
@@ -82,7 +84,8 @@ def render() -> None:
     if st.session_state.live_jobs is not None:
         st.markdown(fb.badge_html(tracker, BADGE_COLORS), unsafe_allow_html=True)
         for name, err in tracker.errors():
-            st.caption(f"{name}: {err} → 백업 데이터로 전환됨")
+            # 오류 문구는 외부 응답에서 오므로 HTML 로 해석되지 않게 이스케이프한다
+            note(f"{html.escape(str(name))}: {html.escape(str(err))} → 백업 데이터로 전환됨")
 
         records = st.session_state.live_jobs
         if type_pick != "전체":
