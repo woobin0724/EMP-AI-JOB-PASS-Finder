@@ -20,7 +20,7 @@ from services import store
 from ui import mascot
 from ui.components import back_to_hub, grid_columns, section_title, topbar
 from ui.icons import icon
-from ui.theme import BRAND, BRAND_LIGHT, CARD_BORDER, GOLD, GREEN, MUTED, RED, TEXT
+from ui.theme import BRAND, CARD_BORDER, GOLD, GREEN, MUTED, RED, TEXT
 
 _PROVIDER_LABEL = {"kakao": "카카오", "naver": "네이버", "google": "Google", "guest": "게스트모드"}
 _ROLE_LABEL = {"student": "학생", "teacher": "선생님"}
@@ -178,7 +178,7 @@ def _class_section(saved: dict) -> None:
         klass = store.get_class(code)
         st.markdown(f"""
         <div class="mjp-card" style="border-color:{GREEN};">
-            <span class="mjp-badge" style="background:{GREEN}; color:#0A0E17;">등록됨</span>
+            <span class="mjp-badge" style="background:{GREEN}; color:#FFFFFF;">등록됨</span>
             <div style="font-size:var(--mjp-body); font-weight:800; color:{TEXT}; margin-top:10px;">
                 {store.class_label(klass) or code}</div>
             <div class="mjp-muted" style="margin-top:4px;">반 코드 {code}</div>
@@ -343,7 +343,7 @@ def build_score_chart(series: list[dict]):
         alt.Chart(df)
         .mark_line(
             color=BRAND, strokeWidth=2, strokeCap="round",
-            point=alt.OverlayMarkDef(color=BRAND_LIGHT, size=70,
+            point=alt.OverlayMarkDef(color=BRAND, size=70,
                                      stroke=CARD_BORDER, strokeWidth=2),
         )
         .encode(

@@ -229,8 +229,12 @@ def html(slot: str, size: int = 110, min_size: int | None = None) -> str:
         return ""
     min_size = min_size or max(56, int(size * 0.62))
     width = f"clamp({min_size}px, 18vw, {size}px)"
+    # 레거시 스티커는 회색 배경(LEGACY_BG)을 깎아낸 이미지라 흰 바탕에서는 경계의
+    # 잔여 점이 드러난다. 이미지는 그대로 두고, 원래 배경과 같은 색의 둥근 타일
+    # 위에 얹어 원본 스티커 모습대로 보이게 한다 (ui/theme.py .mjp-mascot-legacy).
+    legacy = " mjp-mascot-legacy" if _api_path(slot) is None else ""
     return (
-        f'<img src="{uri}" alt="" class="mjp-mascot" '
+        f'<img src="{uri}" alt="" class="mjp-mascot{legacy}" '
         f'style="width:{width}; height:auto; display:block;" />'
     )
 

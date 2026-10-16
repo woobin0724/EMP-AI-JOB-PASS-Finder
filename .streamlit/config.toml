@@ -1,18 +1,17 @@
 [theme]
-base = "dark"
-# 팀 로고에서 추출한 일렉트릭 블루.
-# 그린(#34D399)은 LIVE 배지·합격 안정권 같은 '상태 표시' 전용으로 분리했다.
-# 브랜드색과 상태색이 같으면 "초록 = 좋음"이라는 신호가 희석된다.
-primaryColor = "#4C8FE0"
-backgroundColor = "#0A0E17"
-secondaryBackgroundColor = "#131826"
-textColor = "#E7EAF0"
+# v2: 팀 포트폴리오 사이트와 같은 디자인 언어 — 흰 바탕 · 연회색 면 · 블루 한 가지.
+# 값은 ui/theme.py 토큰과 같아야 한다 (BG · CARD · TEXT · BRAND).
+# primaryColor 는 슬라이더·라디오·탭 밑줄·포커스에 쓰인다. 주요 버튼 면은
+# 흰 글자 대비 때문에 ui/theme.py 에서 한 단 진한 BRAND_DEEP 으로 따로 덮는다.
+base = "light"
+primaryColor = "#3182F6"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F2F4F6"
+textColor = "#191F28"
 font = "sans serif"
 
 # ※ 이 파일은 반드시 `.streamlit/` 폴더 안에 있어야 합니다.
 #    프로젝트 루트의 config.toml 은 Streamlit이 읽지 않아 테마가 적용되지 않습니다.
-#    (개편 전 이 파일이 루트에 있어서 다크 테마가 무시되고 기본 라이트 테마로
-#     렌더링되고 있었습니다 — primaryColor 가 빨강으로 나오던 원인)
 
 [server]
 # 업로드 한도 등 기본값 유지. 배포 시 Streamlit Cloud 설정이 우선합니다.
