@@ -22,13 +22,23 @@ from data.departments import (
 )
 from ui import mascot
 from ui.components import back_to_hub, disclaimer, note, render_html, section_title, topbar
-from ui.theme import BG, BLUE, CARD_BORDER, GREEN, GOLD, MUTED, RED, render_stars, score_bar
+from ui.theme import BG, BLUE, CARD_BORDER, GREEN, GOLD, MUTED, RED, TEXT, render_stars, score_bar
 
 
 # 점수 구간 → 마스코트 감정 슬롯
 # 숫자만 보여주는 진단은 낮은 점수를 받은 학생을 밀어낸다. 같은 48점이라도
 # 위로하는 캐릭터가 옆에 있으면 다음 화면으로 넘어갈 확률이 달라진다.
 _MASCOT_BY_SCORE = {"success": "celebrate", "cheer": "cheer", "comfort": "comfort"}
+
+# 학생이 이번 세션에서 입력을 한 번이라도 건드렸는가.
+# 처음 들어오면 기본값(내신 3.0 · 자격증 없음)으로 계산한 25점이 빨간
+# '보완 시급'으로 먼저 뜬다. 아무것도 넣지 않은 학생에게 경고부터 보여주지
+# 않도록, 입력 전에는 중립 안내를 띄운다. (점수 계산·기록 로직은 그대로)
+_TOUCHED = "spec_touched"
+
+
+def _mark_touched() -> None:
+    st.session_state[_TOUCHED] = True
 
 
 def render() -> None:
@@ -60,7 +70,7 @@ def render() -> None:
     with in_left:
         dept = st.selectbox("학과/계열 (하이파이브 분류 기준)", DEPARTMENT_LIST,
                             index=DEPARTMENT_LIST.index(st.session_state.dept),
-                            key="dept_widget")
+                            key="dept_widget", on_change=_mark_touched)
         st.session_state.dept = dept
 
         majors = get_majors_for_department(dept)
@@ -69,7 +79,7 @@ def render() -> None:
         note(f"세부 전공 예시: {', '.join(majors)}  ·  계열 평균 취업률(예시): <b>{emp_rate}%</b>")
 
         grade = st.slider("내신 성적 등급 (마이스터고 5등급 성취평가제)", 1.0, 5.0,
-                          st.session_state.grade, 0.1, key="grade_widget",
+                          st.session_state.grade, 0.1, key="grade_widget", on_change=_mark_touched,
                           help="환산식: 30 × (5.0 − 등급) ÷ 4.0  |  1.0등급=30점, 2.0등급=22.5점")
         st.session_state.grade = grade
 
@@ -79,7 +89,7 @@ def render() -> None:
         certs = st.multiselect(
             "취득 전공 자격증 다중 선택 (Q-Net 기반)", cert_options,
             default=[c for c in st.session_state.user_certs if c in cert_options],
-            key="user_certs_widget",
+            key="user_certs_widget", on_change=_mark_touched,
             # Streamlit 기본 placeholder 가 "Choose options" 영문이라
             # 한국어 화면에 영어가 섞인다
             placeholder="자격증을 선택하세요",
@@ -90,14 +100,14 @@ def render() -> None:
         strengths = st.multiselect(
             "나의 핵심 강점 키워드 (기업 인재상 매칭에 사용됨)", talent_keywords,
             default=[k for k in st.session_state.strength_keywords if k in talent_keywords],
-            key="strength_keywords_widget",
+            key="strength_keywords_widget", on_change=_mark_touched,
             help="선택한 키워드가 기업 '인재상'과 일치하면 인재상 점수(10점)에 반영됩니다.",
             placeholder="강점 키워드를 선택하세요",
         )
         st.session_state.strength_keywords = strengths
 
         company_names = ["선택 안 함 (일반 진단)"] + [c["name"] for c in COMPANY_SHOWCASE]
-        pick = st.selectbox("정밀 진단할 목표 기업 (선택)", company_names, key="target_company_widget")
+        pick = st.selectbox("정밀 진단할 목표 기업 (선택)", company_names, key="target_company_widget", on_change=_mark_touched)
         target_company = None
         if pick != company_names[0]:
             target_company = next(c for c in COMPANY_SHOWCASE if c["name"] == pick)
@@ -120,82 +130,87 @@ def render() -> None:
     # 슬라이더를 드래그해도 디스크 쓰기가 폭주하지 않는다.
     activity.record_spec(result, dept, grade, target_company)
 
-    sticker_key = ogq.sticker_key_for_score(result["final_score"])
-    verdict, verdict_msg = ogq.SCORE_STICKER_MESSAGES[sticker_key]
-    ring_color = {"success": GREEN, "cheer": GOLD, "comfort": RED}[sticker_key]
+    touched = bool(st.session_state.get(_TOUCHED) or certs or strengths or target_company)
+    if not touched:
+        with score_slot:
+            _render_waiting()
+    else:
+        sticker_key = ogq.sticker_key_for_score(result["final_score"])
+        verdict, verdict_msg = ogq.SCORE_STICKER_MESSAGES[sticker_key]
+        ring_color = {"success": GREEN, "cheer": GOLD, "comfort": RED}[sticker_key]
 
-    # 화면 맨 위에 잡아둔 자리에 점수를 채운다 (배치 의도는 위 주석 참조)
-    with score_slot:
-        render_html(f"""
-        <div class="mjp-scorecard">
-            <span class="mjp-badge" style="background:{ring_color}; color:{BG};">SPEC DIAGNOSIS · 실시간</span>
-            <div class="mjp-scorecard-row">
-                <div class="mjp-scorering" style="background:{ring_color};">
-                    <div class="mjp-scorering-num">{result['final_score']}</div>
-                    <div class="mjp-scorering-cap">100점 만점</div>
-                </div>
-                <div style="flex:1; min-width:210px;">
-                    <div class="mjp-verdict" style="color:{ring_color};">{verdict}</div>
-                    <div class="mjp-muted" style="margin-top:6px;">{verdict_msg}</div>
+        # 화면 맨 위에 잡아둔 자리에 점수를 채운다 (배치 의도는 위 주석 참조)
+        with score_slot:
+            render_html(f"""
+            <div class="mjp-scorecard">
+                <span class="mjp-badge" style="background:{ring_color}; color:{BG};">SPEC DIAGNOSIS · 실시간</span>
+                <div class="mjp-scorecard-row">
+                    <div class="mjp-scorering" style="background:{ring_color};">
+                        <div class="mjp-scorering-num">{result['final_score']}</div>
+                        <div class="mjp-scorering-cap">100점 만점</div>
+                    </div>
+                    <div style="flex:1; min-width:210px;">
+                        <div class="mjp-verdict" style="color:{ring_color};">{verdict}</div>
+                        <div class="mjp-muted" style="margin-top:6px;">{verdict_msg}</div>
+                    </div>
                 </div>
             </div>
-        </div>
-        """)
+            """)
 
-        # 세부 점수 4개는 점수 바로 아래. 가로 2열로 놓아 세로 길이를 줄인다.
-        bar_l, bar_r = st.columns(2)
-        with bar_l:
-            st.markdown(score_bar("내신 성취도", result["grade_score"], 30), unsafe_allow_html=True)
-            st.markdown(score_bar("자격증 가산점", result["cert_score"], 40), unsafe_allow_html=True)
-        with bar_r:
-            st.markdown(score_bar("전공 적합성", result["fit_score"], 20), unsafe_allow_html=True)
-            st.markdown(score_bar("인재상 일치도", result["talent_score"], 10), unsafe_allow_html=True)
+            # 세부 점수 4개는 점수 바로 아래. 가로 2열로 놓아 세로 길이를 줄인다.
+            bar_l, bar_r = st.columns(2)
+            with bar_l:
+                st.markdown(score_bar("내신 성취도", result["grade_score"], 30), unsafe_allow_html=True)
+                st.markdown(score_bar("자격증 가산점", result["cert_score"], 40), unsafe_allow_html=True)
+            with bar_r:
+                st.markdown(score_bar("전공 적합성", result["fit_score"], 20), unsafe_allow_html=True)
+                st.markdown(score_bar("인재상 일치도", result["talent_score"], 10), unsafe_allow_html=True)
 
-        if result["cert_details"]:
-            with st.expander("자격증 인정 비율 상세 보기", expanded=False):
-                for d in result["cert_details"]:
-                    mark = "●" if d["ratio"] == 1.0 else ("◐" if d["ratio"] > 0 else "○")
-                    extra = f" ← 보유: {d['matched_by']}" if d["matched_by"] and d["ratio"] < 1.0 else ""
-                    st.markdown(f"{mark} **{d['cert']}** · {d['status']}{extra}")
-                st.caption("정확히 일치 100% · 직무 유사 자격증 70% 인정 → 평균 인정비율 × 40점")
+            if result["cert_details"]:
+                with st.expander("자격증 인정 비율 상세 보기", expanded=False):
+                    for d in result["cert_details"]:
+                        mark = "●" if d["ratio"] == 1.0 else ("◐" if d["ratio"] > 0 else "○")
+                        extra = f" ← 보유: {d['matched_by']}" if d["matched_by"] and d["ratio"] < 1.0 else ""
+                        st.markdown(f"{mark} **{d['cert']}** · {d['status']}{extra}")
+                    st.caption("정확히 일치 100% · 직무 유사 자격증 70% 인정 → 평균 인정비율 × 40점")
 
-    # ------------------------------------------------------------
-    # [Phase B] 왜 이 점수인가 — 마스코트가 말로 풀어준다
-    # ------------------------------------------------------------
-    # 점수 계산은 위에서 이미 끝났다(로컬 연산). 여기서는 그 숫자를 재료로
-    # 설명만 만든다. 키가 없으면 규칙 기반 문장으로 내려가므로, 키 없이
-    # 100명이 써도 이 자리가 비지 않는다.
-    explain_profile = {
-        "dept": dept, "grade": grade, "certs": certs, "strengths": strengths,
-    }
-    explanation, explain_source = score_explain.explain(
-        explain_profile, result, target_company)
+        # ------------------------------------------------------------
+        # [Phase B] 왜 이 점수인가 — 마스코트가 말로 풀어준다
+        # ------------------------------------------------------------
+        # 점수 계산은 위에서 이미 끝났다(로컬 연산). 여기서는 그 숫자를 재료로
+        # 설명만 만든다. 키가 없으면 규칙 기반 문장으로 내려가므로, 키 없이
+        # 100명이 써도 이 자리가 비지 않는다.
+        explain_profile = {
+            "dept": dept, "grade": grade, "certs": certs, "strengths": strengths,
+        }
+        explanation, explain_source = score_explain.explain(
+            explain_profile, result, target_company)
 
-    tip_l, tip_r = st.columns([1, 3])
-    with tip_l:
-        st.markdown(mascot.html(_MASCOT_BY_SCORE[sticker_key], size=128),
-                    unsafe_allow_html=True)
-    with tip_r:
-        badge = ("AI 설명" if explain_source == "ai" else "규칙 기반 설명")
-        badge_bg = BLUE if explain_source == "ai" else CARD_BORDER
-        badge_fg = "#fff" if explain_source == "ai" else MUTED
-        render_html(f"""
-        <div class="mjp-card" style="margin-bottom:10px;">
-            <span class="mjp-badge" style="background:{badge_bg}; color:{badge_fg};">{badge}</span>
-            <div style="margin-top:10px; line-height:1.7;">{explanation['explanation']}</div>
-            <div style="margin-top:12px; padding-top:12px; border-top:1px solid {CARD_BORDER};
-                        color:{GREEN}; font-weight:700;">
-                다음 한 걸음 · {explanation['suggestion']}
+        tip_l, tip_r = st.columns([1, 3])
+        with tip_l:
+            st.markdown(mascot.html(_MASCOT_BY_SCORE[sticker_key], size=128),
+                        unsafe_allow_html=True)
+        with tip_r:
+            badge = ("AI 설명" if explain_source == "ai" else "규칙 기반 설명")
+            badge_bg = BLUE if explain_source == "ai" else CARD_BORDER
+            badge_fg = "#fff" if explain_source == "ai" else MUTED
+            render_html(f"""
+            <div class="mjp-card" style="margin-bottom:10px;">
+                <span class="mjp-badge" style="background:{badge_bg}; color:{badge_fg};">{badge}</span>
+                <div style="margin-top:10px; line-height:1.7;">{explanation['explanation']}</div>
+                <div style="margin-top:12px; padding-top:12px; border-top:1px solid {CARD_BORDER};
+                            color:{GREEN}; font-weight:700;">
+                    다음 한 걸음 · {explanation['suggestion']}
+                </div>
             </div>
-        </div>
-        """)
+            """)
 
-        failure = score_explain.last_failure()
-        if failure and explain_source == "rule":
-            st.warning(f"API 키는 있으나 설명 생성에 실패해 규칙 기반으로 표시했습니다 — {failure}")
+            failure = score_explain.last_failure()
+            if failure and explain_source == "rule":
+                st.warning(f"API 키는 있으나 설명 생성에 실패해 규칙 기반으로 표시했습니다 — {failure}")
 
-        for tip in result["tips"]:
-            st.info(tip)
+            for tip in result["tips"]:
+                st.info(tip)
 
     st.divider()
 
@@ -231,3 +246,24 @@ def render() -> None:
                 if st.button(f"{c['name']} 자세히 보기", key=f"match_{c['id']}"):
                     st.session_state.selected_company_id = c["id"]
                     ss.goto(ss.PAGE_GUIDE)
+
+
+def _render_waiting() -> None:
+    """입력 전 중립 상태 — 점수·판정 대신 무엇을 넣으면 되는지만 알려준다."""
+    render_html(f"""
+    <div class="mjp-scorecard">
+        <span class="mjp-badge" style="background:{CARD_BORDER}; color:{MUTED};">SPEC DIAGNOSIS · 입력 전</span>
+        <div class="mjp-scorecard-row">
+            <div class="mjp-scorering" style="background:{CARD_BORDER}; color:{MUTED};">
+                <div class="mjp-scorering-num">—</div>
+                <div class="mjp-scorering-cap">100점 만점</div>
+            </div>
+            <div style="flex:1; min-width:210px;">
+                <div class="mjp-verdict" style="color:{TEXT};">아직 입력 전이에요</div>
+                <div class="mjp-muted" style="margin-top:6px;">
+                    아래에서 학과·내신 등급·자격증을 고르면 100점 만점 점수가 바로 계산돼요.
+                </div>
+            </div>
+        </div>
+    </div>
+    """)
