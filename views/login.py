@@ -24,7 +24,9 @@ from services import auth as auth_svc
 from services import store
 from ui import brand
 from ui.icons import brand_symbol
-from ui.theme import CARD, CARD_BORDER, GREEN, MUTED, TEXT
+from ui.components import or_divider, render_html
+from ui.emblem import emblem_svg
+from ui.theme import CARD, MUTED, TEXT
 
 
 def _provider_anchor(key: str) -> str:
@@ -34,10 +36,10 @@ def _provider_anchor(key: str) -> str:
     return f"""
     <a href="{url}" target="_self" style="
         display:flex; align-items:center; justify-content:center; gap:10px;
-        width:100%; min-height:50px; margin-bottom:10px;
+        width:100%; min-height:52px; margin-bottom:10px;
         background:{spec['bg']}; color:{spec['fg']};
-        border:1px solid {spec['border']}; border-radius:12px;
-        font-size:var(--mjp-body); font-weight:700; text-decoration:none;">
+        border:1px solid {spec['border']}; border-radius:16px;
+        font-size:var(--mjp-body); font-weight:600; text-decoration:none;">
         {brand_symbol(spec['icon'], size=19, color=spec['fg'])}{spec['label']}
     </a>"""
 
@@ -48,50 +50,52 @@ def _provider_disabled(key: str) -> str:
     return f"""
     <div style="
         display:flex; align-items:center; justify-content:center; gap:10px;
-        width:100%; min-height:50px; margin-bottom:10px;
-        background:{CARD}; color:{MUTED};
-        border:1px dashed {CARD_BORDER}; border-radius:12px;
-        font-size:var(--mjp-body); font-weight:700; cursor:not-allowed;">
+        width:100%; min-height:52px; margin-bottom:10px;
+        background:{CARD}; color:{MUTED}; border-radius:16px;
+        font-size:var(--mjp-body); font-weight:600; cursor:not-allowed;">
         <span style="opacity:.45;">{brand_symbol(spec['icon'], size=17, color=MUTED)}</span>
         {spec['label']}<span style="font-size:var(--mjp-caption); font-weight:600;">· 준비중</span>
     </div>"""
 
 
 def render() -> None:
-    st.markdown(f"""
-    <div style="text-align:center; margin:18px 0 6px;">
-        {brand.logo_html(max_px=104, min_px=76, detail="mark")}
-        <div style="font-size:var(--mjp-h1); font-weight:800; color:{TEXT}; margin-top:16px;
-                    letter-spacing:-0.03em;">로그인</div>
-        <div style="color:{MUTED}; font-size:var(--mjp-small); margin-top:8px;">
+    # v2: 가운데 좁은 칼럼 하나. 제일 큰 것은 '로그인' 제목, 주요 행동은 게스트 시작.
+    render_html(f"""
+    <div class="mjp-narrow" style="text-align:center; padding:24px 0 8px;">
+        <div class="mjp-landing-mark" style="background:{TEXT}; border-radius:20px; padding:6px;
+             width:64px; height:64px; margin-bottom:24px;">{emblem_svg(64, detail="mark", uid="loginmark")}</div>
+        <span class="mjp-eyebrow">{brand.SERVICE_NAME}</span>
+        <div class="mjp-section-title">로그인</div>
+        <div class="mjp-section-sub" style="margin:10px auto 0;">
             진단 결과와 찜한 기업을 다음에 다시 볼 수 있어요.
         </div>
     </div>
-    """, unsafe_allow_html=True)
+    """)
 
-    left, center, right = st.columns([1, 1.4, 1])
-
-    with center:
+    with st.container(key="mjp_narrow_login"):
         if st.session_state.get("login_error"):
             st.error(st.session_state["login_error"])
             st.session_state["login_error"] = ""
 
         # ---------- 게스트모드 ----------
+        # 라벨을 숨기면 무엇을 적는 칸인지 placeholder 로만 알 수 있다 → 보이게 둔다
         nickname = st.text_input(
-            "이름 또는 닉네임", key="guest_nickname",
-            placeholder="예: 김우빈", label_visibility="collapsed",
+            "이름 또는 닉네임 (선택)", key="guest_nickname", placeholder="예: 김우빈",
         )
-        if st.button("게스트모드로 바로 시작하기", type="primary",
-                     use_container_width=True, key="guest_login_btn"):
-            user = auth_svc.guest_login(nickname)
-            ss.login(user)
+        # 폰에서는 이 버튼이 화면 하단에 꽉 차게 고정된다 (key 가 mjp_cta_ 로 시작)
+        with st.container(key="mjp_cta_login"):
+            if st.button("게스트모드로 바로 시작하기", type="primary",
+                         use_container_width=True, key="guest_login_btn"):
+                user = auth_svc.guest_login(nickname)
+                ss.login(user)
 
-        st.markdown(
-            f'<div style="color:{MUTED}; font-size:var(--mjp-caption); margin-top:6px; line-height:1.65;">'
-            f'게스트로 시작하면 <b style="color:{GREEN};">이어하기 코드</b>가 발급됩니다. '
-            f'다음에 그 코드를 입력하면 저장된 기록을 그대로 이어서 볼 수 있어요.</div>',
-            unsafe_allow_html=True,
+        render_html(
+            '<div class="mjp-muted" style="margin:4px 0 8px; line-height:1.65;">'
+            f'게스트로 시작하면 <b style="color:{TEXT};">이어하기 코드</b>가 발급됩니다. '
+            '다음에 그 코드를 입력하면 저장된 기록을 그대로 이어서 볼 수 있어요.</div>'
         )
+
+        or_divider()
 
         # ---------- 소셜 로그인 ----------
         # ▣ 왜 아래로 내렸나
@@ -125,12 +129,12 @@ def render() -> None:
                 else:
                     st.error("해당 코드로 저장된 기록을 찾지 못했습니다. 코드를 다시 확인해주세요.")
 
-        st.markdown("<div style='height:8px;'></div>", unsafe_allow_html=True)
         if st.button("← 처음 화면으로", use_container_width=True, key="login_back"):
             ss.goto(ss.PAGE_LANDING)
 
     # ---------- 개발자용 설정 현황 ----------
-    _setup_panel()
+    with st.container(key="mjp_narrow_setup"):
+        _setup_panel()
 
 
 def _setup_panel() -> None:

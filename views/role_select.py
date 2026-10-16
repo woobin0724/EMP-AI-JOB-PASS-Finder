@@ -15,19 +15,18 @@ import streamlit as st
 
 from core import session as ss
 from services import store
+from ui.components import render_html
 from ui.icons import icon
-from ui.theme import CARD_BORDER, GREEN, MUTED, PURPLE, TEXT
+from ui.theme import BRAND
 
 ROLES = [
     {
         "key": "student", "icon": "cap", "title": "학생이에요",
-        "color": GREEN,
         "desc": "내 스펙을 진단하고, 목표 기업을 찾고, 자소서를 만들어요.",
         "bullets": ["100점 만점 합격 지수 진단", "관심 기업 찜하기 & 기록", "커리어 로드맵 스탬프 모으기"],
     },
     {
         "key": "teacher", "icon": "users", "title": "선생님이에요",
-        "color": PURPLE,
         "desc": "우리 반을 만들고 학생들의 취업 준비 현황을 한눈에 봐요.",
         "bullets": ["우리 반 개설 & 반 코드 발급", "학생별 목표 기업 · 진행 단계 확인", "반 평균 매칭 점수 모니터링"],
     },
@@ -35,49 +34,37 @@ ROLES = [
 
 
 def render() -> None:
-    st.markdown(f"""
-    <div style="text-align:center; margin:26px 0 10px;">
-        <div style="font-size:var(--mjp-display); font-weight:800; color:{TEXT}; letter-spacing:-0.03em;">
-            어떻게 사용하실 건가요?
-        </div>
-        <div style="color:{MUTED}; font-size:var(--mjp-body); margin-top:12px; line-height:1.6;">
-            역할에 따라 화면 구성이 달라집니다. 처음 한 번만 선택하면 돼요.
-        </div>
+    # v2: 라벨 + 두 줄 헤드라인, 역할 카드 2장(회색 면 · 같은 무게). 역할색 구분은
+    # 없앴다 — 초록은 상태(좋음) 전용이고, 두 역할은 우열이 아니라 선택지다.
+    render_html("""
+    <div class="mjp-center" style="padding:24px 0 8px;">
+        <span class="mjp-eyebrow">처음 한 번만</span>
+        <h2 class="mjp-headline">어떻게<br>사용하실 건가요?</h2>
+        <p class="mjp-lead">역할에 따라 화면 구성이 달라집니다. 처음 한 번만 선택하면 돼요.</p>
     </div>
-    """, unsafe_allow_html=True)
-
+    """)
     st.markdown("<div style='height:16px;'></div>", unsafe_allow_html=True)
 
     cols = st.columns(2)
     for col, role in zip(cols, ROLES):
         with col:
-            bullets = "".join(
-                f'<li style="margin-bottom:6px;">{b}</li>' for b in role["bullets"]
-            )
-            st.markdown(f"""
-            <div class="mjp-feature" style="border-color:{role['color']}33;">
-                <div style="line-height:1;">{icon(role["icon"], size=38, color=role["color"], stroke=1.7)}</div>
-                <div style="font-size:var(--mjp-h2); font-weight:800; color:{role['color']}; margin-top:14px;">
-                    {role['title']}
-                </div>
-                <div style="color:{MUTED}; font-size:var(--mjp-caption); margin-top:10px; line-height:1.6;">
-                    {role['desc']}
-                </div>
-                <ul style="color:{MUTED}; font-size:var(--mjp-caption); margin:14px 0 6px; padding-left:18px;
-                           line-height:1.55;">{bullets}</ul>
+            bullets = "".join(f"<li>{b}</li>" for b in role["bullets"])
+            render_html(f"""
+            <div class="mjp-tcard mjp-role">
+                <div class="mjp-row-icon" style="width:52px; height:52px; border-radius:16px;">
+                    {icon(role["icon"], size=28, color=BRAND, stroke=1.7)}</div>
+                <h4 style="margin-top:18px !important;">{role['title']}</h4>
+                <p>{role['desc']}</p>
+                <ul class="mjp-checklist">{bullets}</ul>
             </div>
-            """, unsafe_allow_html=True)
+            """)
 
             if st.button(f"{role['title']} 선택", key=f"role_{role['key']}",
                          type="primary", use_container_width=True):
                 _choose(role["key"])
 
-    st.markdown(f"""
-    <div style="text-align:center; margin-top:28px; padding-top:16px;
-                border-top:1px solid {CARD_BORDER}; color:{MUTED}; font-size:var(--mjp-caption);">
-        선택한 역할은 나중에 마이페이지에서 바꿀 수 있어요.
-    </div>
-    """, unsafe_allow_html=True)
+    render_html('<div class="mjp-muted mjp-center" style="margin-top:28px;">'
+                '선택한 역할은 나중에 마이페이지에서 바꿀 수 있어요.</div>')
 
 
 def _choose(role: str) -> None:
