@@ -309,7 +309,7 @@ def _render_simulation(grade, certs, dept, dept_category, company, strengths, co
             rows = '<div class="mjp-sim-empty">이미 1.0등급이에요. 자격증·인재상으로 점수를 올려보세요.</div>'
         else:
             rows = ('<div class="mjp-sim-empty">내신을 1등급 올려도 새로 80점을 넘는 기업이 없어요. '
-                    '왼쪽 자격증부터 채워보세요.</div>')
+                    '자격증 시뮬레이션부터 채워보세요.</div>')
         render_html(f'<div class="mjp-sim">{rows}</div>')
 
 

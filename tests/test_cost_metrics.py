@@ -1,22 +1,17 @@
 # -*- coding: utf-8 -*-
 """[big-patch 4·5단계] 하루 AI 한도 · 모델 등급 · 사용 지표 (개인정보 없음)."""
 
-import json
-
 from services import ai_models, ai_quota, usage_log
-
 
 def test_model_tiers_are_distinct():
     assert ai_models.model_for(ai_models.TIER_DRAFT) != ai_models.model_for(ai_models.TIER_FINAL)
     assert ai_models.model_for("unknown") == ai_models.DEFAULT_MODELS[ai_models.TIER_DRAFT]
-
 
 def test_review_uses_final_tier_others_draft():
     from services import coverletter, review, score_explain
     assert review.MODEL_NAME == ai_models.DEFAULT_MODELS[ai_models.TIER_FINAL]
     assert coverletter.MODEL_NAME == ai_models.DEFAULT_MODELS[ai_models.TIER_DRAFT]
     assert score_explain.MODEL_NAME == ai_models.DEFAULT_MODELS[ai_models.TIER_DRAFT]
-
 
 def test_record_ai_call_counts_and_prunes(usage_tmp):
     usage_log.record_ai_call("kakao_1", "write", "review", "2026-10-16")
@@ -29,12 +24,10 @@ def test_record_ai_call_counts_and_prunes(usage_tmp):
     assert doc["ai_quota"][usage_log.anon_id("kakao_2")]["2026-10-17"] == {"explain": 1}
     assert sum(1 for e in doc["events"] if e["type"] == "ai") == 4
 
-
 def test_no_raw_user_id_in_usage_doc(usage_tmp):
     usage_log.record_ai_call("guest_ABC123", "write", "review", "2026-10-17")
     raw = (usage_tmp / "usage.json").read_text(encoding="utf-8")
     assert "guest_ABC123" not in raw and "ABC123" not in raw
-
 
 def test_quota_remaining_uses_stored_count(usage_tmp, monkeypatch):
     monkeypatch.setattr(ai_quota, "_today", lambda: "2026-10-17")
@@ -44,7 +37,6 @@ def test_quota_remaining_uses_stored_count(usage_tmp, monkeypatch):
     assert ai_quota.used("write", "kakao_9") == 3
     assert ai_quota.remaining("write", "kakao_9") == ai_quota.DEFAULT_LIMITS["write"] - 3
     assert ai_quota.remaining("explain", "kakao_9") == ai_quota.DEFAULT_LIMITS["explain"]
-
 
 def test_quota_blocks_when_exhausted(usage_tmp, monkeypatch):
     monkeypatch.setattr(ai_quota, "_today", lambda: "2026-10-17")
@@ -59,15 +51,12 @@ def test_quota_blocks_when_exhausted(usage_tmp, monkeypatch):
     assert ai_quota.can_use("explain")                 # 묶음이 다르다
     assert "다 썼어요" in ai_quota.status_line("review")
 
-
 def test_quota_off_without_premium(monkeypatch):
     monkeypatch.setattr(ai_quota.premium, "ai_enabled", lambda: False)
     assert not ai_quota.can_use("review")
 
-
 def _ev(uid, kind, **kw):
     return {"uid": uid, "type": kind, "at": "2026-10-17T00:00:00+00:00", "is_test": False, **kw}
-
 
 def test_summarize_metrics():
     doc = {

@@ -102,6 +102,31 @@ async def run(device, vw, vh, mobile):
             await pg.wait_for_timeout(2800)
             await probe(pg, f"{device}_{key}", results)
 
+        # [big-patch] 새 화면 — 개인정보 처리방침 · 점수 설명/시뮬레이션 · 모의 면접
+        await pg.get_by_role("button", name="개인정보 처리방침 보기").first.click()
+        await pg.wait_for_timeout(2800)
+        await probe(pg, f"{device}_10_privacy", results)
+
+        await pg.get_by_role("button", name="← 돌아가기").first.click(); await pg.wait_for_timeout(2600)
+        await pg.get_by_role("button", name="스펙 진단", exact=True).first.click()
+        await pg.wait_for_timeout(2800)
+        # 1.63 의 선택 상자는 react-aria 콤보박스 — 접근성 이름으로 찾는다
+        # 1.63 의 선택 상자는 react-aria 콤보박스 — 화면 안으로 스크롤한 뒤 열어야 한다
+        box = pg.locator('[data-testid="stSelectbox"]').filter(has_text="정밀 진단할 목표 기업")
+        opener = box.get_by_role("button", name="Open").first
+        await box.first.scroll_into_view_if_needed()
+        await (opener.tap() if mobile else opener.click()); await pg.wait_for_timeout(1000)
+        option = pg.get_by_role("option").nth(1)
+        await (option.tap() if mobile else option.click()); await pg.wait_for_timeout(3200)
+        await pg.locator(".mjp-sim").first.wait_for(state="visible", timeout=30000)
+        await probe(pg, f"{device}_11_spec_simulation", results)
+
+        await pg.get_by_role("button", name="자소서", exact=True).first.click()
+        await pg.wait_for_timeout(2800)
+        tab = pg.get_by_role("tab", name="모의 면접").first
+        await (tab.tap() if mobile else tab.click()); await pg.wait_for_timeout(2400)
+        await probe(pg, f"{device}_12_interview", results)
+
         await ctx.close(); await b.close()
     return results
 

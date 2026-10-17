@@ -40,6 +40,7 @@
 | D27 | 라우터 전체를 try/except 로 감싸고, rerun·stop 신호는 클래스 이름으로 골라 다시 던진다 | 한 화면 오류가 앱 전체를 멈추지 않게. 내부 모듈 경로가 Streamlit 버전마다 달라 이름으로 본다 |
 | D28 | 사실과 다른 문구 수정: '면접 기출' → '예시 면접 질문', '잡알리오·강소기업 동시 호출' → 고용24만 실시간 · 나머지는 가상 예시 공고 | 1단계 원칙(사실 아닌 정보 금지)을 화면 문구에도 적용 |
 | D29 | usage 문서의 ai_quota 를 병합 대상(레코드 모음)에 넣었다 | 동시 쓰기 때 다른 학생의 오늘 횟수가 덮어써지지 않게 |
+| D30 | qa_mobile.py 에 새 화면 3개(처리방침 · 시뮬레이션 · 모의 면접)를 추가했다. 1.63 선택 상자는 react-aria 라 스크롤 후 Open 버튼을 탭한다 | 새 기능도 같은 기준(44px · 가로 넘침 · 16px)으로 매번 검사되게 |
 | D12 | check_static 의 import 검사에서 tests/ 를 뺐다 | pytest 가 없는 환경에서 정적 검사가 실패했다. tests 는 pytest 로 따로 돈다 |
 
 ## 진행 현황
@@ -62,5 +63,7 @@
   학생 '내 기록 지우기', 라우터 예외 처리(오류 화면 + 처음으로), FAQ 6개 추가(모의 면접 · 시뮬레이션 · AI 한도 · 저장 항목 · 삭제 · 외부 전송),
   사실과 다른 문구 수정, `tests/test_privacy.py`(전체 94건)
 
+- **마무리 검증** — check_static 통과 · pytest 94건 통과 · test_storage_backend 통과 · qa_mobile 24/24 화면 문제 없음. README 갱신
+
 ### 다음 할 것
-1. 마무리: check_static · qa_mobile · 전체 테스트 → README → main 합치기 → 최종 보고: check_static · qa_mobile · 전체 테스트 → main 합치기 → README
+1. big-patch → main 합치기 · 푸시 → 최종 보고
