@@ -607,6 +607,16 @@ div[class*="st-key-mjp_guide"] div[data-testid="stExpander"] summary p {{
     color: {TEXT}; font-weight: 600; line-height: 1.6;
 }}
 .mjp-explain-next b {{ color: {BRAND_DEEP}; margin-right: 6px; }}
+/* [big-patch 2단계] 항목별 '왜 이 점수인지' · 배점 기준 · 시뮬레이션 */
+.mjp-break-why {{ margin-top: 8px; font-size: var(--mjp-small); color: {BODY}; line-height: 1.6; overflow-wrap: anywhere; }}
+.mjp-weight-line {{ margin: 10px 0 0; font-size: var(--mjp-small); color: {MUTED}; overflow-wrap: anywhere; }}
+.mjp-sim {{ background: {CARD}; border-radius: var(--mjp-radius-card); padding: 8px 24px; margin-bottom: 12px; }}
+.mjp-sim-row {{ display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 14px 0; }}
+.mjp-sim-row + .mjp-sim-row {{ border-top: 1px solid {CARD_BORDER}; }}
+.mjp-sim-name {{ color: {TEXT}; font-weight: 600; min-width: 0; overflow-wrap: anywhere; }}
+.mjp-sim-name small {{ display: block; color: {MUTED}; font-weight: 500; font-size: var(--mjp-small); margin-top: 2px; }}
+.mjp-sim-gain {{ flex: 0 0 auto; color: {BRAND_DEEP}; font-weight: 700; font-variant-numeric: tabular-nums; }}
+.mjp-sim-empty {{ padding: 14px 0; color: {BODY}; }}
 
 /* ===== 8. 모바일 (QR 스캔 접속) ===== */
 @media (max-width: {MOBILE_BREAKPOINT}px) {{
@@ -753,13 +763,14 @@ def status_color(pct: float) -> str:
     return GREEN if pct >= 80 else (GOLD if pct >= 50 else RED)
 
 
-def score_bar(label: str, value: float, maximum: int) -> str:
+def score_bar(label: str, value: float, maximum: int, why: str = "") -> str:
     """
     세부 점수 한 줄 HTML (이름 · 값 · 얇은 막대). 여러 화면에서 재사용되므로 테마 모듈에 둔다.
 
     채움 색은 비율로 정한다 — 총점 판정과 같은 구간. 그린 고정이면 15/30 이
     '보완 시급' 옆에서 초록으로 떠 '초록 = 좋음' 신호와 어긋난다.
     .mjp-break 안에 넣으면 회색 면 목록이 되고, 밖에 두면 단독 막대가 된다.
+    why 를 주면 막대 아래에 '왜 이 점수인지' 한 줄을 붙인다(이스케이프는 호출부 책임).
     """
     pct = 0 if not maximum else min(100, value / maximum * 100)
     fill = STATUS_VIVID[status_color(pct)]
@@ -772,6 +783,7 @@ def score_bar(label: str, value: float, maximum: int) -> str:
       <div class="mjp-bar-track">
         <div class="mjp-bar-fill" style="width:{pct:.0f}%; background:{fill};"></div>
       </div>
+      {f'<div class="mjp-break-why">{why}</div>' if why else ''}
     </div>"""
 
 

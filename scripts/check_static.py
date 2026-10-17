@@ -100,7 +100,8 @@ def check_imports(files) -> list:
         mod = str(rel)[:-3].replace(os.sep, ".")
         if mod.endswith(".__init__"):
             mod = mod[:-9]
-        if mod in SKIP_IMPORT or not mod:
+        # tests/ 는 pytest 로 따로 돌린다 (pytest 가 없는 환경에서도 이 검사는 돌아야 한다)
+        if mod in SKIP_IMPORT or not mod or mod.startswith("tests."):
             continue
         try:
             with warnings.catch_warnings():

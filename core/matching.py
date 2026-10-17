@@ -33,6 +33,12 @@ core/matching.py
 
   4) 인재상 일치도 (10점)
      학생이 고른 강점 키워드가 기업 인재상 키워드와 겹치는 비율 * 10점.
+
+▣ [big-patch 2단계] 기업 유형별 배점
+   위 30/40/20/10 은 '목표 기업 미선택(일반 진단)'과 중견기업의 배점이다.
+   목표 기업을 고르면 그 기업 유형에 맞는 배점(WEIGHTS_BY_TYPE)으로 바뀐다.
+   각 항목은 '비율(0~1) × 그 유형의 배점'으로 계산하므로 총점은 항상 100점이고,
+   판정 구간(80 합격 안정권 · 50 분발 필요)도 그대로다. 근거는 docs/scoring.md.
 """
 
 import pandas as pd
@@ -54,9 +60,40 @@ SIMILAR_CREDIT = 0.7  # 유사 자격증 인정 비율 (70%)
 CERT_BONUS_PER_ITEM_NO_COMPANY = 8   # 기업 미선택 시 자격증 1개당 약식 점수
 CERT_BONUS_MAX_NO_COMPANY = CERT_WEIGHT
 
-FIT_MATCH_SCORE = 20.0     # 계열 일치
+FIT_MATCH_SCORE = 20.0     # 계열 일치 (기본 배점 기준)
 FIT_MISMATCH_SCORE = 5.0   # 계열 불일치
 FIT_NEUTRAL_SCORE = 10.0   # 기업 미선택(중립값)
+
+# 전공 적합성은 비율로도 쓴다 — 유형별 배점에 곱한다.
+FIT_MATCH_RATIO = FIT_MATCH_SCORE / FIT_WEIGHT        # 1.0
+FIT_MISMATCH_RATIO = FIT_MISMATCH_SCORE / FIT_WEIGHT  # 0.25
+FIT_NEUTRAL_RATIO = FIT_NEUTRAL_SCORE / FIT_WEIGHT    # 0.5
+
+# ============================================================
+# [big-patch 2단계] 기업 유형별 배점 (각 행의 합 = 100)
+# 근거와 한계는 docs/scoring.md. 값은 팀 가설이며 공식 채용공고로 확인해 조정한다.
+# ============================================================
+DEFAULT_WEIGHTS = {"grade": GRADE_WEIGHT, "cert": CERT_WEIGHT,
+                   "fit": FIT_WEIGHT, "talent": TALENT_WEIGHT}
+WEIGHTS_BY_TYPE = {
+    # 공공기관 고졸 채용은 NCS 기반·블라인드 서류가 일반적이라 학교 성적보다
+    # 직무 관련 자격증 비중을 높게 둔다.
+    "공기업":   {"grade": 25, "cert": 45, "fit": 20, "talent": 10},
+    # 대기업은 인적성·면접에서 조직 적합성(인재상)을 보는 비중을 높게 둔다.
+    "대기업":   {"grade": 30, "cert": 35, "fit": 20, "talent": 15},
+    "중견기업": dict(DEFAULT_WEIGHTS),
+    # 중소·강소·스타트업은 바로 현장에 투입할 전공 적합성을 높게 둔다.
+    "중소기업": {"grade": 25, "cert": 40, "fit": 25, "talent": 10},
+    "강소기업": {"grade": 25, "cert": 40, "fit": 25, "talent": 10},
+    "스타트업": {"grade": 25, "cert": 40, "fit": 25, "talent": 10},
+}
+
+
+def weights_for(company: dict | None) -> dict:
+    """목표 기업의 유형에 맞는 배점. 기업이 없거나 유형을 모르면 기본 배점."""
+    if not company:
+        return dict(DEFAULT_WEIGHTS)
+    return dict(WEIGHTS_BY_TYPE.get(company.get("size_tag") or "", DEFAULT_WEIGHTS))
 
 
 # ============================================================
@@ -80,17 +117,19 @@ def convert_grade_to_score(grade: float, max_score: float = GRADE_WEIGHT) -> flo
 # ============================================================
 # 2. 자격증 가산점 (40점)
 # ============================================================
-def calc_cert_score(user_certs: list, required_certs: list | None) -> tuple[float, list]:
+def calc_cert_score(user_certs: list, required_certs: list | None,
+                    weight: float = CERT_WEIGHT) -> tuple[float, list]:
     """
-    자격증 가산점(40점 만점)과 항목별 상세 내역을 함께 반환한다.
+    자격증 가산점(weight 점 만점, 기본 40)과 항목별 상세 내역을 함께 반환한다.
     반환값: (점수, [{cert, status, ratio, matched_by}, ...])
     """
     user_certs = list(user_certs or [])
 
-    # 목표 기업 미선택 → 보유 개수 기반 약식 점수
+    # 요구 자격증이 없음(목표 기업 미선택 등) → 보유 개수 기반 약식 점수.
+    # 1개당 배점의 1/5 (기본 40점이면 8점), 최대 배점.
     if not required_certs:
-        score = min(len(user_certs) * CERT_BONUS_PER_ITEM_NO_COMPANY,
-                    CERT_BONUS_MAX_NO_COMPANY)
+        per_item = weight * CERT_BONUS_PER_ITEM_NO_COMPANY / CERT_WEIGHT
+        score = min(len(user_certs) * per_item, weight)
         return round(float(score), 1), []
 
     details = []
@@ -108,7 +147,7 @@ def calc_cert_score(user_certs: list, required_certs: list | None) -> tuple[floa
         details.append({"cert": req, "status": status, "ratio": ratio, "matched_by": by})
 
     avg_ratio = total_ratio / len(required_certs)
-    return round(avg_ratio * CERT_WEIGHT, 1), details
+    return round(avg_ratio * weight, 1), details
 
 
 def calc_cert_match_score(user_cert_names: list, required_cert_names: list) -> float:
@@ -127,28 +166,35 @@ def calc_cert_match_score(user_cert_names: list, required_cert_names: list) -> f
 # ============================================================
 # 3. 전공 적합성 (20점)
 # ============================================================
-def calc_fit_score(dept_category: str | None, company_category: str | None) -> float:
-    """학과 계열과 기업 산업분류의 일치 여부로 20/10/5점을 부여한다."""
+def fit_ratio(dept_category: str | None, company_category: str | None) -> float:
+    """학과 계열과 기업 산업분류 비교 — 일치 1.0 · 미선택(중립) 0.5 · 불일치 0.25."""
     if not company_category:
-        return FIT_NEUTRAL_SCORE
+        return FIT_NEUTRAL_RATIO
     if dept_category and dept_category == company_category:
-        return FIT_MATCH_SCORE
-    return FIT_MISMATCH_SCORE
+        return FIT_MATCH_RATIO
+    return FIT_MISMATCH_RATIO
+
+
+def calc_fit_score(dept_category: str | None, company_category: str | None,
+                   weight: float = FIT_WEIGHT) -> float:
+    """학과 계열과 기업 산업분류의 일치 여부 (기본 배점 20 → 20/10/5점)."""
+    return round(fit_ratio(dept_category, company_category) * weight, 1)
 
 
 # ============================================================
 # 4. 인재상 일치도 (10점)
 # ============================================================
-def calc_talent_score(strength_keywords: list, ideal_talent: list | None) -> tuple[float, list]:
+def calc_talent_score(strength_keywords: list, ideal_talent: list | None,
+                      weight: float = TALENT_WEIGHT) -> tuple[float, list]:
     """
-    강점 키워드 ∩ 기업 인재상 키워드의 비율 * 10점.
+    강점 키워드 ∩ 기업 인재상 키워드의 비율 * weight 점 (기본 10).
     반환값: (점수, 일치한 키워드 리스트)
     """
     if not ideal_talent or not strength_keywords:
         return 0.0, []
     matched = [k for k in strength_keywords if k in ideal_talent]
     ratio = min(len(matched) / len(ideal_talent), 1.0)
-    return round(ratio * TALENT_WEIGHT, 1), matched
+    return round(ratio * weight, 1), matched
 
 
 # ============================================================
@@ -157,8 +203,9 @@ def calc_talent_score(strength_keywords: list, ideal_talent: list | None) -> tup
 def build_feedback(result: dict, company: dict | None) -> list:
     """점수 구성표를 읽고 학생에게 줄 다음 행동 제안을 만든다 (LLM 미사용)."""
     tips = []
-    if result["grade_score"] < GRADE_WEIGHT * 0.6:
-        tips.append("내신 점수 비중이 30점으로 가장 크지는 않지만, 남은 학기 성적 관리로 아직 끌어올릴 수 있어요.")
+    w = result.get("weights") or DEFAULT_WEIGHTS
+    if result["grade_score"] < w["grade"] * 0.6:
+        tips.append(f"내신 점수 비중이 {w['grade']}점으로 가장 크지는 않지만, 남은 학기 성적 관리로 아직 끌어올릴 수 있어요.")
     missing = [d["cert"] for d in result.get("cert_details", []) if d["ratio"] == 0.0]
     partial = [d for d in result.get("cert_details", []) if d["ratio"] == SIMILAR_CREDIT]
     if missing:
@@ -169,10 +216,11 @@ def build_feedback(result: dict, company: dict | None) -> list:
     if not company:
         tips.append("목표 기업을 선택하면 요구 자격증·인재상까지 반영된 정밀 점수로 바뀝니다.")
     else:
-        if result["fit_score"] == FIT_MISMATCH_SCORE:
+        if result.get("fit_ratio") == FIT_MISMATCH_RATIO:
             tips.append(f"학과 계열과 {company['name']}의 산업 분류가 달라 적합성 점수가 낮습니다. 같은 계열 기업도 함께 살펴보세요.")
         if result["talent_score"] == 0:
-            tips.append(f"인재상 키워드({', '.join(company.get('ideal_talent', []))})와 겹치는 강점을 골라두면 10점을 챙길 수 있어요.")
+            if company.get("ideal_talent"):
+                tips.append(f"인재상 키워드({', '.join(company.get('ideal_talent', []))})와 겹치는 강점을 골라두면 {w['talent']}점을 챙길 수 있어요.")
     if not tips:
         tips.append("모든 항목이 고르게 채워졌습니다. 이제 면접 실전 연습에 집중하세요.")
     return tips
@@ -190,17 +238,20 @@ def calc_spec_score(
     ※ 순수 파이썬 연산으로만 이루어져 있으며 외부 API를 호출하지 않는다.
     """
     strength_keywords = list(strength_keywords or [])
+    weights = weights_for(company)
 
-    grade_score = convert_grade_to_score(grade)
+    grade_score = convert_grade_to_score(grade, max_score=weights["grade"])
 
     required_certs = company.get("required_certs") if company else None
-    cert_score, cert_details = calc_cert_score(user_certs, required_certs)
+    cert_score, cert_details = calc_cert_score(user_certs, required_certs, weight=weights["cert"])
 
     company_category = company.get("category") if company else None
-    fit_score = calc_fit_score(dept_category, company_category)
+    ratio = fit_ratio(dept_category, company_category)
+    fit_score = round(ratio * weights["fit"], 1)
 
     ideal_talent = company.get("ideal_talent") if company else None
-    talent_score, matched_talent = calc_talent_score(strength_keywords, ideal_talent)
+    talent_score, matched_talent = calc_talent_score(strength_keywords, ideal_talent,
+                                                     weight=weights["talent"])
 
     final_score = round(grade_score + cert_score + fit_score + talent_score, 1)
     final_score = max(0.0, min(100.0, final_score))
@@ -213,10 +264,11 @@ def calc_spec_score(
         "fit_score": fit_score,
         "talent_score": talent_score,
         "matched_talent": matched_talent,
-        "weights": {
-            "grade": GRADE_WEIGHT, "cert": CERT_WEIGHT,
-            "fit": FIT_WEIGHT, "talent": TALENT_WEIGHT,
-        },
+        "fit_ratio": ratio,
+        "weights": weights,
+        # 배점을 고른 기준 — 화면의 '배점 기준' 줄과 docs/scoring.md 가 쓴다
+        "weight_profile": (company.get("size_tag") if company and
+                           company.get("size_tag") in WEIGHTS_BY_TYPE else "일반 진단"),
     }
     result["tips"] = build_feedback(result, company)
     return result

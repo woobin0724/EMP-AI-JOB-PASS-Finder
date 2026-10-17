@@ -9,16 +9,24 @@ views/tab_spec.py
 [v2] 화면의 핵심은 점수 하나다. 맨 위에 큰 숫자 + 판정 칩 + 100점 눈금 막대를
 두고, 세부 점수 4줄은 회색 면 한 장에 목록으로 묶었다. 입력은 STEP 1·2·3 으로
 나눠 무엇부터 넣으면 되는지 순서가 보이게 했다. (위젯 key·동작은 그대로)
+
+[big-patch 2단계] 기업 유형별 배점(core/matching.WEIGHTS_BY_TYPE)에 맞춰 막대의
+만점이 바뀌고, 막대마다 '왜 이 점수인지' 한 줄이 붙는다. 그 아래 시뮬레이션
+(자격증 하나 더 · 내신 상승 시 안정권 진입 기업)은 core/score_simulation 이
+같은 계산식을 입력만 바꿔 다시 돌린 결과다. 전부 로컬 연산(API 0회).
 """
+
+from html import escape
 
 import streamlit as st
 
 from core import session as ss
 from core.catalog import all_talent_keywords, certs_for_department, load_cert_names
 from core.matching import calc_spec_score
+from core import score_simulation as sim
 from data import ogq_assets as ogq
 from data.certifications import get_bonus_points
-from data.company_showcase import COMPANY_SHOWCASE, COMPANY_SIZE_TAGS
+from data.company_showcase import COMPANY_SHOWCASE, COMPANY_SIZE_TAGS, all_companies
 from services import activity
 from services import score_explain
 from data.departments import (
@@ -90,7 +98,7 @@ def render() -> None:
 
         grade = st.slider("내신 성적 등급 (마이스터고 5등급 성취평가제)", 1.0, 5.0,
                           st.session_state.grade, 0.1, key="grade_widget", on_change=_mark_touched,
-                          help="환산식: 30 × (5.0 − 등급) ÷ 4.0  |  1.0등급=30점, 2.0등급=22.5점")
+                          help="환산식: 내신 배점 × (5.0 − 등급) ÷ 4.0  |  일반 진단(30점) 기준 1.0등급=30점, 2.0등급=22.5점")
         st.session_state.grade = grade
 
     with in_right:
@@ -112,18 +120,20 @@ def render() -> None:
             "나의 핵심 강점 키워드 (기업 인재상 매칭에 사용됨)", talent_keywords,
             default=[k for k in st.session_state.strength_keywords if k in talent_keywords],
             key="strength_keywords_widget", on_change=_mark_touched,
-            help="선택한 키워드가 기업 '인재상'과 일치하면 인재상 점수(10점)에 반영됩니다.",
+            help="선택한 키워드가 기업 '인재상'과 일치하면 인재상 점수에 반영됩니다(배점은 기업 유형에 따라 10~15점).",
             placeholder="강점 키워드를 선택하세요",
         )
         st.session_state.strength_keywords = strengths
 
         _step(3, "목표 기업 (선택)")
-        company_names = ["선택 안 함 (일반 진단)"] + [c["name"] for c in COMPANY_SHOWCASE]
+        companies = all_companies()
+        company_names = ["선택 안 함 (일반 진단)"] + [c["name"] for c in companies]
         pick = st.selectbox("정밀 진단할 목표 기업 (선택)", company_names, key="target_company_widget", on_change=_mark_touched)
         target_company = None
         if pick != company_names[0]:
-            target_company = next(c for c in COMPANY_SHOWCASE if c["name"] == pick)
-            st.session_state.selected_company_id = target_company["id"]
+            target_company = next((c for c in companies if c["name"] == pick), None)
+            if target_company:
+                st.session_state.selected_company_id = target_company["id"]
 
         st.caption("※ 입력값을 바꾸면 위 점수가 **즉시** 갱신됩니다.")
 
@@ -154,16 +164,17 @@ def render() -> None:
 
         # 화면 맨 위에 잡아둔 자리에 점수를 채운다 (배치 의도는 위 주석 참조)
         with score_slot:
-            rows = "".join([
-                score_bar("내신 성취도", result["grade_score"], 30),
-                score_bar("자격증 가산점", result["cert_score"], 40),
-                score_bar("전공 적합성", result["fit_score"], 20),
-                score_bar("인재상 일치도", result["talent_score"], 10),
-            ])
+            # 막대 만점은 기업 유형별 배점, 막대 아래 한 줄은 '왜 이 점수인지'
+            items = sim.explain_items(result, target_company, grade, certs, strengths)
+            rows = "".join(score_bar(i["label"], i["score"], i["max"], why=escape(i["reason"]))
+                           for i in items)
+            w = result["weights"]
+            weight_line = (f"배점 기준 · {escape(result['weight_profile'])} — 내신 {w['grade']} · "
+                           f"자격증 {w['cert']} · 전공 {w['fit']} · 인재상 {w['talent']} (합 100)")
             render_html(f"""
             <div class="mjp-score-grid">
-                {_score_hero(result["final_score"], color, verdict, verdict_msg, title)}
-                <div class="mjp-break">{rows}</div>
+                {_score_hero(result["final_score"], color, verdict, verdict_msg, escape(title))}
+                <div class="mjp-break">{rows}<div class="mjp-weight-line">{weight_line}</div></div>
             </div>
             """)
 
@@ -173,7 +184,7 @@ def render() -> None:
                         mark = "●" if d["ratio"] == 1.0 else ("◐" if d["ratio"] > 0 else "○")
                         extra = f" ← 보유: {d['matched_by']}" if d["matched_by"] and d["ratio"] < 1.0 else ""
                         st.markdown(f"{mark} **{d['cert']}** · {d['status']}{extra}")
-                    st.caption("정확히 일치 100% · 직무 유사 자격증 70% 인정 → 평균 인정비율 × 40점")
+                    st.caption(f"정확히 일치 100% · 직무 유사 자격증 70% 인정 → 평균 인정비율 × {w['cert']}점")
 
         # ------------------------------------------------------------
         # [Phase B] 왜 이 점수인가 — 마스코트가 말로 풀어준다
@@ -212,6 +223,8 @@ def render() -> None:
             for tip in result["tips"]:
                 st.info(tip)
 
+        _render_simulation(grade, certs, dept, dept_category, target_company, strengths, companies)
+
     st.divider()
 
     # ------------------------------------------------------------
@@ -241,11 +254,62 @@ def render() -> None:
             st.caption("해당 기업군에는 이 학과 계열과 매칭되는 예시 기업이 없습니다. 다른 규모를 선택해보세요.")
         else:
             for c in matched:
-                st.markdown(f"**{c['name']}** · {c['description']}  {render_stars(c['overall_rating'])}",
+                stars = render_stars(c["overall_rating"]) if c.get("overall_rating") else ""
+                st.markdown(f"**{c['name']}** · {c['description']}  {stars}",
                             unsafe_allow_html=True)
                 if st.button(f"{c['name']} 자세히 보기", key=f"match_{c['id']}"):
                     st.session_state.selected_company_id = c["id"]
                     ss.goto(ss.PAGE_GUIDE)
+
+
+def _render_simulation(grade, certs, dept, dept_category, company, strengths, companies) -> None:
+    """
+    점수 올리기 시뮬레이션 — 자격증 하나 더 · 내신 상승 시 안정권(80점) 진입 기업.
+    계산은 core/score_simulation (스펙 진단과 같은 식). 실패해도 진단 화면은 유지한다.
+    """
+    try:
+        gains = sim.cert_gains(grade, certs, dept_category, company, strengths,
+                               candidates=certs_for_department(dept))
+        unlocks = sim.grade_unlocks(grade, certs, dept_category, strengths, companies)
+        safe = sim.safe_now(grade, certs, dept_category, strengths, companies)
+    except Exception:  # noqa: BLE001 — 부가 기능이라 진단 본체를 멈추지 않는다
+        st.caption("시뮬레이션을 계산하지 못했습니다. 위 점수는 그대로 유효합니다.")
+        return
+
+    st.markdown("#### 점수 올리기 시뮬레이션")
+    note("지금 입력값에서 하나만 바꿨을 때의 점수예요. 같은 계산식으로 다시 계산한 값이며 합격을 보장하지 않습니다.")
+    left, right = st.columns(2)
+
+    with left:
+        target = f"{escape(company['name'])} 기준" if company else "일반 진단 기준"
+        st.markdown(f"**이 자격증을 따면** · {target}")
+        if gains:
+            rows = "".join(
+                f'<div class="mjp-sim-row"><span class="mjp-sim-name">{escape(g["cert"])}'
+                f'<small>{g["before"]:g}점 → {g["after"]:g}점</small></span>'
+                f'<span class="mjp-sim-gain">+{g["gain"]:g}점</span></div>'
+                for g in gains)
+        else:
+            rows = '<div class="mjp-sim-empty">자격증 점수가 이미 만점이거나, 더해서 오르는 자격증이 없어요.</div>'
+        render_html(f'<div class="mjp-sim">{rows}</div>')
+
+    with right:
+        st.markdown(f"**내신이 오르면** · 지금 안정권 {safe}곳")
+        if unlocks:
+            rows = "".join(
+                f'<div class="mjp-sim-row"><span class="mjp-sim-name">{escape(u["company"]["name"])}'
+                f'<small>{u["target_grade"]:.1f}등급이면 {u["before"]:g}점 → {u["after"]:g}점</small></span>'
+                f'<span class="mjp-sim-gain">{u["step"]:g}등급 ↑</span></div>'
+                for u in unlocks[:6])
+            more = len(unlocks) - 6
+            if more > 0:
+                rows += f'<div class="mjp-sim-empty">외 {more}곳</div>'
+        elif grade <= 1.0:
+            rows = '<div class="mjp-sim-empty">이미 1.0등급이에요. 자격증·인재상으로 점수를 올려보세요.</div>'
+        else:
+            rows = ('<div class="mjp-sim-empty">내신을 1등급 올려도 새로 80점을 넘는 기업이 없어요. '
+                    '왼쪽 자격증부터 채워보세요.</div>')
+        render_html(f'<div class="mjp-sim">{rows}</div>')
 
 
 def _score_hero(score, color: str, verdict: str, message: str, title: str) -> str:

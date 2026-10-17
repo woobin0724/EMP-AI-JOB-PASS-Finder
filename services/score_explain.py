@@ -48,6 +48,18 @@ ITEMS = [
     ("talent_score", "인재상 일치도", 10, "기업 인재상과 겹치는 강점 선택"),
 ]
 
+# [big-patch 2단계] 배점은 기업 유형마다 다르다 — 결과에 실린 weights 를 우선 쓴다
+_WEIGHT_KEY = {"grade_score": "grade", "cert_score": "cert",
+               "fit_score": "fit", "talent_score": "talent"}
+
+
+def _items(result: dict) -> list:
+    """ITEMS 의 배점을 이 결과의 실제 배점으로 바꾼 목록."""
+    weights = result.get("weights") or {}
+    return [(key, label, weights.get(_WEIGHT_KEY[key], full), action)
+            for key, label, full, action in ITEMS]
+
+
 _FAILURE_KEY = "_score_explain_error"
 _FALLBACKS_SUPPORTED = True
 
@@ -84,7 +96,7 @@ def weakest_item(result: dict) -> tuple:
     반환값: (키, 라벨, 획득점, 배점, 제안문구)
     """
     best = None
-    for key, label, full, action in ITEMS:
+    for key, label, full, action in _items(result):
         got = float(result.get(key, 0) or 0)
         room = full - got
         if best is None or room > best[0]:
@@ -129,7 +141,7 @@ SYSTEM_PROMPT = """너는 마이스터고 3학년 학생의 취업 준비를 돕
 
 def _user_prompt(profile: dict, result: dict, company_name: str) -> str:
     lines = ["항목별 점수 (획득/배점)"]
-    for key, label, full, _ in ITEMS:
+    for key, label, full, _ in _items(result):
         lines.append(f"- {label}: {result.get(key, 0)} / {full}")
     lines.append(f"총점: {result.get('final_score')} / 100")
     lines.append("")
@@ -166,7 +178,7 @@ def _parse(text: str) -> dict:
 # ------------------------------------------------------------
 def _rule_based(profile: dict, result: dict, company_name: str) -> dict:
     final = float(result.get("final_score", 0) or 0)
-    strong = [label for key, label, full, _ in ITEMS
+    strong = [label for key, label, full, _ in _items(result)
               if float(result.get(key, 0) or 0) >= full * 0.7]
     _, weak_label, got, full, action = weakest_item(result)
 

@@ -63,10 +63,11 @@ def build_success_report_pdf(
     line(f"지원 희망 기업: {company['name']} ({company['size_tag']} · {company['field_tag']})", size=12, gap=10)
 
     line("[취업 등용문 점수]", size=13, gap=8)
-    line(f"내신 성취도: {spec_result['grade_score']}점 / 30점", gap=6)
-    line(f"자격증 가산점: {spec_result['cert_score']}점 / 40점", gap=6)
-    line(f"전공 적합성: {spec_result['fit_score']}점 / 20점", gap=6)
-    line(f"인재상 일치도: {spec_result['talent_score']}점 / 10점", gap=6)
+    w = spec_result.get("weights") or {"grade": 30, "cert": 40, "fit": 20, "talent": 10}
+    line(f"내신 성취도: {spec_result['grade_score']}점 / {w['grade']}점", gap=6)
+    line(f"자격증 가산점: {spec_result['cert_score']}점 / {w['cert']}점", gap=6)
+    line(f"전공 적합성: {spec_result['fit_score']}점 / {w['fit']}점", gap=6)
+    line(f"인재상 일치도: {spec_result['talent_score']}점 / {w['talent']}점", gap=6)
     line(f"최종 취업 등용문 점수: {spec_result['final_score']}점 / 100점", size=13, gap=10)
 
     line("[4주 맞춤 커리큘럼 요약]", size=13, gap=8)
