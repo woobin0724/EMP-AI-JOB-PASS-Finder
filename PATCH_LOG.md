@@ -65,5 +65,9 @@
 
 - **마무리 검증** — check_static 통과 · pytest 94건 통과 · test_storage_backend 통과 · qa_mobile 24/24 화면 문제 없음. README 갱신
 
-### 다음 할 것
-1. big-patch → main 합치기 · 푸시 → 최종 보고
+- **main 합치기** — big-patch 를 main 에 빨리감기로 합쳐 푸시(`1f245c0`). design-v2(PR #1) 내용도 함께 들어갔다
+
+### 다음 할 것 (본선 이후 · 팀 확인 필요)
+1. 실제 기업 레코드를 공식 자료로 확인해 `scripts/update_company_data.py --import` 로 채우기
+2. 유형별 배점 · 비용 토큰 추정 · BM 가격을 실제 사용량과 학교 의견으로 검증
+3. 선생님 계정 삭제 요청 연락처를 처리방침에 적기
