@@ -276,3 +276,31 @@ def grid_columns(total: int, per_row: int) -> list:
             if start + offset < total:
                 columns.append(row[offset])
     return columns
+
+
+# ------------------------------------------------------------
+# [big-patch 1단계] 데이터 종류 표시 — 가상 예시 vs 출처가 있는 실제 기업
+# ------------------------------------------------------------
+def data_kind_chip(company: dict) -> str:
+    """기업 카드 위에 붙이는 데이터 종류 칩 HTML."""
+    if company.get("data_kind") == "verified":
+        when = str(company.get("checked_at") or "")[:10]
+        return (f'<span class="mjp-chiptag">출처 확인{" · 수집일 " + when if when else ""}</span>')
+    return '<span class="mjp-chiptag gray">가상 기업 · 예시 데이터</span>'
+
+
+def source_links(company: dict) -> str:
+    """실제 기업의 출처 링크 줄 HTML (가상 기업이면 빈 문자열)."""
+    if company.get("data_kind") != "verified":
+        return ""
+    import html as _html
+    links = []
+    for key, label in (("official_recruit_url", "공식 채용 페이지"),
+                       ("talent_source_url", "인재상 출처"),
+                       ("source_url", "출처")):
+        url = str(company.get(key) or "").strip()
+        if url.startswith(("http://", "https://")):
+            links.append(f'<a href="{_html.escape(url, quote=True)}" target="_blank" '
+                         f'rel="noopener" style="color:#1B64DA;">{label}</a>')
+    return ('<div class="mjp-muted" style="margin-top:8px;">' + " · ".join(links) + "</div>") if links else ""
+

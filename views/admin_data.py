@@ -74,12 +74,14 @@ def _form(rows: list[dict]) -> None:
     if editing_id:
         st.info(f"'{base.get('name', editing_id)}' 를 수정하고 있습니다.")
 
+    # [big-patch 1단계] 실제 기업 스키마 — 확인 가능한 사실 + 출처만 입력받는다.
+    # 별점·장단점·면접 기출·합격자 평균 스펙은 실제 기업에 대해 지어낼 수밖에 없어 뺐다.
     groups = [
-        ("기본 정보", ["id", "name", "size_tag", "field_tag", "category", "description", "hire_dept"]),
-        ("채용 요건", ["required_certs", "required_skills", "ideal_talent",
-                       "exam_keywords", "interview_questions"]),
-        ("참고 정보", ["overall_rating", "benefit_short", "pros", "cons",
-                       "avg_applicant_grade", "avg_applicant_certs"]),
+        ("기본 정보 (공개 사실)", ["id", "name", "size_tag", "category", "field_tag",
+                                   "description", "region", "official_recruit_url"]),
+        ("채용 정보 (공식 채용공고에 있는 경우만)", ["hire_dept", "work_conditions",
+                                                     "required_certs", "required_skills"]),
+        ("인재상 (짧게 요약 · 출처 필수)", ["ideal_talent", "talent_summary", "talent_source_url"]),
         ("출처 (검증용)", ["source_url", "source_type", "checked_by", "checked_at"]),
     ]
     spec = {k: (lbl, kind, req) for k, lbl, kind, req in curated.FIELDS}
@@ -137,7 +139,7 @@ def _list(rows: list[dict]) -> None:
                 출처 {r.get('source_type','')} ·
                 <a href="{r.get('source_url','')}" target="_blank"
                    style="color:{BRAND_DEEP};">{r.get('source_url','')}</a><br>
-                {r.get('checked_by','')} · {r.get('checked_at','')}
+                {r.get('checked_by','')} · 수집일 {r.get('checked_at','')}
             </div>
         </div>
         """)

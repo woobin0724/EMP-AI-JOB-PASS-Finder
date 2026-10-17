@@ -5,7 +5,8 @@ data/company_showcase.py
 캐치(Catch) 스타일 기업 분석 카드 백업(모의) 데이터 20건.
 
 ※ 중요 안내
-기업명은 전부 가상(fictional)이다. 별점·복지·인재상·합격자 평균 스펙·
+기업명은 전부 가상(fictional)이다. 실존 대기업·건설사 이름을 떠올리게 하는
+이름(현대·대림·한진·신한·동양·우성 등)도 big-patch 1단계에서 바꿨다. 별점·복지·인재상·합격자 평균 스펙·
 선배 리뷰·면접질문 등 세부 내용은 팀이 구성한 예시(모의) 콘텐츠이며 실제
 사실이 아니다. 화면에도 "예시 데이터" 라벨을 노출한다.
 
@@ -337,7 +338,7 @@ COMPANY_SHOWCASE = [
      "required_skills": ["PLC 시퀀스 제어", "센서/액추에이터 기초", "자동화 설비 점검", "도면 해독"]},
 
     # ---------------- 건축/토목 ----------------
-    {"id": "woosung_construction", "name": "우성건설", "size_tag": "중견기업", "field_tag": "건축/토목",
+    {"id": "woosung_construction", "name": "온결건설", "size_tag": "중견기업", "field_tag": "건축/토목",
      "category": "건축/토목", "description": "건축시공 현장기술직",
      "overall_rating": 4.2, "hire_dept": "건축시공팀",
      "benefit_short": "현장수당 지급, 자격증 취득 지원금, 명절 상여금 등",
@@ -373,12 +374,17 @@ def all_companies() -> list:
     같은 id 가 있으면 큐레이션 쪽이 이긴다 — 사람이 나중에 확인한 값이
     더 최신이기 때문이다.
     """
-    from services.curated import load as _load_curated
+    from services.curated import load as _load_curated, sanitize_real
 
-    # 근무지·근무조건 필드를 모든 기업에 둔다(값이 없으면 빈 문자열)
-    merged = {c["id"]: {"region": "", "work_conditions": "", **c} for c in COMPANY_SHOWCASE}
+    # 근무지·근무조건 필드를 모든 기업에 둔다(값이 없으면 빈 문자열).
+    # data_kind: "sample" = 가상 기업 예시 데이터 / "verified" = 출처가 있는 실제 기업
+    merged = {c["id"]: {"region": "", "work_conditions": "", "data_kind": "sample", **c}
+              for c in COMPANY_SHOWCASE}
     for row in _load_curated():
         ident = row.get("id")
         if ident:
-            merged[ident] = {**merged.get(ident, {}), **row}
+            # [big-patch 1단계] 합치지(merge) 않고 통째로 바꾼다.
+            # 예전에는 같은 id 의 가상 기업 위에 덮어써서, 실제 기업이 가상 기업의
+            # 별점·장단점·면접 질문을 물려받을 수 있었다.
+            merged[ident] = sanitize_real(row)
     return list(merged.values())

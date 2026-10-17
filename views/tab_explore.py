@@ -21,7 +21,10 @@ from services import reactions
 from services import story_cards
 from services.strong_sme_api import PRIORITY_DEPARTMENTS, prioritize_by_department
 from ui import mascot
-from ui.components import back_to_hub, disclaimer, grid_columns, note, render_html, section_title, topbar
+from ui.components import (
+    back_to_hub, data_kind_chip, disclaimer, grid_columns, note, render_html, section_title,
+    source_links, topbar,
+)
 from ui.icons import icon
 from ui.story_viewer import render_story
 from ui.theme import BADGE_COLORS, BG, GREEN, MUTED, RED, TEXT, render_stars
@@ -57,7 +60,7 @@ def render() -> None:
         kcol, tcol, bcol = st.columns([2.2, 1.2, 1])
         with kcol:
             kw = st.text_input("검색 키워드 (기업명·공고명·자격증)",
-                               placeholder="예: 전기기능사, CNC, 정보처리, 한국전력공사")
+                               placeholder="예: 전기기능사, CNC, 정보처리")
         with tcol:
             type_pick = st.selectbox("기업 유형",
                                      ["전체", "대기업", "중견기업", "중소기업",
@@ -200,18 +203,32 @@ def render() -> None:
                 f'margin-left:6px;">매칭 {c["match_score"]:.0f}</span>'
                 if c.get("match_score") is not None else ""
             )
+            # [big-patch 1단계] 실제 기업(verified)에는 별점·복지 같은 지어낸 값이 없다.
+            # 가상 기업은 '가상 기업 · 예시 데이터' 칩, 실제 기업은 '출처 확인' 칩 + 출처 링크.
+            verified = c.get("data_kind") == "verified"
+            stars = "" if verified else render_stars(c.get("overall_rating") or 0)
+            if verified:
+                extra = (f'<div class="mjp-muted" style="margin-top:6px;">소재지 '
+                         f'<b style="color:{TEXT};">{c.get("region") or "-"}</b></div>'
+                         + (f'<div class="mjp-muted" style="margin-top:6px;">인재상 요약<br>'
+                            f'<span style="color:{TEXT};">{c["talent_summary"]}</span></div>'
+                            if c.get("talent_summary") else "")
+                         + source_links(c))
+            else:
+                extra = (f'<div class="mjp-muted" style="margin-top:6px;">복지 (예시)<br>'
+                         f'<span style="color:{TEXT};">{c.get("benefit_short", "")}</span></div>')
+            talent = ", ".join(c.get("ideal_talent") or []) or "-"
             render_html(f"""
             <div class="mjp-card">
+                {data_kind_chip(c)}
                 <span class="mjp-tag">{c['size_tag']} · {c['field_tag']}</span>{match_chip}
                 <span style="float:right; display:inline-flex; align-items:center; gap:6px;">
-                    {render_stars(c['overall_rating'])}{heart}
+                    {stars}{heart}
                 </span>
                 <div style="font-size:var(--mjp-h2); font-weight:800; margin-top:8px;">{c['name']}</div>
                 <div class="mjp-muted" style="margin-bottom:8px;">{c['description']}</div>
-                <div class="mjp-muted">인재상<br><b style="color:{TEXT};">{', '.join(c['ideal_talent'])}</b></div>
-                <div class="mjp-muted" style="margin-top:6px;">독점 복지 혜택<br>
-                    <span style="color:{TEXT};">{c['benefit_short']}</span>
-                </div>
+                <div class="mjp-muted">인재상<br><b style="color:{TEXT};">{talent}</b></div>
+                {extra}
             </div>
             """)
             # 버튼 줄은 mjp_row_ 컨테이너로 감싸 모바일에서도 가로로 유지한다

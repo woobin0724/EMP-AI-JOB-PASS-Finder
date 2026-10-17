@@ -50,9 +50,13 @@ def render() -> None:
     disclaimer("선배 리뷰·면접질문·커리큘럼은 팀이 구성한 예시 콘텐츠이며 실제 후기가 아닙니다.")
 
     names = {c["name"]: c["id"] for c in COMPANY_SHOWCASE}
-    default_name = (COMPANY_BY_ID[st.session_state.selected_company_id]["name"]
-                    if st.session_state.selected_company_id else list(names.keys())[0])
-    pick_name = st.selectbox("기업별 원스톱 채용 가이드 허브", list(names.keys()),
+    # 가이드는 가상 기업 예시 데이터(별점·장단점·면접 질문)를 보여주는 화면이라
+    # COMPANY_BY_ID(가상 20곳)만 쓴다. 탐색에서 실제 기업(출처 확인)을 고르고
+    # 넘어오면 그 id 가 여기 없으므로 첫 기업으로 시작한다 (예전엔 KeyError).
+    sel = st.session_state.selected_company_id
+    default_name = (COMPANY_BY_ID[sel]["name"] if sel in COMPANY_BY_ID
+                    else list(names.keys())[0])
+    pick_name = st.selectbox("기업별 원스톱 채용 가이드 허브 (가상 기업 예시)", list(names.keys()),
                              index=list(names.keys()).index(default_name))
     c = COMPANY_BY_ID[names[pick_name]]
     st.session_state.selected_company_id = c["id"]
@@ -178,7 +182,7 @@ def _company_detail(c: dict) -> None:
         render_html(f"""<div class="mjp-tcard" style="margin-bottom:12px;"><h4>전공 필기시험 핵심 키워드</h4>
             <p style="margin-top:10px !important;">{c['exam_keywords']}</p></div>""")
 
-    st.markdown("#### 예상 기출 면접 질문 3선 (예시)")
+    st.markdown("#### 예상 면접 질문 3선 (예시 · 실제 기출 아님)")
     for i, q in enumerate(c["interview_questions"]):
         st.markdown(
             f'<div class="mjp-interview"><span class="mjp-qbadge">인터뷰 질문 {i + 1:02d}</span>Q. {q}</div>',

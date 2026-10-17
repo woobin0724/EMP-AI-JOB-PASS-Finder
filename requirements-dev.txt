@@ -8,3 +8,6 @@ pyflakes>=3.2.0
 
 # 모바일 QA 측정 (docs/qa_mobile.py)
 playwright>=1.45.0
+
+# 테스트 (tests/) — python -m pytest -q tests
+pytest>=8.0

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 services/alio_api.py
-공기업 채용정보 — 팀 큐레이션 데이터
+공기업 채용정보 — 가상 공공기관 예시 데이터 (공식 API 미연동 시)
 
 ▣ 왜 스크래핑을 걷어냈나
    이전 구현은 job.alio.go.kr 의 HTML 을 requests + BeautifulSoup 으로
@@ -24,7 +24,7 @@ services/alio_api.py
 from data.certifications import CERT_CODE_TO_NAME
 from data.companies import BACKUP_PUBLIC_COMPANIES
 
-SOURCE_LABEL = "공기업 채용(큐레이션)"
+SOURCE_LABEL = "공기업 채용(가상 예시)"
 
 
 def _curated_public_jobs() -> list:
@@ -47,6 +47,10 @@ def fetch_alio_jobs(timeout: int = 5):
     timeout 은 쓰지 않지만 호출부(services/fallback.py)의 시그니처를 맞추기
     위해 남겨둔다 — 공식 API 가 붙으면 그대로 쓰인다.
 
-    반환값: (list[dict], "curated")
+    반환값: (list[dict], "backup")
+
+    [big-patch 1단계] 예전에는 실제 공공기관명에 팀이 만든 공고를 붙여 'curated'
+    (팀이 조사한 데이터)로 표시했다. 지금은 가상 기관 예시라 'backup' 으로 표시한다
+    — 화면 배지가 BACKUP DATA 로 나와 '실제 공고가 아님'이 드러난다.
     """
-    return _curated_public_jobs(), "curated"
+    return _curated_public_jobs(), "backup"

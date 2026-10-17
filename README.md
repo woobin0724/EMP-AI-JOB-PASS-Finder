@@ -72,22 +72,26 @@ AI Job Pass Finder 는 내신과 자격증을 **목표 기업별 100점 만점 '
 |---|---|---|
 | 자격증 | 공공데이터포털 Q-Net (`services/qnet_api.py`) | `data/certifications.py` 45종 |
 | 채용공고 | 고용24 Open API (`services/worknet_api.py`) | `data/companies.py` 34건 |
-| 공기업 공고 | 설정 자리만 있음 (`services/api_registry.py`) | 큐레이션 10건 |
-| 강소기업 공고 | 설정 자리만 있음 | 큐레이션 10건 |
+| 공기업 공고 | 설정 자리만 있음 (`services/api_registry.py`) | 가상 공공기관 예시 10건 (BACKUP) |
+| 강소기업 공고 | 설정 자리만 있음 | 가상 강소기업 예시 10건 (BACKUP) |
+| 실제 기업 정보 | (공식 홈페이지·채용공고·공공데이터에서 팀이 확인) | 출처·수집일 필수, 별점·리뷰 금지 (`docs/data_schema.md`) |
 
 - 모든 외부 호출은 `services/fallback.py` 의 `safe_call()` 로 감싸 실패해도 화면이 멈추지 않습니다.
   화면에는 **LIVE API / BACKUP DATA / CURATED** 배지로 출처를 표시합니다.
 - Q-Net·고용24 의 엔드포인트는 코드 주석에 '예시'로 표기되어 있습니다. 활용가이드로 규격을 확인한 뒤
   `services/api_registry.py` 를 채워야 실제 연동이 됩니다.
-- 팀이 넣는 기업 정보는 **출처 URL · 출처 유형 · 조사자 · 조사일이 없으면 저장되지 않습니다** (`services/curated.py`).
+- 팀이 넣는 실제 기업 정보는 **출처 URL · 출처 유형 · 조사자 · 수집일이 없으면 저장되지 않고**, 별점·리뷰·면접 후기·연봉처럼
+  확인할 수 없는 항목은 입력란 자체가 없습니다 (`services/curated.py`, 검사 도구 `scripts/update_company_data.py`).
+  스키마와 갱신 절차는 [`docs/data_schema.md`](docs/data_schema.md).
 
 ### 예시(모의) 데이터 안내
 - 기업 분석 카드 20곳(`data/company_showcase.py`)의 **기업명은 모두 가상**이고, 별점·복지·인재상·
   선배 리뷰·면접 질문·합격자 평균 스펙은 팀이 만든 **예시 데이터**입니다. 화면에도 "예시 데이터" 안내를 띄웁니다.
   (예전에는 일부 실제 기업명을 썼으나 실제 정보로 오해될 수 있어 가상 이름으로 바꿨습니다 — 커밋 `22d2c83`)
 - 채용공고 백업 34건·강소기업 10건의 기업명도 가상입니다.
-- 공기업 백업 10건(`data/companies.py` 의 `BACKUP_PUBLIC_COMPANIES`)은 실제 공공기관명을 쓰고, 채용 분야·자격증·
-  안내 문구는 팀이 구성한 예시입니다(코드 주석·화면 문구에 '예시'로 표기). [팀 확인 필요] 가상 이름으로 바꿀지.
+- 공기업 백업 10건(`data/companies.py` 의 `BACKUP_PUBLIC_COMPANIES`)도 **가상 기관명**입니다. 예전에는 실제 공공기관명에
+  팀이 만든 채용 분야·가산점 설명을 붙였는데, 실제 기관에 사실이 아닌 정보를 붙이는 셈이라 바꿨습니다(big-patch 1단계).
+  확인할 수 없는 채용 조언(`ai_tip`)도 모두 비웠습니다.
 - 근무지·근무 조건은 확인된 값이 없어 비워 두었습니다(지어내지 않음).
 
 ---
@@ -190,6 +194,10 @@ fonts/                 NanumGothic.ttf + OFL.txt (PDF 한글용)
 | PDF 한글 폰트 `fonts/NanumGothic.ttf` | Google Fonts 배포본, SIL Open Font License 1.1 (`fonts/OFL.txt`). [팀 확인 필요] 공식 OFL.txt 원문으로 교체 |
 | 마스코트 이미지 `assets/ogq/*.jpg` (11장) | **[팀 확인 필요]** 제작자와 사용 허락 범위. 코드 주석은 'NAVER OGQ마켓 캐릭터 스티커'로, 이전 README 의 W3 절은 '팀 자체 제작'으로 적고 있어 서로 다릅니다. 대회 공식 OGQ API 로 받는 도구(`scripts/fetch_mascot.py`)는 있으나 아직 실행 기록이 없습니다. |
 | 팀 로고 · 엠블럼 | 팀 로고를 코드로 다시 그린 벡터(`ui/emblem.py`) |
+| 자격증 목록 (API 연동 시) | 공공데이터포털 Q-Net 오픈API — 공공누리 이용조건은 [팀 확인 필요] |
+| 채용공고 (API 연동 시) | 고용24(워크넷) Open API — 이용약관은 [팀 확인 필요] |
+| 실제 기업 정보 `data/curated_companies.json` | 각 레코드의 `source_url`(공식 홈페이지·채용공고·공공데이터), 수집일 `checked_at`. 인재상은 원문을 복사하지 않고 80자 이내 요약 + `talent_source_url` |
+| 가상 기업 20곳 · 백업 채용공고 · 강소기업 · 공공기관 예시 | 팀 자체 제작 예시 데이터 (기업명 포함 전부 가상) |
 | Impeccable 디자인 스킬 (pbakaus/impeccable, Apache-2.0, 개발 도구로만 사용) | `.claude/skills/impeccable/` (라이선스 `LICENSE` 동봉). 서비스 코드에서 호출하지 않음 |
 
 ---

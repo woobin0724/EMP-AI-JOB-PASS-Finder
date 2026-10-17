@@ -63,8 +63,9 @@ def _render_generator() -> None:
 
         company_names = [c["name"] for c in COMPANY_SHOWCASE]
         default_idx = 0
-        if st.session_state.selected_company_id:
-            comp = COMPANY_BY_ID[st.session_state.selected_company_id]
+        # 탐색에서 실제 기업(출처 확인)을 고르고 넘어오면 id 가 가상 기업 목록에 없다 → 첫 기업
+        comp = COMPANY_BY_ID.get(st.session_state.selected_company_id or "")
+        if comp:
             if comp["name"] in company_names:
                 default_idx = company_names.index(comp["name"])
         target_company_name = st.selectbox("목표 지원 회사", company_names, index=default_idx)
