@@ -12,7 +12,7 @@ app.py 에 흩어져 있던 MILESTONES / ROADMAP_STAGE_LABELS 를 콘텐츠 데�
 MILESTONES = [
     ("cert", "자격증 준비", "목표 기업이 요구하는 자격증을 취득했거나 시험 접수를 마쳤습니다."),
     ("portfolio", "포트폴리오 완성", "4주 커리큘럼의 프로젝트 결과물을 문서로 정리했습니다."),
-    ("interview", "면접 준비", "예상 기출 질문 3선에 대한 나만의 답변을 만들었습니다."),
+    ("interview", "면접 준비", "예시 면접 질문 3선에 대한 나만의 답변을 만들었습니다."),
 ]
 
 MILESTONE_KEYS = [key for key, _, _ in MILESTONES]

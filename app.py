@@ -46,7 +46,7 @@ from services import usage_log                      # noqa: E402
 from ui.theme import inject_css                     # noqa: E402
 from views import (                                 # noqa: E402
     admin_data, admin_stats, class_board, class_join, class_setup, hub, landing, login, mypage,
-    role_select,
+    privacy, role_select,
     tab_explore, tab_guide, tab_next, tab_resume, tab_spec,
 )
 
@@ -95,10 +95,23 @@ ROUTES = {
     ss.PAGE_NEXT: tab_next.render,
     ss.PAGE_ADMIN_DATA: admin_data.render,
     ss.PAGE_ADMIN_STATS: admin_stats.render,
+    ss.PAGE_PRIVACY: privacy.render,
 }
 
 # 사용 기록 — 접속일(세션당 하루 1번)과 화면 이동(화면이 바뀔 때만).
 # 로그인 전에는 남기지 않는다. 실패해도 화면은 그대로 그린다.
 usage_log.track(ss.current_page())
 
-ROUTES.get(ss.current_page(), landing.render)()
+# [big-patch 6단계] 한 화면의 오류가 앱 전체를 멈추지 않게 한다.
+# 화면 이동(st.rerun · st.stop)은 Streamlit 이 예외로 처리하므로 그대로 다시 던진다.
+try:
+    ROUTES.get(ss.current_page(), landing.render)()
+except Exception as exc:  # noqa: BLE001
+    # 클래스 이름으로 본다 — 내부 모듈 경로가 Streamlit 버전마다 달라서
+    if any(c.__name__ in ("RerunException", "StopException") for c in type(exc).__mro__):
+        raise
+    st.error("이 화면을 그리는 중 문제가 생겼어요. 입력한 기록은 그대로 있으니 다른 화면으로 이동하거나 새로고침해 주세요.")
+    with st.expander("오류 정보 (팀에 알려줄 때 보여주세요)"):
+        st.code(f"{type(exc).__name__}: {str(exc)[:300]}", language=None)
+    if st.button("처음 화면으로", key="mjp_error_home", type="primary"):
+        ss.goto(ss.PAGE_HUB if ss.is_authed() else ss.PAGE_LANDING)

@@ -53,6 +53,7 @@ PAGE_LABELS = {
     ss.PAGE_SPEC: "스펙 진단", ss.PAGE_EXPLORE: "기업 탐색", ss.PAGE_GUIDE: "가이드",
     ss.PAGE_RESUME: "자소서", ss.PAGE_NEXT: "로드맵",
     ss.PAGE_ADMIN_DATA: "기업 데이터 입력", ss.PAGE_ADMIN_STATS: "사용 통계",
+    ss.PAGE_PRIVACY: "개인정보 처리방침",
 }
 
 
@@ -183,6 +184,16 @@ def record_ai_call(uid: str, bucket: str, feature: str, day: str) -> None:
             quota.pop(other, None)
     doc["events"].append(_event(uid, "ai", feature=feature))
     _write(doc)
+
+
+def forget(uid: str) -> None:
+    """[big-patch 6단계] '내 기록 지우기' — 이 사용자의 해시 ID 로 남은 통계 기록을 지운다."""
+    key = anon_id(uid)
+    doc = _read()
+    doc["visitors"].pop(key, None)
+    (doc.get("ai_quota") or {}).pop(key, None)
+    doc["events"] = [e for e in doc["events"] if e.get("uid") != key]
+    storage_backend.get_backend(DOC).write(doc)
 
 
 # [big-patch 5단계] 기능 사용 기록 — 내용은 남기지 않고 '어떤 기능을 썼다'만

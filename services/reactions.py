@@ -103,6 +103,24 @@ def record(company_id: str, reaction: str) -> None:
     })
 
 
+def forget(uid: str) -> None:
+    """[big-patch 6단계] '내 기록 지우기' — 이 학생의 관심/패스 기록을 파일에서 지운다."""
+    with _FILE_LOCK:
+        if not os.path.exists(REACTIONS_PATH):
+            _state().clear()
+            return
+        rows = [r for r in _read() if r.get("student") != uid]
+        try:
+            os.makedirs(os.path.dirname(REACTIONS_PATH), exist_ok=True)
+            fd, tmp = tempfile.mkstemp(dir=os.path.dirname(REACTIONS_PATH), suffix=".tmp")
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                json.dump(rows, f, ensure_ascii=False, indent=1)
+            os.replace(tmp, REACTIONS_PATH)
+        except OSError:
+            pass
+    _state().clear()
+
+
 def reaction_of(company_id: str) -> str | None:
     _restore()
     return _state().get(company_id)

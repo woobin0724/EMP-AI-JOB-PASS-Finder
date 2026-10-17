@@ -75,7 +75,8 @@ def last_error() -> str:
 
 
 # 문서 최상위의 '레코드 모음' 키들. 이 안은 id → 레코드 구조라 키 단위로 합칠 수 있다.
-_COLLECTIONS = ("users", "classes", "visitors")
+# ai_quota: [big-patch 4단계] 해시 ID → 오늘 AI 사용 횟수 (사용자 단위로 합친다)
+_COLLECTIONS = ("users", "classes", "visitors", "ai_quota")
 # 문서 최상위의 '목록' 키들. 각 항목이 고유 "id" 를 가져 합집합으로 합칠 수 있다.
 _LIST_COLLECTIONS = ("events",)
 

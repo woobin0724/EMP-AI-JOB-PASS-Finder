@@ -50,9 +50,10 @@ PAGE_RESUME = "resume"
 PAGE_NEXT = "next"
 PAGE_ADMIN_DATA = "admin_data"   # 팀 관리자 — 기업 마스터 데이터 입력
 PAGE_ADMIN_STATS = "admin_stats"  # 팀 관리자 — 사용 통계
+PAGE_PRIVACY = "privacy"          # [big-patch 6단계] 개인정보 처리방침 (로그인 없이)
 
 # 로그인 없이 볼 수 있는 화면
-PUBLIC_PAGES = {PAGE_LANDING, PAGE_LOGIN}
+PUBLIC_PAGES = {PAGE_LANDING, PAGE_LOGIN, PAGE_PRIVACY}
 
 # 역할 선택을 마쳐야 들어갈 수 있는 화면
 FEATURE_PAGES = {
@@ -72,12 +73,12 @@ FEATURES = [
     },
     {
         "key": PAGE_EXPLORE, "icon": "search", "title": "실시간 기업 탐색기", "nav": "기업 탐색",
-        "desc": "고용24·잡알리오·강소기업 포털을 한 번에 검색합니다. "
+        "desc": "고용24 채용공고(API 키가 있으면 실시간)와 공기업·강소기업 예시 공고를 한 번에 검색합니다. "
                 "응답하지 않는 소스는 즉시 백업 데이터로 전환돼 화면이 멈추지 않습니다.",
     },
     {
         "key": PAGE_GUIDE, "icon": "wrench", "title": "채용 대비 가이드 & 커리큘럼", "nav": "가이드",
-        "desc": "목표 기업별 면접 기출·필기 키워드·4주 커리큘럼을 제공하고, "
+        "desc": "목표 기업별 예시 면접 질문·필기 키워드·4주 커리큘럼을 제공하고, "
                 "커리어 로드맵 3단계를 스탬프로 관리합니다.",
     },
     {

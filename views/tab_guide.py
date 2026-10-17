@@ -44,7 +44,7 @@ def render() -> None:
     topbar(active=ss.PAGE_GUIDE)
     back_to_hub()
     section_title("채용 대비 가이드 & 커리큘럼", icon_name="wrench", eyebrow="가이드", sub=
-                  "목표 기업의 면접 기출·필기 키워드·4주 커리큘럼을 확인하고, "
+                  "목표 기업의 예시 면접 질문·필기 키워드·4주 커리큘럼을 확인하고, "
                   "커리어 로드맵 3단계를 스탬프로 관리하세요.")
 
     disclaimer("선배 리뷰·면접질문·커리큘럼은 팀이 구성한 예시 콘텐츠이며 실제 후기가 아닙니다.")

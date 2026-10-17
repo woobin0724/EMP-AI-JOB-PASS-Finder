@@ -83,10 +83,15 @@ def _write_all(doc: dict) -> bool:
 # ------------------------------------------------------------
 # 사용자
 # ------------------------------------------------------------
+def _live(user: dict | None) -> dict | None:
+    """'내 기록 지우기'로 비운 레코드(삭제 표시)는 없는 사용자로 본다."""
+    return None if (user is None or user.get("deleted_at")) else user
+
+
 def get_user(user_id: str) -> dict | None:
     if not user_id:
         return None
-    return _read_all()["users"].get(user_id)
+    return _live(_read_all()["users"].get(user_id))
 
 
 def _default_user(user_id: str) -> dict:
@@ -119,7 +124,7 @@ def upsert_user(user_id: str, **fields) -> dict:
     이미 있는 사용자는 전달한 필드만 덮어쓰고 나머지(활동 기록 등)는 보존한다.
     """
     doc = _read_all()
-    user = doc["users"].get(user_id)
+    user = _live(doc["users"].get(user_id))
 
     if user is None:
         user = _default_user(user_id)
@@ -226,7 +231,8 @@ def class_students(class_code: str) -> list[dict]:
     klass = doc["classes"].get((class_code or "").strip().upper())
     if not klass:
         return []
-    return [doc["users"][sid] for sid in klass["students"] if sid in doc["users"]]
+    return [doc["users"][sid] for sid in klass["students"]
+            if sid in doc["users"] and _live(doc["users"][sid])]
 
 
 # ------------------------------------------------------------
@@ -237,7 +243,7 @@ def _mutate_user(user_id: str, fn) -> dict | None:
     if not user_id:
         return None
     doc = _read_all()
-    user = doc["users"].get(user_id)
+    user = _live(doc["users"].get(user_id))
     if user is None:
         return None
     fn(user)
@@ -357,6 +363,31 @@ def leave_class(user_id: str) -> bool:
     user["class_skipped"] = True   # 탈퇴 후 다시 묻지 않는다
     user["last_seen_at"] = _now()
     doc["users"][user_id] = user
+    _write_all(doc)
+    return True
+
+
+def delete_user(user_id: str) -> bool:
+    """
+    [big-patch 6단계] '내 기록 지우기' — 학생 본인의 레코드를 비운다.
+
+    레코드를 통째로 빼지 않고 {user_id, deleted_at} 만 남긴 '삭제 표시'로 바꾼다.
+    Supabase 동시 쓰기 충돌 때 병합(storage_backend._merge)은 키 단위로 합쳐서,
+    빼버린 레코드는 다른 사람의 저장에 실려 되살아날 수 있기 때문이다.
+    삭제 표시는 이름·이메일·스펙·기록을 하나도 담지 않는다.
+    선생님(반 담당) 계정은 반이 함께 사라지므로 여기서 지우지 않는다.
+    """
+    doc = _read_all()
+    user = doc["users"].get(user_id)
+    if not user or user.get("deleted_at"):
+        return False
+    if user.get("role") == "teacher" or any(
+            k.get("teacher_id") == user_id for k in doc["classes"].values()):
+        return False
+    for klass in doc["classes"].values():
+        if user_id in klass.get("students", []):
+            klass["students"].remove(user_id)
+    doc["users"][user_id] = {"user_id": user_id, "deleted_at": _now()}
     _write_all(doc)
     return True
 

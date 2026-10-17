@@ -16,7 +16,7 @@ from data.roadmap import MILESTONES
 from services import access
 from services import activity
 from services import premium
-from services import store
+from services import reactions, store, usage_log
 from ui import mascot
 from ui.components import (
     back_to_hub, code_display, grid_columns, list_row, render_html, section_title, status_chip, topbar,
@@ -115,10 +115,41 @@ def render() -> None:
                          key="mypage_admin_stats"):
                 ss.goto(ss.PAGE_ADMIN_STATS)
 
+    _privacy_section(uid)
+
     st.caption(f"저장소 현황: {store.store_summary()}")
     st.caption("Streamlit Community Cloud는 재배포·슬립 해제 시 파일시스템이 초기화됩니다. "
                "장기 보관이 필요하면 외부 DB 연동이 필요합니다 "
                "(services/store.py 의 `_read_all` / `_write_all` 두 함수만 교체하면 됩니다).")
+
+
+# ------------------------------------------------------------
+# [big-patch 6단계] 개인정보 — 처리방침 · 내 기록 지우기
+# ------------------------------------------------------------
+def _privacy_section(uid: str) -> None:
+    st.markdown("#### 개인정보")
+    if st.button("개인정보 처리방침 보기", use_container_width=True, key="mypage_privacy"):
+        ss.goto(ss.PAGE_PRIVACY)
+    if not uid or st.session_state.get("role") == "teacher":
+        if uid:
+            st.caption("선생님 계정은 반이 함께 사라지므로 기록 삭제를 팀에 요청해 주세요.")
+        return
+    with st.expander("내 기록 지우기"):
+        st.caption("계정 정보 · 스펙 진단 · 점수 기록 · 찜 · 로드맵 · 사용 통계 · 스토리 반응을 지우고 반 명단에서 빠집니다. "
+                   "되돌릴 수 없고, 지운 뒤에는 로그아웃됩니다.")
+        sure = st.checkbox("지운 기록은 되돌릴 수 없다는 것을 이해했어요", key="mypage_delete_sure")
+        if st.button("내 기록 모두 지우기", disabled=not sure, use_container_width=True,
+                     key="mypage_delete"):
+            ok = store.delete_user(uid)
+            try:
+                usage_log.forget(uid)
+                reactions.forget(uid)
+            except Exception:  # noqa: BLE001 — 통계 정리 실패가 삭제 자체를 막지 않게
+                pass
+            if ok:
+                ss.logout()
+            else:
+                st.error("지울 기록이 없거나, 선생님 계정이라 화면에서 지울 수 없습니다.")
 
 
 # ------------------------------------------------------------
