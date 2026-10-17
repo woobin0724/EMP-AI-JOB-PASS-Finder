@@ -25,11 +25,12 @@ import json
 
 import streamlit as st
 
-from services import premium
 
 from services.coverletter import apply_josa
 
-MODEL_NAME = "claude-opus-5"
+# [big-patch 4단계] 점수 설명은 초안 등급(저가) 모델 — services/ai_models.py
+from services.ai_models import DEFAULT_MODELS, TIER_DRAFT, model_for  # noqa: E402
+MODEL_NAME = DEFAULT_MODELS[TIER_DRAFT]
 # 출력은 두세 문장이지만 현행 모델은 추론 토큰이 기본으로 켜져 있고 그 양이
 # max_tokens 에 함께 잡힌다. 낮게 잡으면 문장 중간에서 잘린다(자소서 쪽에서
 # 900 으로 뒀다가 같은 문제를 겪었다). 상한일 뿐이라 실제 생성량만 과금된다.
@@ -218,7 +219,7 @@ def _claude(profile: dict, result: dict, company_name: str, api_key: str) -> dic
 
     client = anthropic.Anthropic(api_key=api_key, timeout=REQUEST_TIMEOUT, max_retries=1)
     params = {
-        "model": MODEL_NAME,
+        "model": model_for(TIER_DRAFT),
         "max_tokens": MAX_TOKENS,
         "system": SYSTEM_PROMPT,
         "output_config": {"effort": EFFORT},
@@ -261,6 +262,8 @@ def _explain_cached(fingerprint: str, profile_json: str, result_json: str,
         key = _api_key()
         if key:
             try:
+                from services import ai_quota
+                ai_quota.consume("explain")
                 return _claude(profile, result, company_name, key), "ai"
             except Exception as exc:
                 try:
@@ -268,6 +271,11 @@ def _explain_cached(fingerprint: str, profile_json: str, result_json: str,
                 except Exception:
                     pass
     return _rule_based(profile, result, company_name), "rule"
+
+
+def _quota_ok() -> bool:
+    from services import ai_quota
+    return ai_quota.can_use("explain")
 
 
 def explain(profile: dict, result: dict, company: dict | None = None):
@@ -282,6 +290,6 @@ def explain(profile: dict, result: dict, company: dict | None = None):
         json.dumps(profile, ensure_ascii=False, sort_keys=True, default=str),
         json.dumps(result, ensure_ascii=False, sort_keys=True, default=str),
         company_name,
-        # 키가 있어도 프리미엄 회원이 아니면 API 를 부르지 않는다 (services/premium.py)
-        premium.ai_enabled(),
+        # 키가 있어도 프리미엄 회원이 아니거나 오늘 한도를 다 썼으면 API 를 부르지 않는다
+        _quota_ok(),
     )

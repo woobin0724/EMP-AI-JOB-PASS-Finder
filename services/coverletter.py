@@ -37,7 +37,9 @@ import re
 # 현행 모델. 기존 코드의 "claude-sonnet-4-5" 는 구형이라 교체했다.
 # 비용을 낮추려면 "claude-sonnet-5" 로 바꾸면 된다 (입력 $2 / 출력 $10 per MTok,
 # Opus 5 는 $5 / $25). 품질 판단은 팀의 몫이라 기본값은 Opus 5 로 둔다.
-MODEL_NAME = "claude-opus-5"
+# [big-patch 4단계] 자소서 초안은 '초안 등급'(저가) 모델 — services/ai_models.py
+from services.ai_models import DEFAULT_MODELS, TIER_DRAFT, model_for  # noqa: E402
+MODEL_NAME = DEFAULT_MODELS[TIER_DRAFT]
 
 # 잘림 방지. max_tokens 는 상한일 뿐이라 높게 잡아도 실제 생성량만 과금된다.
 # 기존 900 은 1000자 자소서 + 추론 토큰을 감당하지 못해 문장 중간에서 끊겼다.
@@ -257,7 +259,7 @@ def _claude_cover_letter(profile: dict, company: dict | None, api_key: str,
     client = anthropic.Anthropic(api_key=api_key, timeout=REQUEST_TIMEOUT, max_retries=1)
 
     params = {
-        "model": MODEL_NAME,
+        "model": model_for(TIER_DRAFT),
         "max_tokens": MAX_TOKENS,
         "system": build_system_prompt(options),
         "output_config": {"effort": EFFORT},

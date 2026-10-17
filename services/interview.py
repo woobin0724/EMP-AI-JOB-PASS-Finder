@@ -21,7 +21,7 @@ import re
 
 import streamlit as st
 
-from services import premium, talent_link
+from services import talent_link
 from services.ai_models import TIER_DRAFT
 
 QUESTIONS_PER_SESSION = 5
@@ -257,7 +257,8 @@ def _feedback_cached(fingerprint: str, question: str, answer: str,
         key = _api_key()
         if key:
             try:
-                from services import ai_call
+                from services import ai_call, ai_quota
+                ai_quota.consume("interview")
                 text = ai_call.complete(TIER_DRAFT, SYSTEM_PROMPT,
                                         _user_prompt(question, answer, company), key,
                                         max_tokens=8000, effort="low", timeout=60.0)
@@ -280,7 +281,8 @@ def feedback(question: str, answer: str, company: dict | None,
              use_api: bool | None = None) -> tuple[dict, str]:
     """반환: (피드백 {good, improve, links, rewrite, raw}, "ai" | "rule")."""
     if use_api is None:
-        use_api = premium.ai_enabled()
+        from services import ai_quota
+        use_api = ai_quota.can_use("interview")
     return _feedback_cached(
         fingerprint(question, answer, company), question, (answer or "").strip(),
         json.dumps(company, ensure_ascii=False, sort_keys=True, default=str) if company else "",

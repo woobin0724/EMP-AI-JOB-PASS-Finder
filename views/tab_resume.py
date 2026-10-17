@@ -18,7 +18,7 @@ from data.company_showcase import COMPANY_BY_ID, COMPANY_SHOWCASE, all_companies
 from services.coverletter import (
     LENGTH_OPTIONS, TONE_OPTIONS, angle_for, build_copy_prompt, normalize_options,
 )
-from services import premium
+from services import ai_quota, premium, usage_log
 from services import review as review_svc
 from services import interview as interview_svc
 from services import talent_link
@@ -179,6 +179,7 @@ def _render_generator() -> None:
                     gen_profile, target_company, gen_options)
             st.session_state.cover_letter = text
             st.session_state.cover_letter_source = source
+            usage_log.log_feature("coverletter")
             st.session_state.cover_letter_cached = cache_hit
             st.session_state.cover_letter_options = normalize_options(gen_options)
             st.session_state.selected_company_id = target_company["id"]
@@ -266,6 +267,8 @@ def _render_review() -> None:
         )
 
     st.caption(f"현재 {len(draft.strip())}자")
+    if premium.ai_enabled():
+        st.caption("최종 첨삭은 상위 등급 모델이 읽습니다. " + ai_quota.status_line("review"))
 
     if st.button("첨삭 받기", type="primary", use_container_width=True,
                  key="review_run"):
@@ -275,6 +278,7 @@ def _render_review() -> None:
         else:
             with st.spinner("초안을 읽는 중..."):
                 feedback, source = review_svc.review(draft, target, strengths)
+            usage_log.log_feature("review")
             st.session_state["review_result"] = feedback
             st.session_state["review_source"] = source
 
@@ -399,7 +403,9 @@ def _render_interview() -> None:
                           placeholder="말하듯이 써 보세요. 1분 답변은 약 300~400자예요.")
     st.caption(f"현재 {len(answer.strip())}자")
 
-    use_ai = premium.ai_enabled()
+    use_ai = ai_quota.can_use("interview")
+    if premium.ai_enabled():
+        st.caption(ai_quota.status_line("interview"))
     run = st.button("피드백 받기", type="primary", use_container_width=True, key="iv_run")
     if run:
         problem = interview_svc.validate_answer(answer)
@@ -408,6 +414,7 @@ def _render_interview() -> None:
         else:
             with st.spinner("답변을 읽는 중..."):
                 fb, source = interview_svc.feedback(q["q"], answer, company, use_api=use_ai)
+            usage_log.log_feature("interview")
             st.session_state["iv_result"] = {"fb": fb, "source": source, "q": q["q"]}
 
     if not use_ai:
@@ -429,7 +436,7 @@ def _render_interview() -> None:
     if source == "rule":
         st.caption("무료 점검 — 숫자·행동·결과·인재상 단어가 있는지만 셉니다. 답변의 뜻을 평가하지 않아요.")
         failure = interview_svc.last_failure()
-        if failure and premium.ai_enabled():
+        if failure and ai_quota.can_use("interview"):
             st.warning(f"AI 피드백에 실패해 규칙 점검으로 표시했습니다 — {failure}")
     if fb.get("raw"):
         st.markdown(escape(fb["raw"]))
@@ -456,7 +463,8 @@ def _render_interview() -> None:
 def _plan_notice() -> None:
     """생성 버튼 바로 위 — 지금 요금제로 무엇이 동작하는지 한 줄로."""
     if premium.ai_enabled():
-        st.success("프리미엄 회원 · Claude 가 자기소개서를 직접 작성합니다.")
+        st.success("프리미엄 회원 · Claude 가 자기소개서를 직접 작성합니다. "
+                   + ai_quota.status_line("coverletter"))
         return
     st.info(premium.lock_reason()
             + " 아래 '요청문 만들기'로 무료 AI 에 맡기면 같은 기준의 초안을 받을 수 있어요.")

@@ -24,10 +24,11 @@ import json
 
 import streamlit as st
 
-from services import premium
+from services import ai_quota, premium
+from services.ai_models import TIER_DRAFT, model_for
 
 from services.coverletter import (
-    MODEL_NAME, _claude_cover_letter, _template_cover_letter, normalize_options,
+    _claude_cover_letter, _template_cover_letter, normalize_options,
 )
 
 # secrets에서 찾을 키 이름 (첫 번째가 표준, 나머지는 하위 호환)
@@ -128,6 +129,7 @@ def _generate_cached(fingerprint: str, profile_json: str, company_json: str,
         api_key = get_api_key()
         if api_key:
             try:
+                ai_quota.consume("coverletter")   # 실제 호출만 센다(캐시 적중은 여기 오지 않음)
                 return _claude_cover_letter(profile, company, api_key, options), "ai"
             except Exception as exc:
                 # 템플릿으로 내려가되, 이유는 남긴다. 조용히 삼키면 키를 넣어둔
@@ -156,8 +158,8 @@ def generate_cover_letter_cached(profile: dict, company: dict | None = None,
         json.dumps(profile, ensure_ascii=False, sort_keys=True, default=str),
         json.dumps(company, ensure_ascii=False, sort_keys=True, default=str) if company else "",
         json.dumps(options, ensure_ascii=False, sort_keys=True),
-        # 키가 있어도 프리미엄 회원이 아니면 API 를 부르지 않는다 (services/premium.py)
-        premium.ai_enabled(),
+        # 키가 있어도 프리미엄 회원이 아니거나 오늘 한도를 다 썼으면 API 를 부르지 않는다
+        ai_quota.can_use("coverletter"),
     )
     seen.add(fingerprint)
     return text, source, cache_hit
@@ -201,7 +203,8 @@ def cost_guard_caption() -> str:
     """화면에 노출할 비용 방어 상태 안내 문구."""
     if premium.ai_enabled():
         return (
-            f"프리미엄 · API 키는 st.secrets에서만 읽습니다(코드 내 하드코딩 없음). 모델 {MODEL_NAME}. "
+            f"프리미엄 · API 키는 st.secrets에서만 읽습니다(코드 내 하드코딩 없음). 초안 등급 모델 {model_for(TIER_DRAFT)}. "
+            f"{ai_quota.status_line('coverletter')}. "
             "동일한 입력·동일한 회차면 캐시된 결과가 나오며 API는 재호출되지 않습니다. "
             "'다시 생성하기'를 눌렀을 때만 새로 호출됩니다."
         )

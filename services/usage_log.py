@@ -6,6 +6,8 @@ services/usage_log.py
 ▣ 남기는 것 (이것뿐이다)
    visitors : 사용자별 최초 접속 시각 · 마지막 접속 시각 · 접속한 날짜 목록
    events   : 화면 이동 {사용자, 화면, 시각} · 스토리 반응 {사용자, 기업 ID, 관심/패스, 시각}
+              · 기능 사용 {사용자, 기능 이름, 시각} · AI 호출 {사용자, 기능 이름, 시각}  [big-patch]
+   ai_quota : 하루 AI 한도용 오늘 횟수 {사용자: {오늘 날짜: {묶음: 횟수}}}  [big-patch]
 
 ▣ 남기지 않는 것
    이름 · 학교 · 반 · 이메일 · 입력한 스펙 · 자소서 내용.
@@ -164,6 +166,52 @@ def log_reaction(company_id: str, reaction: str) -> None:
         pass
 
 
+def record_ai_call(uid: str, bucket: str, feature: str, day: str) -> None:
+    """
+    [big-patch 4단계] 하루 AI 한도용 횟수 + 통계용 'ai' 이벤트.
+    ai_quota 에는 오늘 날짜만 남긴다(지난 날짜는 이때 지운다).
+    """
+    doc = _read()
+    quota = doc.setdefault("ai_quota", {})
+    key = anon_id(uid)
+    mine = {d: v for d, v in (quota.get(key) or {}).items() if d == day}
+    today = mine.setdefault(day, {})
+    today[bucket] = int(today.get(bucket, 0)) + 1
+    quota[key] = mine
+    for other in list(quota):
+        if other != key and day not in (quota.get(other) or {}):
+            quota.pop(other, None)
+    doc["events"].append(_event(uid, "ai", feature=feature))
+    _write(doc)
+
+
+# [big-patch 5단계] 기능 사용 기록 — 내용은 남기지 않고 '어떤 기능을 썼다'만
+FEATURES = {
+    "spec_done": "스펙 진단 완료",
+    "coverletter": "자소서 생성",
+    "review": "자소서 첨삭",
+    "interview": "모의 면접 피드백",
+}
+
+
+def log_feature(feature: str) -> None:
+    """같은 세션에서 같은 기능은 하루 한 번만 쓴다(rerun 마다 늘지 않게)."""
+    uid = ss.user_id()
+    if not uid or feature not in FEATURES:
+        return
+    try:
+        mark = (uid, feature, _today())
+        seen = st.session_state.setdefault("_usage_features", set())
+        if mark in seen:
+            return
+        doc = _read()
+        doc["events"].append(_event(uid, "feature", feature=feature))
+        _write(doc)
+        seen.add(mark)
+    except Exception:
+        pass
+
+
 # ------------------------------------------------------------
 # 통계 (views/admin_stats.py)
 # ------------------------------------------------------------
@@ -204,7 +252,25 @@ def summarize(doc: dict, include_test: bool = False) -> dict:
     likes = sum(1 for r in latest.values() if r == "like")
     passes = sum(1 for r in latest.values() if r == "pass")
 
+    # [big-patch 5단계] 기능별 사용 학생 수(해시 ID 기준 중복 제거) · AI 호출 수
+    feature_users: dict[str, set] = {k: set() for k in FEATURES}
+    for e in events:
+        if e.get("type") == "feature" and e.get("feature") in feature_users:
+            feature_users[e["feature"]].add(e.get("uid"))
+    spec_users = {e.get("uid") for e in events
+                  if e.get("type") == "page" and e.get("page") == ss.PAGE_SPEC}
+    spec_done = len(feature_users["spec_done"])
+    ai_calls: dict[str, int] = {}
+    for e in events:
+        if e.get("type") == "ai":
+            ai_calls[e.get("feature") or "?"] = ai_calls.get(e.get("feature") or "?", 0) + 1
+
     return {
+        "features": {FEATURES[k]: len(v) for k, v in feature_users.items()},
+        "spec_visitors": len(spec_users),
+        "spec_done": spec_done,
+        "spec_done_rate": (spec_done / len(spec_users)) if spec_users else None,
+        "ai_calls": ai_calls,
         "users": users,
         "returning": returning,
         "returning_rate": (returning / users) if users else None,

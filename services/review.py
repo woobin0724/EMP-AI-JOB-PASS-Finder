@@ -26,9 +26,11 @@ import re
 
 import streamlit as st
 
-from services import premium
+from services import ai_quota
+from services.ai_models import DEFAULT_MODELS, TIER_FINAL, model_for
 
-MODEL_NAME = "claude-opus-5"
+# [big-patch 4단계] 최종 첨삭만 상위 등급 모델 — services/ai_models.py
+MODEL_NAME = DEFAULT_MODELS[TIER_FINAL]
 # 첨삭은 초안 전문을 읽고 답하므로 생성보다 출력이 길 수 있다.
 # 현행 모델은 추론 토큰이 기본 on 이고 그 양도 max_tokens 에 함께 잡힌다.
 MAX_TOKENS = 16000
@@ -229,7 +231,7 @@ def _claude(draft: str, company: dict | None, strengths: list | None,
 
     client = anthropic.Anthropic(api_key=api_key, timeout=REQUEST_TIMEOUT, max_retries=1)
     params = {
-        "model": MODEL_NAME,
+        "model": model_for(TIER_FINAL),
         "max_tokens": MAX_TOKENS,
         "system": SYSTEM_PROMPT,
         "output_config": {"effort": EFFORT},
@@ -267,6 +269,7 @@ def _review_cached(fingerprint: str, draft: str, company_json: str,
         key = _api_key()
         if key:
             try:
+                ai_quota.consume("review")
                 return _claude(draft, company, strengths, key), "ai"
             except Exception as exc:
                 try:
@@ -294,6 +297,6 @@ def review(draft: str, company: dict | None = None, strengths: list | None = Non
         (draft or "").strip(),
         json.dumps(company, ensure_ascii=False, sort_keys=True, default=str) if company else "",
         json.dumps(sorted(strengths or []), ensure_ascii=False),
-        # 키가 있어도 프리미엄 회원이 아니면 API 를 부르지 않는다 (services/premium.py)
-        premium.ai_enabled(),
+        # 키가 있어도 프리미엄 회원이 아니거나 오늘 한도를 다 썼으면 API 를 부르지 않는다
+        ai_quota.can_use("review"),
     )

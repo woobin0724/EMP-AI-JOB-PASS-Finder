@@ -27,7 +27,7 @@ from core import score_simulation as sim
 from data import ogq_assets as ogq
 from data.certifications import get_bonus_points
 from data.company_showcase import COMPANY_SHOWCASE, COMPANY_SIZE_TAGS, all_companies
-from services import activity
+from services import activity, usage_log
 from services import score_explain
 from data.departments import (
     DEPARTMENT_LIST, get_category, get_employment_rate, get_majors_for_department,
@@ -157,6 +157,7 @@ def render() -> None:
         with score_slot:
             _render_waiting()
     else:
+        usage_log.log_feature("spec_done")   # 지표용 — 내용 없이 '진단을 마쳤다'만 (하루 1회)
         sticker_key = ogq.sticker_key_for_score(result["final_score"])
         verdict, verdict_msg = ogq.SCORE_STICKER_MESSAGES[sticker_key]
         color = {"success": GREEN, "cheer": GOLD, "comfort": RED}[sticker_key]
