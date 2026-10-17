@@ -8,6 +8,8 @@ Phase 5(템플릿 탈피 · 프롬프트 재설계)에서 이 화면의 입력 �
 services/llm.py 호출부가 확장된다.
 """
 
+from html import escape
+
 import streamlit as st
 
 from core import session as ss
@@ -18,6 +20,8 @@ from services.coverletter import (
 )
 from services import premium
 from services import review as review_svc
+from services import interview as interview_svc
+from services import talent_link
 from services.llm import (
     clear_cover_letter_cache, cost_guard_caption, current_variation,
     generate_cover_letter_cached, last_api_failure, next_variation, reset_variation,
@@ -36,10 +40,17 @@ def render() -> None:
 
     # 생성과 첨삭은 하는 일이 다르다 — 재료로 글을 만드는 것과, 이미 있는
     # 글을 읽고 고칠 곳을 짚는 것. 탭으로 갈라 서로 섞이지 않게 한다.
-    gen_tab, review_tab = st.tabs(["자소서 생성", "내 초안 첨삭"])
+    # [big-patch 3단계] 세 번째 탭 — 텍스트 모의 면접
+    gen_tab, review_tab, interview_tab = st.tabs(["자소서 생성", "내 초안 첨삭", "모의 면접"])
 
     with review_tab:
         _render_review()
+
+    with interview_tab:
+        try:
+            _render_interview()
+        except Exception:  # noqa: BLE001 — 면접 탭 오류가 자소서 화면 전체를 멈추지 않게
+            st.error("모의 면접을 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.")
 
     with gen_tab:
         _render_generator()
@@ -326,6 +337,117 @@ def _render_review() -> None:
             <div style="margin-top:12px; line-height:1.75; color:{TEXT};">{feedback['example']}</div>
         </div>
         """)
+
+    _render_talent_links(draft, target)
+
+
+def _render_talent_links(text: str, company: dict | None) -> None:
+    """[big-patch 3단계] 문장 ↔ 인재상 연결 — 단어 기준 추정(규칙 기반, 비용 0원)."""
+    talents = (company or {}).get("ideal_talent") or []
+    if not talents:
+        st.caption("지원 기업을 고르면 문장마다 그 기업 인재상의 어느 부분과 이어지는지 보여드려요.")
+        return
+    links = talent_link.link_sentences(text, talents)
+    shown, missing = talent_link.coverage(text, talents)
+    rows = "".join(
+        f'<div class="mjp-sim-row"><span class="mjp-sim-name">{escape(l["sentence"][:140])}'
+        f'<small>{" · ".join(escape(x["talent"]) + " ← “" + escape(x["cue"]) + "”" for x in l["links"])}</small>'
+        f'</span></div>'
+        for l in links)
+    if not rows:
+        rows = '<div class="mjp-sim-empty">인재상과 이어지는 단어가 있는 문장을 찾지 못했어요.</div>'
+    st.markdown("**문장과 인재상 연결** · 단어 기준 추정")
+    render_html(f'<div class="mjp-sim">{rows}</div>')
+    if missing:
+        st.caption(f"글에 아직 드러나지 않은 인재상: {', '.join(missing)} — "
+                   "키워드를 그대로 쓰기보다 그 가치가 보이는 장면을 한 문장 넣어 보세요.")
+    elif shown:
+        st.caption("인재상 키워드가 모두 글에 드러나요.")
+
+
+# ------------------------------------------------------------
+# [big-patch 3단계] 텍스트 모의 면접
+# ------------------------------------------------------------
+_IV_SEED = "iv_seed"
+
+
+def _render_interview() -> None:
+    st.markdown("#### 기업을 고르면 면접 질문을 드려요")
+    st.caption("질문은 기업 유형별 일반 질문과 내 자격증·전공 관련 질문으로 만든 연습용 질문입니다. "
+               "실제 기업의 기출 문제가 아닙니다.")
+
+    companies = all_companies()
+    names = ["선택 안 함 (일반 질문)"] + [c["name"] for c in companies]
+    pick = st.selectbox("면접 볼 기업", names, key="iv_company")
+    company = next((c for c in companies if c["name"] == pick), None) if pick != names[0] else None
+
+    certs = list(st.session_state.get("user_certs") or [])
+    major = st.session_state.get("dept") or ""
+    seed = int(st.session_state.get(_IV_SEED, 0))
+    questions = interview_svc.build_questions(company, certs, major, seed=seed)
+
+    labels = [f"Q{i + 1}. {q['q']}" for i, q in enumerate(questions)]
+    idx = st.radio("질문 고르기", range(len(labels)), format_func=lambda i: labels[i],
+                   key=f"iv_q_{(company or {}).get('id', 'none')}_{seed}")
+    q = questions[idx]
+    st.caption(f"질문 출처: {q['kind']} (연습용)")
+    if st.button("다른 질문 받기", key="iv_reshuffle", use_container_width=True):
+        st.session_state[_IV_SEED] = seed + 1
+        st.rerun()
+
+    answer = st.text_area("내 답변", height=180, key=f"iv_answer_{idx}_{seed}",
+                          placeholder="말하듯이 써 보세요. 1분 답변은 약 300~400자예요.")
+    st.caption(f"현재 {len(answer.strip())}자")
+
+    use_ai = premium.ai_enabled()
+    run = st.button("피드백 받기", type="primary", use_container_width=True, key="iv_run")
+    if run:
+        problem = interview_svc.validate_answer(answer)
+        if problem:
+            st.error(problem)
+        else:
+            with st.spinner("답변을 읽는 중..."):
+                fb, source = interview_svc.feedback(q["q"], answer, company, use_api=use_ai)
+            st.session_state["iv_result"] = {"fb": fb, "source": source, "q": q["q"]}
+
+    if not use_ai:
+        with st.expander("무료 AI 로 피드백 받기 (요청문 복사)"):
+            if interview_svc.validate_answer(answer):
+                st.caption("답변을 먼저 써 주세요. 답변이 들어간 요청문을 만들어 드려요.")
+            else:
+                _render_copy_prompt(interview_svc.copy_prompt(q["q"], answer, company))
+
+    result = st.session_state.get("iv_result")
+    if not result or result.get("q") != q["q"]:
+        return
+    fb, source = result["fb"], result["source"]
+    badge = "AI 피드백" if source == "ai" else "규칙 기반 점검"
+    badge_bg = BLUE if source == "ai" else "#F2F4F6"
+    badge_fg = "#FFFFFF" if source == "ai" else MUTED
+    render_html(f'<div style="margin:8px 0 12px;"><span class="mjp-badge" '
+                f'style="background:{badge_bg}; color:{badge_fg};">{badge}</span></div>')
+    if source == "rule":
+        st.caption("무료 점검 — 숫자·행동·결과·인재상 단어가 있는지만 셉니다. 답변의 뜻을 평가하지 않아요.")
+        failure = interview_svc.last_failure()
+        if failure and premium.ai_enabled():
+            st.warning(f"AI 피드백에 실패해 규칙 점검으로 표시했습니다 — {failure}")
+    if fb.get("raw"):
+        st.markdown(escape(fb["raw"]))
+        return
+    for title, key, color in (("잘된 점", "good", GREEN), ("보완할 점", "improve", GOLD)):
+        if fb.get(key):
+            items = "".join(f"<li style='margin-bottom:8px;'>{escape(x)}</li>" for x in fb[key])
+            render_html(f'<div class="mjp-tcard" style="margin-bottom:12px;">{status_chip(title, color)}'
+                        f'<ul style="margin:12px 0 0; padding-left:20px; line-height:1.7;">{items}</ul></div>')
+    if fb.get("links"):
+        rows = "".join(f'<div class="mjp-sim-row"><span class="mjp-sim-name">{escape(l["talent"])}'
+                       f'<small>{escape(l["note"])}</small></span></div>' for l in fb["links"])
+        st.markdown("**인재상 기준**")
+        render_html(f'<div class="mjp-sim">{rows}</div>')
+    if fb.get("rewrite"):
+        render_html(f'<div class="mjp-tcard" style="margin-bottom:12px;"><span class="mjp-chiptag" '
+                    f'style="margin-bottom:0;">다시 말해 보기</span><div style="margin-top:12px; '
+                    f'line-height:1.75; color:{TEXT};">{escape(fb["rewrite"])}</div></div>')
 
 
 # ------------------------------------------------------------
