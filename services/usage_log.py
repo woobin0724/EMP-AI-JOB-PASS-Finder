@@ -265,7 +265,16 @@ def summarize(doc: dict, include_test: bool = False) -> dict:
         if e.get("type") == "ai":
             ai_calls[e.get("feature") or "?"] = ai_calls.get(e.get("feature") or "?", 0) + 1
 
+    # 가입 수 = 처음 접속한 날 기준 (로그인해야 기록되므로 계정 생성과 같다)
+    signups_by_day: dict[str, int] = {}
+    for v in visitors.values():
+        day = str(v.get("first_seen") or "")[:10]
+        if day:
+            signups_by_day[day] = signups_by_day.get(day, 0) + 1
+
     return {
+        "signups": users,
+        "signups_by_day": dict(sorted(signups_by_day.items())),
         "features": {FEATURES[k]: len(v) for k, v in feature_users.items()},
         "spec_visitors": len(spec_users),
         "spec_done": spec_done,

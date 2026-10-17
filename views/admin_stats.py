@@ -24,7 +24,7 @@ def render() -> None:
     if access.deny_if_not_admin():
         return
     section_title("사용 통계", icon_name="chart", eyebrow="팀 관리자", sub=
-                  "로그인한 사용자의 접속일·화면 이동·스토리 반응 기록입니다. "
+                  "로그인한 사용자의 접속일·화면 이동·스토리 반응·기능 사용 기록입니다. "
                   "이름·학교 같은 개인 정보는 남기지 않고, 사용자는 해시 ID 로만 구분합니다.")
 
     if not usage_log.is_production():
@@ -46,6 +46,26 @@ def render() -> None:
     c4.metric("스토리 관심 비율", _pct(s["like_rate"]),
               help=f"관심 {s['likes']} · 패스 {s['passes']} (같은 기업에 반응을 바꾸면 마지막 것만 셈)")
     st.caption(f"테스트로 표시된 사용자 {s['test_visitors']}명 · 저장된 이벤트 {s['events_total']}건")
+
+    # [big-patch 5단계] 핵심 지표 — 기능을 '쓴 학생 수'(해시 ID 기준 중복 제거)
+    st.markdown("#### 핵심 지표")
+    f = s["features"]
+    d1, d2, d3, d4 = st.columns(4)
+    d1.metric("가입 수", s["signups"], help="처음 로그인한 사용자 수 (첫 접속일 기준)")
+    d2.metric("스펙 진단 완료율", _pct(s["spec_done_rate"]),
+              help=f"스펙 진단 화면에 들어온 {s['spec_visitors']}명 중 입력을 마쳐 점수를 본 {s['spec_done']}명")
+    d3.metric("자소서 사용", f.get("자소서 생성", 0) + f.get("자소서 첨삭", 0),
+              help=f"생성 {f.get('자소서 생성', 0)}명 · 첨삭 {f.get('자소서 첨삭', 0)}명 (기능별 사용 학생 수의 합)")
+    d4.metric("모의 면접 사용", f.get("모의 면접 피드백", 0), help="답변 피드백을 한 번 이상 받은 학생 수")
+    ai_total = sum(s["ai_calls"].values())
+    st.caption(f"실제 AI 호출 {ai_total}회 (캐시·규칙 기반 제외) · 기록하는 것: 해시 ID · 기능 이름 · 시각뿐, "
+               "입력한 스펙·자소서·답변 내용은 저장하지 않습니다.")
+
+    if s["signups_by_day"]:
+        with st.expander("날짜별 가입 수"):
+            st.dataframe(pd.DataFrame(
+                [{"날짜": d, "가입 수": n} for d, n in s["signups_by_day"].items()]),
+                hide_index=True, use_container_width=True)
 
     left, right = st.columns(2)
     with left:

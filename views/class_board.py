@@ -16,10 +16,14 @@ services/activity.py 가 학생 화면에서 기록한 값을 읽는다.
    '다음에 뭘 해야 하는지' 알려주는 화면으로 만들었다.
 """
 
+from html import escape
+
 import pandas as pd
 import streamlit as st
 
+from core import class_match
 from core import session as ss
+from data.company_showcase import all_companies
 from data.roadmap import MILESTONES
 from services import store
 from services.activity import student_summary
@@ -55,6 +59,56 @@ def render() -> None:
     _render_attention(rows)
     _render_summary(rows)
     _render_table(rows)
+    _render_export(rows, klass)
+    try:
+        _render_company_match(students)
+    except Exception:  # noqa: BLE001 — 부가 기능 오류가 반 현황 전체를 멈추지 않게
+        st.caption("기업별 학생 목록을 계산하지 못했습니다. 위 반 현황은 그대로 유효합니다.")
+
+
+# ------------------------------------------------------------
+# [big-patch 5단계] 반 현황 CSV · 이 기업에 맞는 학생
+# ------------------------------------------------------------
+def _render_export(rows: list[dict], klass: dict) -> None:
+    st.download_button(
+        "반 현황 엑셀(CSV) 내려받기", data=class_match.class_csv(rows, len(MILESTONES)),
+        file_name=f"반현황_{klass['class_code']}.csv", mime="text/csv",
+        use_container_width=True, key="board_csv",
+    )
+    st.caption("엑셀에서 바로 열 수 있습니다(한글 깨짐 없음). 학생 이름이 들어 있으니 학교 밖으로 공유하지 마세요.")
+
+
+def _render_company_match(users: list[dict]) -> None:
+    st.markdown("#### 이 기업에 맞는 학생")
+    st.caption("학생이 스펙 진단에 저장한 학과·내신·자격증·강점으로 학생 화면과 같은 계산식을 기업마다 다시 돌립니다.")
+    companies = all_companies()
+    names = [c["name"] for c in companies]
+    pick = st.selectbox("기업 고르기", names, key="board_company")
+    company = next((c for c in companies if c["name"] == pick), None)
+    if not company:
+        return
+    fits = class_match.students_for_company(users, company)
+    if not fits:
+        st.info("아직 스펙 진단 기록이 있는 학생이 없습니다.")
+        return
+    safe = sum(1 for f in fits if f["score"] >= 80)
+    st.caption(f"진단 기록이 있는 {len(fits)}명 중 합격 안정권(80점 이상) {safe}명")
+    color = {"합격 안정권": GREEN, "분발 필요": GOLD, "보완 시급": RED}
+    out = []
+    for f in fits[:30]:
+        if not f["certs_known"]:
+            miss = "자격증 기록 없음(예전 진단) — 학생이 다시 진단하면 정확해져요"
+        elif f["missing_certs"]:
+            miss = f"없는 자격증: {', '.join(f['missing_certs'])}"
+        else:
+            miss = "요구 자격증 모두 보유"
+        out.append(
+            f'<div class="mjp-sim-row"><span class="mjp-sim-name">{escape(f["name"])}'
+            f'<small>{escape(f["dept"])} · 내신 {f["grade"]:.1f}등급 · {escape(miss)}</small></span>'
+            f'<span class="mjp-sim-gain" style="color:{color[f["band"]]};">{f["score"]:g}점</span></div>')
+    render_html(f'<div class="mjp-sim">{"".join(out)}</div>')
+    if len(fits) > 30:
+        st.caption(f"상위 30명만 표시 · 전체 {len(fits)}명")
 
 
 # ------------------------------------------------------------

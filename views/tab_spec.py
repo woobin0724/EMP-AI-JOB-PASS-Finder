@@ -150,7 +150,7 @@ def render() -> None:
     # [Phase 2] 선생님 대시보드에 쓰일 진단 기록.
     # services/activity.py 가 직전 값과 비교해 실제로 바뀐 경우에만 저장하므로,
     # 슬라이더를 드래그해도 디스크 쓰기가 폭주하지 않는다.
-    activity.record_spec(result, dept, grade, target_company)
+    activity.record_spec(result, dept, grade, target_company, certs=certs, strengths=strengths)
 
     touched = bool(st.session_state.get(_TOUCHED) or certs or strengths or target_company)
     if not touched:

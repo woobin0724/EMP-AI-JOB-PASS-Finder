@@ -50,7 +50,8 @@ def _changed(slot: str, value) -> bool:
 # ------------------------------------------------------------
 # 스펙 진단
 # ------------------------------------------------------------
-def record_spec(result: dict, dept: str, grade: float, company: dict | None) -> None:
+def record_spec(result: dict, dept: str, grade: float, company: dict | None,
+                certs: list | None = None, strengths: list | None = None) -> None:
     """
     진단 결과를 기록한다.
 
@@ -66,11 +67,17 @@ def record_spec(result: dict, dept: str, grade: float, company: dict | None) -> 
     company_name = (company or {}).get("name", "")
 
     # 프로필 스냅샷 — 선생님 대시보드의 '목표 기업' 칼럼이 여기서 나온다
-    profile_sig = (dept, round(float(grade), 1), company_id)
+    # [big-patch 5단계] 자격증·강점도 함께 남긴다 — 선생님 화면의 '이 기업에 맞는 학생'이
+    # 학생마다 같은 계산식(calc_spec_score)으로 점수를 다시 낼 수 있게. (None 이면 기존 값 유지)
+    certs_snapshot = sorted(certs) if certs is not None else None
+    strengths_snapshot = sorted(strengths) if strengths is not None else None
+    profile_sig = (dept, round(float(grade), 1), company_id,
+                   tuple(certs_snapshot or ()), tuple(strengths_snapshot or ()))
     if _changed("profile", profile_sig):
         store.save_profile(
             uid, dept=dept, grade=float(grade),
             target_company_id=company_id, target_company_name=company_name,
+            certs=certs_snapshot, strengths=strengths_snapshot,
         )
 
     if _changed("score", (score, company_id)):
