@@ -20,7 +20,7 @@ from services import activity
 from services.curriculum import generate_curriculum
 from services.pdf_report import build_success_report_pdf
 from ui.components import back_to_hub, disclaimer, render_html, section_title, status_chip, topbar
-from ui.theme import CARD, GREEN, MUTED, RED, render_stars
+from ui.theme import CARD, GREEN, GREEN_SOFT, MUTED, RED, render_stars
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -85,24 +85,30 @@ def _roadmap(company: dict) -> None:
                                   key=f"ms_{key}")
             st.session_state.milestones[key] = checked
             st.caption(desc)
+            # [심사대응] 마스코트 이미지가 없으면 달성 전·후 칸을 같은 높이의 글자 칸으로 맞춘다
+            stamp = mascot.html(MILESTONE_MASCOT.get(key, "celebrate"), size=112)
+            box_h = 126 if stamp else 72
             if checked:
-                # [Phase 4] 달성 시 마스코트가 축하한다.
-                # 단계마다 다른 낱장이 있으면 그것을, 없으면 같은 이미지에
-                # 문구로 차별화한다 (매니페스트 slots 에 단계별 매핑을 넣으면
-                # 아래 MILESTONE_MASCOT 이 자동으로 다른 감정을 집는다).
-                st.markdown(
-                    f'<div style="display:flex; justify-content:center;">'
-                    f'{mascot.html(MILESTONE_MASCOT.get(key, "celebrate"), size=112)}</div>',
-                    unsafe_allow_html=True)
-                st.markdown(
-                    f'<div style="text-align:center; color:{GREEN}; font-size:var(--mjp-caption); '
-                    f'font-weight:700; margin-top:6px;">{MILESTONE_CHEER[key]}</div>',
-                    unsafe_allow_html=True)
+                # [Phase 4] 달성 시 응원한다. 공식 API 로 받은 마스코트가 있으면 함께 보여준다
+                # (매니페스트 slots 에 단계별 매핑을 넣으면 MILESTONE_MASCOT 이 다른 감정을 집는다).
+                if stamp:
+                    st.markdown(f'<div style="display:flex; justify-content:center;">{stamp}</div>',
+                                unsafe_allow_html=True)
+                    st.markdown(
+                        f'<div style="text-align:center; color:{GREEN}; font-size:var(--mjp-caption); '
+                        f'font-weight:700; margin-top:6px;">{MILESTONE_CHEER[key]}</div>',
+                        unsafe_allow_html=True)
+                else:
+                    st.markdown(
+                        f'<div style="min-height:{box_h}px; background:{GREEN_SOFT}; border-radius:20px; padding:12px 16px; margin-bottom:12px;'
+                        f'display:flex; align-items:center; justify-content:center; text-align:center; color:{GREEN};'
+                        f'font-size:var(--mjp-small); font-weight:700;">{MILESTONE_CHEER[key]}</div>',
+                        unsafe_allow_html=True)
             else:
                 # v2: 점선 상자 대신 회색 면 — 테두리로 구분하지 않는다
                 st.markdown(
-                    f'<div style="height:126px; background:{CARD}; border-radius:20px;'
-                    f'display:flex; align-items:center; justify-content:center; color:{MUTED};'
+                    f'<div style="min-height:{box_h}px; background:{CARD}; border-radius:20px; padding:12px 16px; margin-bottom:12px;'
+                    f'display:flex; align-items:center; justify-content:center; text-align:center; color:{MUTED};'
                     f'font-size:var(--mjp-small);">달성하면 응원 문구가 나와요</div>', unsafe_allow_html=True)
 
     # [Phase 2] 로드맵 진행 단계 저장 — 체크박스 3개를 모두 반영한 뒤 한 번만 호출한다.

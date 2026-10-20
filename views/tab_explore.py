@@ -92,7 +92,7 @@ def render() -> None:
 
         if not records:
             st.warning("검색 결과가 없습니다. 다른 키워드나 기업 유형으로 다시 시도해보세요.")
-            st.markdown(mascot.html("thinking", size=110), unsafe_allow_html=True)
+            mascot.show("thinking", size=110)
         else:
             st.caption(f"검색 결과 {len(records)}건")
             for r in records:
@@ -178,7 +178,7 @@ def render() -> None:
         st.caption(f"필터 적용 — {len(shown)}개 기업 (전체 {len(companies)}개 중)")
     if not shown:
         st.warning("조건에 맞는 기업이 없습니다. 필터를 하나씩 풀어보세요.")
-        st.markdown(mascot.html("thinking", size=110), unsafe_allow_html=True)
+        mascot.show("thinking", size=110)
 
     # 카드 20장을 한 번에 펼치면 모바일에서 화면 8개 분량이 된다.
     # 처음에는 9장만 보여주고 나머지는 눌러서 펼치게 한다.

@@ -225,10 +225,7 @@ def _class_section(saved: dict) -> None:
 
 def _empty(slot: str, title: str, desc: str, button: str, page: str, key: str) -> None:
     """빈 상태 공통 렌더러 — '아무것도 없음'이 아니라 '다음에 뭘 하면 되는지'를 보여준다."""
-    c1, c2 = st.columns([1, 2.6])
-    with c1:
-        st.markdown(mascot.html(slot, size=104), unsafe_allow_html=True)
-    with c2:
+    with mascot.side(slot, size=104, ratio=(1, 2.6)):
         st.markdown(f"""
         <div style="padding-top:8px;">
             <div style="font-weight:800; color:{TEXT}; font-size:var(--mjp-body);">{title}</div>

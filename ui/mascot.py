@@ -138,6 +138,28 @@ def html(slot: str, size: int = 110, min_size: int | None = None) -> str:
     )
 
 
+def side(slot: str, size: int = 110, ratio: tuple = (1, 2.4)):
+    """
+    [이미지 | 본문] 2단 배치. 이미지가 없으면 2단으로 나누지 않고 본문을 전체 폭으로 둔다.
+    본문을 그릴 컨테이너를 돌려준다 — `with mascot.side(...):` 로 쓴다.
+    [심사대응] 마스코트 이미지를 삭제한 뒤 왼쪽 칸이 빈 채로 남던 레이아웃을 정리했다.
+    """
+    markup = html(slot, size)
+    if not markup:
+        return st.container()
+    left, right = st.columns(list(ratio))
+    with left:
+        st.markdown(markup, unsafe_allow_html=True)
+    return right
+
+
+def show(slot: str, size: int = 110) -> None:
+    """이미지가 있을 때만 그린다 (없으면 빈 요소도 만들지 않는다)."""
+    markup = html(slot, size)
+    if markup:
+        st.markdown(markup, unsafe_allow_html=True)
+
+
 def render(slot: str, size: int = 110, caption: str = "") -> None:
     """마스코트를 단독으로 그린다."""
     markup = html(slot, size)

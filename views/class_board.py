@@ -129,10 +129,7 @@ def _render_code_strip(klass: dict, count: int) -> None:
 # ------------------------------------------------------------
 def _render_no_class() -> None:
     section_title("우리 반 현황", "아직 반을 만들지 않으셨어요.", icon_name="school", eyebrow="선생님")
-    c1, c2 = st.columns([1, 2.4])
-    with c1:
-        st.markdown(mascot.html("thinking", size=120), unsafe_allow_html=True)
-    with c2:
+    with mascot.side("thinking", size=120):
         st.info("반을 만들면 6자리 코드가 발급되고, 학생들이 그 코드로 등록할 수 있습니다.")
         if st.button("우리 반 만들러 가기", type="primary", key="board_to_setup"):
             ss.goto(ss.PAGE_CLASS_SETUP)
@@ -140,10 +137,7 @@ def _render_no_class() -> None:
 
 def _render_empty_class(klass: dict) -> None:
     st.markdown("")
-    c1, c2 = st.columns([1, 2.4])
-    with c1:
-        st.markdown(mascot.html("welcome", size=126), unsafe_allow_html=True)
-    with c2:
+    with mascot.side("welcome", size=126):
         st.info(f"아직 등록한 학생이 없습니다. 반 코드 **{klass['class_code']}** 를 "
                 f"학생들에게 알려주세요.")
         st.caption("학생 안내 문구 예시 — 아래를 복사해 학급 단톡방에 붙여넣으세요.")

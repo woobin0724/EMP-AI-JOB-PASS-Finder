@@ -201,11 +201,8 @@ def render() -> None:
             explain_profile, result, target_company)
 
         st.markdown("#### 왜 이 점수인가요")
-        tip_l, tip_r = st.columns([1, 3])
-        with tip_l:
-            st.markdown(mascot.html(_MASCOT_BY_SCORE[sticker_key], size=128),
-                        unsafe_allow_html=True)
-        with tip_r:
+        # 마스코트 이미지가 없으면 설명 카드를 전체 폭으로 (빈 왼쪽 칸을 남기지 않는다)
+        with mascot.side(_MASCOT_BY_SCORE[sticker_key], size=128, ratio=(1, 3)):
             badge = ("AI 설명" if explain_source == "ai" else "규칙 기반 설명")
             # 설명 카드가 회색 면이라 규칙 기반 배지는 흰 칩으로 둔다
             badge_bg = BLUE if explain_source == "ai" else "#FFFFFF"

@@ -98,13 +98,20 @@ def render() -> None:
     topbar(active=ss.PAGE_NEXT)
     back_to_hub()
 
-    tcol1, tcol2 = st.columns([2.4, 1])
-    with tcol1:
+    def _title() -> None:
         section_title("서비스 로드맵", icon_name="route", eyebrow="로드맵", sub=
                       "지금 <b>바로 쓸 수 있는 기능</b>과, 이어서 준비하고 있는 기능을 "
                       "구분해 적었습니다.")
-    with tcol2:
-        st.markdown(mascot.html("thanks", size=128), unsafe_allow_html=True)
+
+    # 마스코트 이미지가 있을 때만 오른쪽 칸을 둔다 (없으면 제목을 전체 폭으로)
+    if mascot.available("thanks"):
+        tcol1, tcol2 = st.columns([2.4, 1])
+        with tcol1:
+            _title()
+        with tcol2:
+            mascot.show("thanks", size=128)
+    else:
+        _title()
 
     features = _cut_features()
 
@@ -113,7 +120,7 @@ def render() -> None:
         ("스펙 진단", "100점 만점 합격 점수 — 서비스의 존재 이유. 이것 하나가 안 되면 나머지는 무의미합니다."),
         ("공고 탐색", "예시(가상) 공고 검색 — 공공 채용 정보 연동은 검증 전이라 아직 실제 공고를 보여주지 않습니다."),
         ("커리어 로드맵", "3단계 마일스톤 스탬프 — 진단 이후 '그래서 뭘 하지'에 답하는 최소 장치."),
-        ("자소서 초안", "캐싱된 생성기 — 비용 상한을 지키면서도 결과물을 손에 쥐어주는 마무리."),
+        ("자소서 초안", "같은 요청은 다시 만들지 않는 생성기 — 비용 상한을 지키면서도 결과물을 손에 쥐어주는 마무리."),
     ]
     kcols = st.columns(4)
     for i, (title, desc) in enumerate(kept):
