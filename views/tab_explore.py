@@ -68,7 +68,7 @@ def render() -> None:
             fetch = st.button("지금 불러오기", type="primary", use_container_width=True)
 
     if fetch:
-        with st.spinner("고용24·잡알리오·강소기업 포털 호출 중... 실패 시 백업 데이터로 자동 전환됩니다."):
+        with st.spinner("예시 공고를 불러오는 중..."):
             worknet_df, _ = fb.fetch_jobs_safe(
                 fb.server_key(fb.WORKNET_SECRET), kw, tracker=tracker)
             alio_records, _ = fb.fetch_alio_safe(tracker=tracker)

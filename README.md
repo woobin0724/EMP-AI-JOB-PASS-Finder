@@ -218,7 +218,7 @@ fonts/                 NanumGothic.ttf + OFL.txt (PDF 한글용)
 | 항목 | 출처 · 라이선스 |
 |---|---|
 | Streamlit · pandas · requests · anthropic · reportlab | 각 프로젝트의 오픈소스 라이선스 (Apache-2.0, BSD, MIT 등) |
-| PDF 한글 폰트 `fonts/NanumGothic.ttf` | Google Fonts 배포본, SIL Open Font License 1.1 (`fonts/OFL.txt`). [팀 확인 필요] 공식 OFL.txt 원문으로 교체 |
+| PDF 한글 폰트 `fonts/NanumGothic.ttf` | Google Fonts 배포본(Copyright © NHN Corporation), SIL Open Font License 1.1. `fonts/OFL.txt` 는 Google Fonts 저장소의 공식 원문(2026-10-20 교체) |
 | 마스코트 이미지 `assets/ogq/*.jpg` (11장, **삭제됨**) | **정정:** 마스코트 이미지는 OGQ마켓 스티커를 이용 허락 없이 캡처해 사용했던 것으로, W3 제출물의 '자체 제작' 표기는 사실과 달랐습니다. 2026-10-20에 전부 삭제했습니다. 지금은 마스코트 자리를 비워 두고 문구만 보여줍니다. 대회 공식 OGQ API 로 받는 도구(`scripts/fetch_mascot.py`)는 남아 있으나 실행한 적이 없습니다. |
 | 팀 로고 · 엠블럼 | 팀 로고를 코드로 다시 그린 벡터(`ui/emblem.py`) |
 | 자격증 목록 (API 연동 시) | 공공데이터포털 Q-Net 오픈API — 공공누리 이용조건은 [팀 확인 필요] |
