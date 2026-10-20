@@ -30,7 +30,7 @@ from data.company_showcase import COMPANY_SHOWCASE, COMPANY_SIZE_TAGS, all_compa
 from services import activity, usage_log
 from services import score_explain
 from data.departments import (
-    DEPARTMENT_LIST, get_category, get_employment_rate, get_majors_for_department,
+    DEPARTMENT_LIST, get_category, get_majors_for_department,
 )
 from ui import mascot
 from ui.components import back_to_hub, disclaimer, sample_notice, note, render_html, section_title, topbar
@@ -94,9 +94,8 @@ def render() -> None:
         st.session_state.dept = dept
 
         majors = get_majors_for_department(dept)
-        emp_rate = get_employment_rate(dept)
-        # '예시' 안내가 섞인 줄이라 캡션(13px)이 아니라 본문 크기 note 로 둔다
-        note(f"세부 전공 예시: {', '.join(majors)}  ·  계열 평균 취업률(예시): <b>{emp_rate}%</b>")
+        # [심사대응] 근거 없는 '계열 평균 취업률(예시)' 수치는 삭제했다 (data/departments.py)
+        note(f"세부 전공 예시: {', '.join(majors)}")
 
         grade = st.slider("내신 성적 등급 (마이스터고 5등급 성취평가제)", 1.0, 5.0,
                           st.session_state.grade, 0.1, key="grade_widget", on_change=_mark_touched,
