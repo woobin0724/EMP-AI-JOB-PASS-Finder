@@ -16,3 +16,6 @@ data/reactions.json
 
 # 사용 기록(접속일·화면 이동·반응) — 해시 ID 만 있지만 운영 데이터이므로 커밋하지 않는다
 data/userdata/usage.json
+
+# Claude Code 등 개발 도구 설정 — 앱 기능과 무관하므로 커밋하지 않는다
+.claude/

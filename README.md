@@ -250,7 +250,7 @@ fonts/                 NanumGothic.ttf + OFL.txt (PDF 한글용)
 | 아이콘 · 소셜 로그인 버튼 심볼 | 팀이 직접 그린 SVG(`ui/icons.py`). 카카오·네이버·구글 심볼은 각 사 브랜드 가이드 형태를 단순 도형으로 그림 — 가이드 준수 여부 [팀 확인 필요] |
 | 실제 기업 정보 `data/curated_companies.json` | 각 레코드의 `source_url`(공식 홈페이지·채용공고·공공데이터), 수집일 `checked_at`. 인재상은 원문을 복사하지 않고 80자 이내 요약 + `talent_source_url` |
 | 가상 기업 20곳 · 백업 채용공고 · 강소기업 · 공공기관 예시 | 팀 자체 제작 예시 데이터 (기업명 포함 전부 가상) |
-| Impeccable 디자인 스킬 (pbakaus/impeccable, Apache-2.0, 개발 도구로만 사용) | `.claude/skills/impeccable/` (라이선스 `LICENSE` 동봉). 서비스 코드에서 호출하지 않음 |
+| Impeccable 디자인 스킬 (pbakaus/impeccable, Apache-2.0) | 디자인 작업 때 개발 도구로만 썼고 서비스 코드에서 호출하지 않음. 앱 기능과 무관해 2026-10-20 저장소에서 삭제(`.claude/` 는 `.gitignore`) |
 
 ---
 
