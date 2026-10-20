@@ -22,6 +22,13 @@
 | 과장 문구 정정 | '코멘토 스타일', '하이파이브 분류 기준' 등 외부 서비스와 연동한 것처럼 읽히는 문구와 근거 없는 인터뷰 문장을 고쳤습니다 | [0a3413c](https://github.com/woobin0724/EMP-AI-JOB-PASS-Finder/commit/0a3413c) |
 | 개발자용 화면 정보 정리 | 키 상태·secrets·Redirect URI·출처 배지·오류 원문 등을 일반 사용자 화면에서 빼고 관리자 화면으로 옮겼습니다 | [8786f97](https://github.com/woobin0724/EMP-AI-JOB-PASS-Finder/commit/8786f97) |
 | 심사 기준 점검에서 고친 것 | 나눔고딕 라이선스 파일을 공식 원문으로 교체, 실제로 호출하지 않는 포털을 '호출 중'이라 한 문구 수정, 검사 스크립트의 작업 환경 경로 제거 | [a791232](https://github.com/woobin0724/EMP-AI-JOB-PASS-Finder/commit/a791232) · [ac7873e](https://github.com/woobin0724/EMP-AI-JOB-PASS-Finder/commit/ac7873e) |
+| 개발 도구 삭제 | 앱 기능과 무관한 제3자 디자인 스킬(impeccable)을 저장소에서 삭제, `.claude/` 는 `.gitignore` | [018ce3c](https://github.com/woobin0724/EMP-AI-JOB-PASS-Finder/commit/018ce3c) |
+| 실명 예시 제거 | 이름 입력칸 예시를 팀원 실명 대신 '홍길동'으로 | [9c0958c](https://github.com/woobin0724/EMP-AI-JOB-PASS-Finder/commit/9c0958c) |
+| 근거 없는 수치 삭제 | 학과별 '평균 취업률(예시)' 숫자(팀 제작 수치)를 데이터와 화면에서 삭제 | [efc75a7](https://github.com/woobin0724/EMP-AI-JOB-PASS-Finder/commit/efc75a7) |
+| 빈 칸 레이아웃 정리 | 마스코트가 있던 빈 칸을 없애고 본문을 전체 폭으로 (이미지·이모지 추가 없음) | [b78ea3d](https://github.com/woobin0724/EMP-AI-JOB-PASS-Finder/commit/b78ea3d) |
+| README 정정 | 이 수정 이력 섹션과 현재 앱과 다르던 설명 정정 | [ccddd90](https://github.com/woobin0724/EMP-AI-JOB-PASS-Finder/commit/ccddd90) |
+
+이 날 이후 커밋은 작성자 이메일을 GitHub noreply 주소로 기록합니다(이전 기록의 이메일은 기록 수정 금지 원칙에 따라 그대로 둡니다).
 
 **데이터 안내** — 앱에 보이는 기업과 채용공고는 모두 **예시(가상) 데이터**이며 실제 채용 조건이 아닙니다.
 Q-Net(자격증)·고용24(채용공고) 연동은 공식 활용가이드 기준 **검증 전**이라 현재 **백업(예시) 데이터로 동작**합니다.
