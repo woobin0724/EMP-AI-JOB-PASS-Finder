@@ -246,7 +246,7 @@ def render() -> None:
             disclaimer("※ 실제 공식 가산점 규정이 아닌 예시 데이터입니다.")
 
     with gcol2:
-        st.markdown("**매칭 기업 탐색 (실시간 반영)**")
+        st.markdown("**매칭 기업 탐색 (입력에 바로 반영)**")
         size_pick = st.radio("기업 규모", COMPANY_SIZE_TAGS[1:], horizontal=True,
                              key="match_size", label_visibility="collapsed")
         matched = [c for c in COMPANY_SHOWCASE

@@ -9,10 +9,10 @@ services/worknet_api.py
 2) 실패 시 예외를 모두 흡수하고 data/companies.py 의 MOCK_JOBS 로 자동 전환한다.
 3) 반환값은 항상 pandas.DataFrame + 데이터 출처("live"/"backup") 튜플이다.
 
-※ 워크넷 Open API는 https://www.work24.go.kr (구 work.go.kr) 개발자센터에서
-   신청 후 인증키(authKey)를 발급받아야 합니다. 아래 엔드포인트/파라미터명은
-   워크넷 Open API의 일반적 규격(XML 응답 기반)을 참고한 예시이며, 실제
-   서비스 적용 전 최신 활용가이드로 검증이 필요합니다.
+※ 연동 상태: 공식 활용가이드 기준 검증 전, 키 미설정 시 백업 데이터로 동작.
+   워크넷 Open API는 https://www.work24.go.kr (구 work.go.kr) 개발자센터에서
+   신청 후 인증키(authKey)를 발급받는다. 아래 엔드포인트·파라미터명은 일반적
+   규격(XML 응답)을 참고한 미검증 값이다. 키가 있어도 응답이 맞지 않으면 백업으로 내려간다.
 """
 
 import requests
@@ -23,7 +23,7 @@ from data.companies import MOCK_JOBS
 from data.certifications import CERT_CODE_TO_NAME
 from core.matching import filter_results
 
-# 예시 엔드포인트 (실서비스 적용 시 발급받은 활용가이드의 실제 URL로 교체)
+# 미검증 엔드포인트 — 활용가이드로 확인한 뒤 확정한다
 WORKNET_API_ENDPOINT = "https://www.work24.go.kr/cm/openApi/call/wk/callOpenApiSvcInfo210L01.do"
 
 

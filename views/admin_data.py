@@ -241,7 +241,7 @@ def render() -> None:
     with tabs[3]:
         st.markdown("#### 공식 오픈API 연동 준비 현황")
         st.caption("규격(엔드포인트·파라미터)을 확인하고 키를 등록하면 해당 소스가 "
-                   "LIVE 로 전환됩니다. 확인 전에는 큐레이션 데이터가 쓰입니다.")
+                   "LIVE 로 전환됩니다. 확인 전에는 백업 데이터가 쓰입니다.")
         st.dataframe(reg.summary_rows(), use_container_width=True, hide_index=True)
         for spec in reg.REGISTRY:
             st.caption(f"· {spec.label} — 신청: {spec.portal_url}")

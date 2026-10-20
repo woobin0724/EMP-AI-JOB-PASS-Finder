@@ -43,6 +43,14 @@ def test_alio_backup_is_labeled_backup_not_curated():
     assert source == "backup" and len(rows) == len(BACKUP_PUBLIC_COMPANIES)
 
 
+def test_strong_sme_fictional_is_labeled_backup_not_curated():
+    """[심사대응] 가상 강소기업 예시는 '팀이 조사한 데이터(CURATED)'가 아니다."""
+    from services.strong_sme_api import SOURCE_LABEL, fetch_strong_small_companies
+    rows, source = fetch_strong_small_companies()
+    assert source == "backup" and len(rows) == len(BACKUP_STRONG_SME)
+    assert "큐레이션" not in SOURCE_LABEL
+
+
 def test_showcase_is_marked_sample(monkeypatch):
     monkeypatch.setattr(curated, "load", lambda: [])
     assert all(c["data_kind"] == "sample" for c in cs.all_companies())

@@ -18,10 +18,10 @@ services/api_registry.py
    2) 활용가이드(요청 URL·파라미터명·응답 필드)를 보고 endpoint/params/
       response_path 를 채운다
    3) .streamlit/secrets.toml 에 secret_name 으로 키를 넣는다
-   4) ready() 가 True 가 되면 화면 배지가 CURATED → LIVE 로 바뀐다
+   4) ready() 가 True 가 되면 화면 배지가 BACKUP → LIVE 로 바뀐다
 
    규격을 확인하기 전에는 빈 칸으로 두는 것이 맞다. 빈 칸이면 이 모듈은
-   "아직 준비 안 됨"을 정직하게 보고하고 큐레이션 데이터가 쓰인다.
+   "아직 준비 안 됨"을 정직하게 보고하고 백업 데이터가 쓰인다.
 """
 
 from dataclasses import dataclass, field
@@ -74,9 +74,9 @@ REGISTRY: list[ApiSpec] = [
         portal="공공데이터포털",
         portal_url="https://www.data.go.kr",
         secret_name="QNET_API_KEY",
-        # 이 건만 실제 엔드포인트가 확인돼 있다 (services/qnet_api.py 참고)
+        # services/qnet_api.py 와 같은 값. 활용가이드로 검증하기 전이다.
         endpoint="https://apis.data.go.kr/B490007/qualInfoService/getQualInfo",
-        note="유일하게 실제 엔드포인트가 확인된 소스. 키만 넣으면 동작한다.",
+        note="공식 활용가이드 기준 검증 전, 키 미설정 시 백업 데이터로 동작.",
     ),
     ApiSpec(
         key="public_recruit",
@@ -93,7 +93,7 @@ REGISTRY: list[ApiSpec] = [
         portal_url="https://www.data.go.kr/data/3038225/openapi.do",
         secret_name="WORKNET_API_KEY",
         key_param="authKey",
-        note="채용목록 + 상세정보. 현재 services/worknet_api.py 의 파라미터는 미검증 추측값이다.",
+        note="공식 활용가이드 기준 검증 전, 키 미설정 시 백업 데이터로 동작. services/worknet_api.py 의 파라미터는 미검증 값이다.",
     ),
     ApiSpec(
         key="saramin",

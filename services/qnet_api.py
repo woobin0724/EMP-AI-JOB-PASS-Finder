@@ -10,10 +10,10 @@ services/qnet_api.py
    data/certifications.py 의 정적 마스터 데이터로 자동 전환(fallback)한다.
 3) 반환값은 항상 pandas.DataFrame + 데이터 출처("live"/"backup") 튜플이다.
 
-※ 실제 엔드포인트/파라미터명은 공공데이터포털에서 "국가기술자격" 관련 API를
-   신청하면 발급되는 활용가이드 문서의 값으로 반드시 교체해야 합니다.
-   아래 URL/파라미터는 공공데이터포털 REST API의 일반적인 규격(서비스키,
-   페이지 번호, 응답 타입)을 따른 예시이며 실제 서비스 URL이 아닙니다.
+※ 연동 상태: 공식 활용가이드 기준 검증 전, 키 미설정 시 백업 데이터로 동작.
+   아래 엔드포인트·파라미터·응답 필드는 공공데이터포털 REST API 의 일반 규격을
+   따른 값으로, 활용가이드로 확인해 실제 호출에 성공한 기록은 아직 없다.
+   (services/api_registry.py 의 같은 항목과 설명을 맞췄다)
 """
 
 import requests
@@ -21,7 +21,7 @@ import pandas as pd
 
 from data.certifications import CERTIFICATIONS
 
-# 예시 엔드포인트 (실서비스 적용 시 발급받은 활용가이드의 실제 URL로 교체)
+# 검증 전 엔드포인트 — 활용가이드로 확인한 뒤 확정한다
 QNET_API_ENDPOINT = "https://apis.data.go.kr/B490007/qualInfoService/getQualInfo"
 
 

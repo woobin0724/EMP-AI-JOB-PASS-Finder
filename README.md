@@ -81,15 +81,16 @@ AI Job Pass Finder 는 내신과 자격증을 **목표 기업별 100점 만점 '
 
 | 데이터 | 공식 API (키가 있을 때) | 키가 없거나 실패하면 |
 |---|---|---|
-| 자격증 | 공공데이터포털 Q-Net (`services/qnet_api.py`) | `data/certifications.py` 45종 |
-| 채용공고 | 고용24 Open API (`services/worknet_api.py`) | `data/companies.py` 34건 |
+| 자격증 | 공공데이터포털 Q-Net (`services/qnet_api.py`) — **공식 활용가이드 기준 검증 전** | `data/certifications.py` 45종 |
+| 채용공고 | 고용24 Open API (`services/worknet_api.py`) — **미검증** | `data/companies.py` 34건 |
 | 공기업 공고 | 설정 자리만 있음 (`services/api_registry.py`) | 가상 공공기관 예시 10건 (BACKUP) |
 | 강소기업 공고 | 설정 자리만 있음 | 가상 강소기업 예시 10건 (BACKUP) |
 | 실제 기업 정보 | (공식 홈페이지·채용공고·공공데이터에서 팀이 확인) | 출처·수집일 필수, 별점·리뷰 금지 (`docs/data_schema.md`) |
 
 - 모든 외부 호출은 `services/fallback.py` 의 `safe_call()` 로 감싸 실패해도 화면이 멈추지 않습니다.
-  화면에는 **LIVE API / BACKUP DATA / CURATED** 배지로 출처를 표시합니다.
-- Q-Net·고용24 의 엔드포인트는 코드 주석에 '예시'로 표기되어 있습니다. 활용가이드로 규격을 확인한 뒤
+  화면에는 **LIVE API / BACKUP DATA / CURATED** 배지로 출처를 표시합니다. 강소기업 예시 공고는 가상 데이터라
+  BACKUP 으로 표시합니다(예전에는 CURATED 로 잘못 표시했습니다).
+- Q-Net·고용24 연동은 '공식 활용가이드 기준 검증 전, 키 미설정 시 백업 데이터로 동작'합니다. 활용가이드로 규격을 확인한 뒤
   `services/api_registry.py` 를 채워야 실제 연동이 됩니다.
 - 팀이 넣는 실제 기업 정보는 **출처 URL · 출처 유형 · 조사자 · 수집일이 없으면 저장되지 않고**, 별점·리뷰·면접 후기·연봉처럼
   확인할 수 없는 항목은 입력란 자체가 없습니다 (`services/curated.py`, 검사 도구 `scripts/update_company_data.py`).
