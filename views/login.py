@@ -94,7 +94,7 @@ def render() -> None:
         # ---------- 게스트모드 ----------
         # 라벨을 숨기면 무엇을 적는 칸인지 placeholder 로만 알 수 있다 → 보이게 둔다
         nickname = st.text_input(
-            "이름 또는 닉네임 (선택)", key="guest_nickname", placeholder="예: 김우빈",
+            "이름 또는 닉네임 (선택)", key="guest_nickname", placeholder="예: 홍길동",
         )
         # 이 화면은 위쪽이 사용법이라 하단 고정 버튼을 두지 않는다 — 고정하면 사용법을 읽는
         # 내내 '게스트 시작'이 떠 있어 맨 위 '바로 로그인하기 ↓' 와 행동 유도가 둘이 된다.

@@ -70,7 +70,7 @@ def _render_generator() -> None:
 
         name = st.text_input("학생 이름",
                              value=st.session_state.student_name or ss.display_name(),
-                             placeholder="예: 김우빈")
+                             placeholder="예: 홍길동")
         target_dept = st.text_input("목표 입사 지원 부서", placeholder="예: 공정설비제어팀 엔지니어")
 
         company_names = [c["name"] for c in COMPANY_SHOWCASE]
