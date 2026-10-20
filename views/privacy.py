@@ -12,7 +12,6 @@ views/privacy.py
 import streamlit as st
 
 from core import session as ss
-from services import storage_backend
 from ui.components import render_html, section_title
 
 # (분류, 항목, 저장 위치 키)
@@ -56,7 +55,7 @@ SENT_OUT = [
     ("소셜 로그인(카카오 · 네이버 · 구글)", "로그인할 때 그 서비스에서 이름 · 이메일 · 계정 ID 를 받아옵니다."),
     ("AI 기능(프리미엄 · 시연 계정만)", "자소서 재료 · 첨삭 초안 · 면접 답변 · 점수 요약이 답을 만들기 위해 "
      "Anthropic 의 Claude API 로 전송됩니다. 무료 계정은 전송하지 않습니다(규칙 기반으로 처리)."),
-    ("공공 채용 API(고용24 · Q-Net)", "검색어만 보냅니다. 개인 정보는 보내지 않습니다."),
+    ("공공 채용 정보 서비스(고용24 · Q-Net)", "연동이 켜진 경우 검색어만 보냅니다. 개인 정보는 보내지 않습니다. 지금은 연동 검증 전입니다."),
 ]
 
 
@@ -79,14 +78,12 @@ def render() -> None:
         (x, "화면을 쓰는 동안 브라우저 세션에만 있고, 창을 닫으면 사라집니다.") for x in NOT_STORED) + "</div>")
 
     st.markdown("#### 어디에 저장하나요")
-    status = storage_backend.status()
     render_html('<div class="mjp-sim">' + _rows([
-        ("외부 저장소를 연결한 경우", "Supabase(Postgres) 데이터베이스의 app_state 표 — 사용자 문서(main)와 사용 기록(usage)"),
-        ("연결하지 않은 경우", "앱 서버의 파일(data/userdata/store.json · usage.json)"),
-        ("반응 기록", "앱 서버의 파일(data/reactions.json)"),
+        ("외부 데이터베이스를 연결한 경우", "Supabase 데이터베이스 — 사용자 기록과 사용 통계를 따로 보관"),
+        ("연결하지 않은 경우", "앱 서버 안의 파일 (서버를 다시 배포하면 지워질 수 있음)"),
+        ("반응 기록", "앱 서버 안의 파일"),
         ("브라우저 주소", "새로고침해도 로그인이 유지되도록 주소 끝에 사용자 ID(uid)와 화면 이름이 붙습니다. "
          "게스트 ID 에는 이어하기 코드가 들어 있으니 주소를 다른 사람에게 보내지 마세요. 로그아웃하면 지워집니다."),
-        ("지금 이 서버", f"{status['name']}"),
     ]) + "</div>")
 
     st.markdown("#### 언제 지우나요")

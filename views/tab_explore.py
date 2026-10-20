@@ -7,7 +7,6 @@ views/tab_explore.py
 모바일 레이아웃(기업 카드 3단 → 폰에서 1단)만 조정했다.
 """
 
-import html
 
 import streamlit as st
 
@@ -22,23 +21,22 @@ from services import story_cards
 from services.strong_sme_api import PRIORITY_DEPARTMENTS, prioritize_by_department
 from ui import mascot
 from ui.components import (
-    back_to_hub, data_kind_chip, disclaimer, grid_columns, note, render_html, section_title,
+    back_to_hub, data_kind_chip, grid_columns, render_html, sample_notice, section_title,
     source_links, topbar,
 )
 from ui.icons import icon
 from ui.story_viewer import render_story
-from ui.theme import BADGE_COLORS, BG, GREEN, MUTED, RED, TEXT, render_stars
+from ui.theme import BG, GREEN, MUTED, RED, TEXT, render_stars
 
 
 def render() -> None:
     topbar(active=ss.PAGE_EXPLORE)
     back_to_hub()
     section_title("기업 탐색기", icon_name="search", eyebrow="기업 탐색", sub=
-                  "채용공고를 백업 데이터 기반으로 한곳에서 검색합니다. 공식 API 연동은 "
-                  "활용가이드 기준 검증 전이며, 키가 없거나 응답이 없으면 백업 데이터를 씁니다.")
+                  "채용공고를 한곳에서 검색합니다. 공공 채용 정보 연동은 아직 검증 전이라, "
+                  "지금은 팀이 만든 예시 공고를 보여줍니다.")
 
-    disclaimer("기업 카드(별점·복지 등)는 예시(모의) 데이터입니다. "
-               "하단 채용공고 검색은 백업 데이터 기반이며, 화면의 BACKUP / LIVE 배지로 출처를 표시합니다.")
+    sample_notice()
 
     # 기업 스토리 — 카드 한 장씩 넘기며 훑어보는 진입점이라 맨 위에 둔다
     _render_story_section()
@@ -51,9 +49,8 @@ def render() -> None:
     # (이전 배치는 쇼케이스 카드 20장 뒤였고, 모바일에서 fold +5574px,
     #  즉 8화면쯤 내려가야 검색창이 나왔다.)
     # ------------------------------------------------------------
-    st.markdown("#### 채용 공고 통합 검색 (고용24 + 공기업 + 강소기업 · 백업 데이터 기반)")
-    st.caption("고용24 연동은 공식 활용가이드 기준 검증 전이라, 키가 없거나 응답이 없으면 백업 데이터로 보여줍니다. "
-               "잡알리오·강소기업은 공식 API 규격 확인 전이라 지금은 가상 예시 공고입니다. "
+    st.markdown("#### 채용 공고 통합 검색 (예시 공고)")
+    st.caption("고용24 · 공기업 · 강소기업 공고를 한 번에 검색합니다. 지금은 모두 팀이 만든 예시(가상) 공고입니다. "
                "기계·전기·제조·IT 전공 연관 강소기업 공고는 상단에 우선 노출됩니다.")
 
     # 키워드 · 유형 · 실행을 한 줄로 묶어 검색이 한 덩어리로 읽히게 한다
@@ -86,10 +83,8 @@ def render() -> None:
         st.rerun()
 
     if st.session_state.live_jobs is not None:
-        st.markdown(fb.badge_html(tracker, BADGE_COLORS), unsafe_allow_html=True)
-        for name, err in tracker.errors():
-            # 오류 문구는 외부 응답에서 오므로 HTML 로 해석되지 않게 이스케이프한다
-            note(f"{html.escape(str(name))}: {html.escape(str(err))} → 백업 데이터로 전환됨")
+        # [심사대응] 출처 배지(LIVE/BACKUP)·오류 문구는 개발자용이라 관리자 화면에서만 본다
+        sample_notice()
 
         records = st.session_state.live_jobs
         if type_pick != "전체":
@@ -309,7 +304,7 @@ def _render_story_section() -> None:
 
     failure = story_cards.last_failure()
     if failure and "basic" in sources:
-        st.warning(f"AI 요약에 실패해 기본 요약으로 표시했습니다 — {failure}")
+        st.caption("AI 요약을 받지 못해 기본 요약으로 보여드렸어요.")
 
     # 모바일에서도 가로 한 줄 유지 (theme.py 의 mjp_row 예외 규칙)
     with st.container(key="mjp_row_story_nav"):

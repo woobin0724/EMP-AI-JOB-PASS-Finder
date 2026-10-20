@@ -29,7 +29,7 @@ from services import store
 from services.activity import student_summary
 from ui import mascot
 from ui.components import (
-    back_to_hub, grid_columns, render_html, section_title, stat_tiles, status_chip, topbar,
+    back_to_hub, grid_columns, render_html, sample_notice, section_title, stat_tiles, status_chip, topbar,
 )
 from ui.theme import GOLD, GREEN, MUTED, RED, STATUS_VIVID, TEXT
 
@@ -81,6 +81,7 @@ def _render_export(rows: list[dict], klass: dict) -> None:
 def _render_company_match(users: list[dict]) -> None:
     st.markdown("#### 이 기업에 맞는 학생")
     st.caption("학생이 스펙 진단에 저장한 학과·내신·자격증·강점으로 학생 화면과 같은 계산식을 기업마다 다시 돌립니다.")
+    sample_notice()
     companies = all_companies()
     names = [c["name"] for c in companies]
     pick = st.selectbox("기업 고르기", names, key="board_company")

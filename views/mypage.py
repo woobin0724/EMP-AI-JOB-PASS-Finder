@@ -117,10 +117,6 @@ def render() -> None:
 
     _privacy_section(uid)
 
-    st.caption(f"저장소 현황: {store.store_summary()}")
-    st.caption("Streamlit Community Cloud는 재배포·슬립 해제 시 파일시스템이 초기화됩니다. "
-               "장기 보관이 필요하면 외부 DB 연동이 필요합니다 "
-               "(services/store.py 의 `_read_all` / `_write_all` 두 함수만 교체하면 됩니다).")
 
 
 # ------------------------------------------------------------

@@ -23,11 +23,11 @@ from services import review as review_svc
 from services import interview as interview_svc
 from services import talent_link
 from services.llm import (
-    clear_cover_letter_cache, cost_guard_caption, current_variation,
+    current_variation,
     generate_cover_letter_cached, last_api_failure, next_variation, reset_variation,
 )
 from ui import mascot
-from ui.components import back_to_hub, render_html, section_title, status_chip, topbar
+from ui.components import back_to_hub, render_html, sample_notice, section_title, status_chip, topbar
 from ui.theme import BG, BLUE, GOLD, GREEN, MUTED, TEXT
 
 
@@ -41,6 +41,7 @@ def render() -> None:
     # 생성과 첨삭은 하는 일이 다르다 — 재료로 글을 만드는 것과, 이미 있는
     # 글을 읽고 고칠 곳을 짚는 것. 탭으로 갈라 서로 섞이지 않게 한다.
     # [big-patch 3단계] 세 번째 탭 — 텍스트 모의 면접
+    sample_notice()
     gen_tab, review_tab, interview_tab = st.tabs(["자소서 생성", "내 초안 첨삭", "모의 면접"])
 
     with review_tab:
@@ -135,22 +136,14 @@ def _render_generator() -> None:
             type="primary", use_container_width=True)
         regen_clicked = st.button("다시 생성하기 (다른 구성으로)",
                                   use_container_width=True,
-                                  help="같은 재료로 서사 구성을 바꿔 새 초안을 만듭니다. "
-                                       "캐시를 우회해 새로 생성합니다.")
+                                  help="같은 재료로 서사 구성을 바꿔 새 초안을 만듭니다.")
         prompt_clicked = st.button(
             "AI 에게 맡길 요청문 만들기 (무료)", use_container_width=True,
             help="입력한 재료로 완성된 요청문을 만듭니다. 무료 AI 채팅에 붙여넣으면 "
                  "Claude 직접 작성과 같은 기준의 초안을 받을 수 있어요.")
 
-        with st.expander("고급"):
-            if st.button("캐시 전체 비우기", use_container_width=True):
-                clear_cover_letter_cache()
-                reset_variation()
-                st.toast("캐시를 비웠습니다. 다음 생성은 API를 새로 호출합니다.")
-            st.caption("보통은 '다시 생성하기'면 충분합니다. 캐시를 통째로 비우면 "
-                       "이전 회차 초안까지 사라져 되돌아올 때 API를 다시 호출합니다.")
-
-        st.caption(cost_guard_caption())
+        if premium.ai_enabled():
+            st.caption(ai_quota.status_line("coverletter"))
 
     with right:
         target_company = next(c for c in COMPANY_SHOWCASE if c["name"] == target_company_name)
@@ -187,7 +180,7 @@ def _render_generator() -> None:
         # 키를 넣었는데도 템플릿이 나왔다면 이유를 드러낸다 (조용한 폴백 방지)
         api_error = last_api_failure()
         if api_error and st.session_state.cover_letter_source == "template":
-            st.warning(f"API 키는 있으나 호출에 실패해 템플릿으로 생성했습니다 — {api_error}")
+            st.caption("AI 응답을 받지 못해 템플릿으로 초안을 만들었어요.")
 
         badges = ""
         if st.session_state.cover_letter_source == "ai":
@@ -195,7 +188,7 @@ def _render_generator() -> None:
         elif st.session_state.cover_letter_source == "template":
             badges += f'<span class="mjp-badge" style="background:{BG}; color:{MUTED};">템플릿 생성</span> '
         if st.session_state.cover_letter_cached:
-            badges += f'<span class="mjp-badge" style="background:{BLUE}; color:#fff;">캐시 응답 · API 호출 0회</span> '
+            badges += f'<span class="mjp-badge" style="background:{BLUE}; color:#fff;">이전 결과 재사용</span> '
         opts = st.session_state.get("cover_letter_options")
         if opts:
             badges += (f'<span class="mjp-badge" style="background:{BG}; color:{MUTED};">'
@@ -268,7 +261,7 @@ def _render_review() -> None:
 
     st.caption(f"현재 {len(draft.strip())}자")
     if premium.ai_enabled():
-        st.caption("최종 첨삭은 상위 등급 모델이 읽습니다. " + ai_quota.status_line("review"))
+        st.caption(ai_quota.status_line("review"))
 
     if st.button("첨삭 받기", type="primary", use_container_width=True,
                  key="review_run"):
@@ -307,7 +300,7 @@ def _render_review() -> None:
                    "Claude 첨삭은 프리미엄 회원 전용입니다.")
     failure = review_svc.last_failure()
     if failure and source == "rule":
-        st.warning(f"API 키는 있으나 첨삭에 실패해 규칙 점검으로 표시했습니다 — {failure}")
+        st.caption("AI 첨삭을 받지 못해 규칙 점검으로 보여드렸어요.")
 
     if feedback.get("raw"):
         # 출력 형식이 어긋난 경우 — 통째로 보여주되 버리지는 않는다
@@ -437,7 +430,7 @@ def _render_interview() -> None:
         st.caption("무료 점검 — 숫자·행동·결과·인재상 단어가 있는지만 셉니다. 답변의 뜻을 평가하지 않아요.")
         failure = interview_svc.last_failure()
         if failure and ai_quota.can_use("interview"):
-            st.warning(f"AI 피드백에 실패해 규칙 점검으로 표시했습니다 — {failure}")
+            st.caption("AI 피드백을 받지 못해 규칙 점검으로 보여드렸어요.")
     if fb.get("raw"):
         st.markdown(escape(fb["raw"]))
         return

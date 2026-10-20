@@ -25,6 +25,8 @@ from data.company_showcase import COMPANY_CATEGORIES
 from services import access
 from services import api_registry as reg
 from services import curated
+from services import auth as auth_svc
+from services import fallback as fb
 from services import storage_backend
 from ui.components import back_to_hub, render_html, section_title, topbar
 from ui.theme import BRAND_DEEP, MUTED, TEXT
@@ -245,3 +247,17 @@ def render() -> None:
         st.dataframe(reg.summary_rows(), use_container_width=True, hide_index=True)
         for spec in reg.REGISTRY:
             st.caption(f"· {spec.label} — 신청: {spec.portal_url}")
+
+        # [심사대응] 예전에 허브(데이터 연동 상태)·로그인 화면(소셜 로그인 연동 현황)에
+        # 일반 사용자에게 보이던 개발자용 정보를 관리자 화면으로 옮겼다. 키 값은 표시하지 않는다.
+        st.markdown("#### 서버 키 설정 여부 (값은 표시하지 않음)")
+        st.dataframe([
+            {"항목": "Q-Net 자격증", "secrets 키": fb.QNET_SECRET,
+             "설정": "있음" if fb.key_configured(fb.QNET_SECRET) else "없음"},
+            {"항목": "고용24 채용공고", "secrets 키": fb.WORKNET_SECRET,
+             "설정": "있음" if fb.key_configured(fb.WORKNET_SECRET) else "없음"},
+        ], use_container_width=True, hide_index=True)
+        st.caption(f"내장 백업: {fb.backup_summary()}")
+        st.markdown("#### 소셜 로그인 연동 현황")
+        st.dataframe(auth_svc.status_table(), use_container_width=True, hide_index=True)
+        st.caption(f"Redirect URI: {auth_svc.redirect_uri()} — 각 개발자 콘솔에 문자 단위로 같게 등록해야 합니다.")

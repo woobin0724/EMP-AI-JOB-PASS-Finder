@@ -146,10 +146,6 @@ def render() -> None:
         if st.button("← 처음 화면으로", use_container_width=True, key="login_back"):
             ss.goto(ss.PAGE_LANDING)
 
-    # ---------- 개발자용 설정 현황 ----------
-    with st.container(key="mjp_narrow_setup"):
-        _setup_panel()
-
     _render_closing()
 
 
@@ -181,28 +177,3 @@ def _render_closing() -> None:
         {brand.TEAM_NAME} · 김우빈 · 김정수 · 오상명 · 이건희
     </div>
     """)
-
-
-def _setup_panel() -> None:
-    """
-    소셜 로그인 연동 현황과 설정 방법을 표로 보여준다.
-    심사위원에게는 '왜 지금 준비중인지'를, 팀원에게는 '뭘 넣으면 켜지는지'를
-    같은 화면에서 설명한다.
-    """
-    ready = auth_svc.configured_providers()
-    label = ("소셜 로그인 연동 현황 — "
-             + (f"{len(ready)}개 제공자 활성화" if ready else "현재 게스트모드로 동작 중"))
-
-    with st.expander(label, expanded=False):
-        st.markdown(
-            "소셜 로그인은 **코드가 아니라 각 플랫폼의 앱 등록·검수 절차**가 병목입니다. "
-            "그래서 OAuth2 인가 코드 흐름(`services/auth.py`)을 전부 구현해 두고, "
-            "`st.secrets` 에 키가 있는지로 **런타임에 자동 전환**되도록 했습니다. "
-            "키만 등록하면 코드 수정 없이 아래 상태가 '연동됨'으로 바뀝니다."
-        )
-        st.table(auth_svc.status_table())
-        st.caption(
-            f"현재 등록된 Redirect URI: `{auth_svc.redirect_uri()}` — "
-            "각 개발자 콘솔에 **문자 단위로 동일하게** 등록되어야 합니다. "
-            "배포 URL이 확정되면 `secrets.toml` 의 `OAUTH_REDIRECT_URI` 만 바꾸면 됩니다."
-        )

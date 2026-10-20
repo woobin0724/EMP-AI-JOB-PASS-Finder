@@ -112,7 +112,7 @@ def plan_label() -> str:
 def lock_reason() -> str:
     """AI 기능이 꺼져 있는 이유 — 화면 안내 문구."""
     if is_premium() and not has_api_key():
-        return "프리미엄 회원이지만 AI 서비스 키가 아직 설정되지 않았습니다."
+        return "프리미엄 회원이지만 AI 기능이 아직 준비되지 않았습니다."
     if ss.provider() in ("", "guest"):
         return "Claude 직접 작성은 소셜 로그인한 프리미엄 회원 전용입니다. 게스트는 무료 기능을 쓸 수 있어요."
     return "Claude 직접 작성은 프리미엄 회원 전용입니다. 지금은 무료 기능을 쓸 수 있어요."

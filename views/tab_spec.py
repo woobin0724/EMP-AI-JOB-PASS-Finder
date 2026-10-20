@@ -33,7 +33,7 @@ from data.departments import (
     DEPARTMENT_LIST, get_category, get_employment_rate, get_majors_for_department,
 )
 from ui import mascot
-from ui.components import back_to_hub, disclaimer, note, render_html, section_title, topbar
+from ui.components import back_to_hub, disclaimer, sample_notice, note, render_html, section_title, topbar
 from ui.theme import BLUE, CARD, GREEN, GOLD, MUTED, RED, STATUS_SOFT, STATUS_VIVID, render_stars, score_bar
 
 
@@ -63,7 +63,9 @@ def render() -> None:
     back_to_hub()
     section_title("스펙 진단 & 추천", icon_name="chart", sub=
                   "내신·자격증·전공 적합성·인재상을 100점 만점으로 환산합니다. "
-                  "이 연산은 AI API 호출 없이 로컬에서만 수행되므로 입력 즉시 갱신됩니다.")
+                  "AI 를 쓰지 않는 정해진 계산식이라 입력하는 즉시 점수가 바뀝니다.")
+
+    sample_notice()
 
     tracker = st.session_state.tracker
     all_cert_names, cert_source = load_cert_names()
@@ -219,7 +221,7 @@ def render() -> None:
 
             failure = score_explain.last_failure()
             if failure and explain_source == "rule":
-                st.warning(f"API 키는 있으나 설명 생성에 실패해 규칙 기반으로 표시했습니다 — {failure}")
+                st.caption("AI 설명을 받지 못해 규칙 기반 설명으로 보여드렸어요.")
 
             for tip in result["tips"]:
                 st.info(tip)

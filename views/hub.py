@@ -14,14 +14,13 @@ views/hub.py
 import streamlit as st
 
 from core import session as ss
-from services import fallback as fb
 from services import store
 from ui.components import (
-    code_display, grid_columns, list_row, render_html, section_title, settings_expander, topbar,
+    code_display, grid_columns, list_row, render_html, section_title, topbar,
 )
 from ui.icons import icon
 from ui import mascot
-from ui.theme import BADGE_COLORS, BRAND
+from ui.theme import BRAND
 
 
 def render() -> None:
@@ -93,8 +92,6 @@ def render() -> None:
         if st.button("로드맵 보기", key="hub_next", use_container_width=True):
             ss.goto(ss.PAGE_NEXT)
 
-    settings_expander()
-
     # ---------- 계정·반 안내 (보조) ----------
     # 학생 대부분이 매번 쓰지는 않는 정보다. 핵심 기능 카드가 첫 화면을
     # 차지하도록 주 동선 아래로 내렸다.
@@ -106,9 +103,6 @@ def render() -> None:
 
     # 반 등록/현황
     _class_strip(is_teacher)
-
-    # 데이터 출처 배지
-    st.markdown(fb.badge_html(st.session_state.tracker, BADGE_COLORS), unsafe_allow_html=True)
 
 
 def _class_strip(is_teacher: bool) -> None:

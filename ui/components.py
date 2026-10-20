@@ -7,7 +7,6 @@ ui/components.py
 import streamlit as st
 
 from core import session as ss
-from services import fallback as fb
 from ui.brand import SERVICE_NAME, TEAM_FULL
 from ui.emblem import emblem_svg
 from ui.icons import icon
@@ -134,31 +133,14 @@ def back_to_hub(label: str = "← 메인 허브로") -> None:
 
 
 # ------------------------------------------------------------
-# 데이터 연동 상태 (키 입력칸 없음 — 연결 상태만 표시)
+# 사용자 보호 안내 — 기업·채용공고·자격증 정보가 보이는 화면에 붙인다 [심사대응]
+# (예전 '데이터 연동 상태' 패널은 관리자 화면 '기업 데이터 입력 > API 연동 현황'으로 옮겼다)
 # ------------------------------------------------------------
-def settings_expander() -> None:
-    """
-    데이터 연동 상태 — 키 입력칸 없이 '연결 상태'만 보여준다. [심사대응]
+SAMPLE_NOTICE = "표시되는 기업과 채용공고는 예시(가상) 데이터이며 실제 채용 조건이 아닙니다."
 
-    예전에는 키 입력칸이 서버 secrets 값을 초기값으로 채워, 배포 서버에 키가 있으면
-    로그인한 누구나 브라우저에서 키를 볼 수 있었다. 키는 운영자가 서버 secrets 에만
-    넣고(services/fallback.server_key), 화면은 설정 여부만 표시한다.
-    """
-    def chip(label: str, on: bool) -> str:
-        bg, text = (GREEN, "키 설정됨 · 연결 시도") if on else (CARD_BORDER, "키 없음 · 백업 데이터")
-        fg = "#FFFFFF" if on else "#4E5968"
-        return (f'<span class="mjp-badge" style="background:{bg}; color:{fg}; margin:0 6px 6px 0;">'
-                f'{label} · {text}</span>')
 
-    with st.expander("데이터 연동 상태", expanded=False):
-        st.markdown(
-            chip("Q-Net 자격증", fb.key_configured(fb.QNET_SECRET))
-            + chip("고용24 채용공고", fb.key_configured(fb.WORKNET_SECRET)),
-            unsafe_allow_html=True,
-        )
-        st.caption("API 키는 운영자가 서버 설정(secrets)에만 넣으며, 화면에서 입력하거나 볼 수 없습니다. "
-                   "키가 없거나 응답이 없으면 백업 데이터로 동작합니다.")
-        st.caption(f"내장 백업: {fb.backup_summary()}")
+def sample_notice() -> None:
+    disclaimer(SAMPLE_NOTICE)
 
 
 def disclaimer(text: str) -> None:
