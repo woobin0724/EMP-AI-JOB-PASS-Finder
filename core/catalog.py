@@ -17,9 +17,12 @@ from services import fallback as fb
 
 
 @st.cache_data(ttl=3600, show_spinner=False)
-def load_cert_names(api_key: str) -> tuple[list, str]:
-    """Q-Net 자격증 목록. 실패 시 백업 마스터로 자동 전환된다."""
-    df, source = fb.fetch_certifications_safe(api_key)
+def load_cert_names() -> tuple[list, str]:
+    """
+    Q-Net 자격증 목록. 실패 시 백업 마스터로 자동 전환된다.
+    키는 서버 secrets 에서만 읽는다 — 인자로 받지 않아 캐시 키에도 남지 않는다.
+    """
+    df, source = fb.fetch_certifications_safe(fb.server_key(fb.QNET_SECRET))
     names = df["name"].tolist() if "name" in df else []
     return names, source
 

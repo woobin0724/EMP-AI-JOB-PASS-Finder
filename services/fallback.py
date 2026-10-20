@@ -171,6 +171,30 @@ def safe_call(fn, *args, fallback=None, tracker: SourceTracker | None = None,
 # ------------------------------------------------------------
 # 각 데이터 소스별 안전 조회 함수
 # ------------------------------------------------------------
+# ------------------------------------------------------------
+# [심사대응] API 키는 서버 secrets 에서만 읽는다
+# ------------------------------------------------------------
+# 예전에는 허브의 '데이터 연동 설정' 입력칸이 secrets 값을 초기값으로 채워
+# 키가 사용자 브라우저로 전송될 수 있었다. 이제 키는 이 함수로만 읽고,
+# 세션 상태·화면 위젯에 넣지 않는다. 화면에는 연결 상태만 보여준다.
+QNET_SECRET = "QNET_API_KEY"
+WORKNET_SECRET = "WORKNET_API_KEY"
+
+
+def server_key(secret_name: str) -> str:
+    """st.secrets 의 키. secrets.toml 이 없어도 예외 없이 빈 문자열."""
+    try:
+        import streamlit as st
+        return str(st.secrets.get(secret_name, "") or "").strip()
+    except Exception:
+        return ""
+
+
+def key_configured(secret_name: str) -> bool:
+    """키가 서버에 설정돼 있는가 (값은 돌려주지 않는다)."""
+    return bool(server_key(secret_name))
+
+
 def fetch_certifications_safe(api_key: str | None, tracker: SourceTracker | None = None):
     """Q-Net(공공데이터포털) 자격증 마스터 조회. 실패 시 백업 자격증 데이터."""
     from services.qnet_api import fetch_certifications_from_api

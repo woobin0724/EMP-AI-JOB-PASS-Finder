@@ -66,7 +66,7 @@ def render() -> None:
                   "이 연산은 AI API 호출 없이 로컬에서만 수행되므로 입력 즉시 갱신됩니다.")
 
     tracker = st.session_state.tracker
-    all_cert_names, cert_source = load_cert_names(st.session_state.get("qnet_key", ""))
+    all_cert_names, cert_source = load_cert_names()
     tracker.record("Q-Net 자격증", cert_source)
 
     # ▣ 배치 의도 — 점수가 항상 첫 화면에 온다

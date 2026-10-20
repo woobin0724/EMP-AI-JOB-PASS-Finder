@@ -73,7 +73,7 @@ def render() -> None:
     if fetch:
         with st.spinner("고용24·잡알리오·강소기업 포털 호출 중... 실패 시 백업 데이터로 자동 전환됩니다."):
             worknet_df, _ = fb.fetch_jobs_safe(
-                st.session_state.get("worknet_key", ""), kw, tracker=tracker)
+                fb.server_key(fb.WORKNET_SECRET), kw, tracker=tracker)
             alio_records, _ = fb.fetch_alio_safe(tracker=tracker)
             sme_records, _ = fb.fetch_strong_sme_safe(tracker=tracker)
 

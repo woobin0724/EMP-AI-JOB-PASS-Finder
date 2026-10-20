@@ -118,10 +118,7 @@ def _defaults() -> dict:
         "cover_letter_options": None,   # [Phase 5] 문체·분량·회차
         "live_jobs": None,
         "tracker": SourceTracker(),
-
-        # --- 외부 API 키 (사이드바 → 설정 패널로 이동) ---
-        "qnet_key": "",
-        "worknet_key": "",
+        # [심사대응] 외부 API 키는 세션에 두지 않는다 — services/fallback.server_key
     }
 
 
