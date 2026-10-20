@@ -9,14 +9,14 @@ ui/mascot.py
    둘이 한 화면에서 경쟁하면 시선이 분산되므로, 마스코트는 포인트로만 쓴다.
 
 ▣ 이미지 해석 순서 (앞에서 찾으면 뒤는 보지 않는다)
-   1) assets/mascot/manifest.json  — OGQ API 로 내려받은 원본 PNG (최종 형태)
+   1) assets/mascot/manifest.json  — 대회 공식 OGQ API 로 내려받은 PNG
       scripts/fetch_mascot.py 가 만든다. slots 매핑으로 감정별 낱장을 고른다.
-   2) assets/ogq/*.jpg             — 레포에 이미 있던 스티커 (과도기)
-      다만 이 파일들은 어두운 회색(RGB 37,41,42) 배경이 붙은 저해상도 크롭이라,
-      그대로 올리면 다크 테마 위에 회색 네모가 뜬다. 런타임에 배경을 빼서 쓴다.
-   3) 없으면 아무것도 그리지 않는다.
-      이모지로 대체하지 않는 이유: 이모지를 걷어내는 것이 이번 작업의 목표다.
-      깨진 그림 대신 여백이 낫다.
+      (지금 저장소에는 없다 — 내려받은 적이 없다)
+   2) 없으면 아무것도 그리지 않는다(빈 영역). 말풍선은 문구만 보여준다.
+
+▣ [심사대응] assets/ogq/*.jpg 11장은 삭제했다
+   OGQ마켓 스티커를 이용 허락 없이 캡처해 쓰던 이미지였다. 그 파일을 읽고
+   배경을 깎아 쓰던 과도기 코드도 함께 지웠다(README '자산과 라이선스' 정정 참고).
 
 ▣ API 호출은 하지 않는다
    마스코트는 최초 1회 내려받은 정적 파일로만 동작한다. 화면을 그릴 때마다
@@ -24,7 +24,6 @@ ui/mascot.py
 """
 
 import base64
-import io
 import json
 import os
 
@@ -33,35 +32,9 @@ import streamlit as st
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MASCOT_DIR = os.path.join(BASE_DIR, "assets", "mascot")
 MANIFEST_PATH = os.path.join(MASCOT_DIR, "manifest.json")
-LEGACY_DIR = os.path.join(BASE_DIR, "assets", "ogq")
 
-# 레거시 스티커의 배경색 (측정값). 이 색 근처를 투명으로 뺀다.
-LEGACY_BG = (37, 41, 42)
-LEGACY_TOLERANCE = 26
-
-# 감정 슬롯 → 과도기 레거시 파일 매핑
-_LEGACY_SLOTS = {
-    "welcome": "ogq_hello.jpg",
-    "celebrate": "ogq_clap.jpg",
-    "cheer": "ogq_cheer.jpg",
-    "comfort": "ogq_comfort.jpg",
-    "thinking": "ogq_thinking.jpg",
-    "stamp": "ogq_stamp.jpg",
-    "encourage": "ogq_encourage.jpg",
-    "thanks": "ogq_thanks.jpg",
-}
-
-SLOT_NAMES = tuple(_LEGACY_SLOTS)
-
-# 슬롯 이미지가 없을 때 대신 쓸 슬롯 (가까운 감정 순).
-# ogq_thinking.jpg 는 코드가 찾지만 저장소에 없다 — 출처를 모르는 이미지를
-# 새로 넣는 대신, 이미 있는 마스코트 중 가까운 감정으로 대체한다.
-_SLOT_FALLBACKS = {
-    "thinking": ("encourage", "cheer", "welcome"),
-    "celebrate": ("cheer", "thanks", "welcome"),
-    "comfort": ("encourage", "cheer", "welcome"),
-    "stamp": ("celebrate", "cheer", "welcome"),
-}
+# 화면이 쓰는 감정 슬롯 이름 (매니페스트의 slots 키와 같다)
+SLOT_NAMES = ("welcome", "celebrate", "cheer", "comfort", "thinking", "stamp", "encourage", "thanks")
 
 
 # ------------------------------------------------------------
@@ -92,13 +65,13 @@ def is_api_mascot() -> bool:
 
 
 def credit() -> str:
-    """출처 표기 문구. 화면 하단이나 캡션에 쓴다."""
+    """출처 표기 문구. 공식 API 로 받은 이미지가 있을 때만, 매니페스트 값 그대로."""
     data = manifest()
     if data.get("files"):
-        title = data.get("title") or "OGQ 스티커"
-        creator = data.get("creator") or "OGQ"
-        return f"마스코트: {title} · {creator} · NAVER OGQ마켓"
-    return "마스코트: NAVER OGQ마켓 캐릭터 스티커"
+        title = data.get("title") or ""
+        creator = data.get("creator") or ""
+        return f"마스코트: {title} · {creator}".strip(" ·")
+    return ""
 
 
 # ------------------------------------------------------------
@@ -126,68 +99,6 @@ def _api_path(slot: str) -> str | None:
     return path if os.path.exists(path) else None
 
 
-def _legacy_file(slot: str) -> str | None:
-    name = _LEGACY_SLOTS.get(slot)
-    if not name:
-        return None
-    path = os.path.join(LEGACY_DIR, name)
-    return path if os.path.exists(path) else None
-
-
-def _legacy_path(slot: str) -> str | None:
-    """
-    슬롯 → 실제 파일. 없으면 가까운 감정 → 아무 슬롯 순으로 대체한다.
-    전부 없으면 None (화면은 마스코트 자리를 아예 그리지 않는다).
-    """
-    order = (slot,) + _SLOT_FALLBACKS.get(slot, ()) + SLOT_NAMES
-    for candidate in order:
-        path = _legacy_file(candidate)
-        if path:
-            return path
-    return None
-
-
-# ------------------------------------------------------------
-# 레거시 스티커 배경 제거
-# ------------------------------------------------------------
-@st.cache_data(show_spinner=False)
-def _keyed_png(path: str, mtime: float) -> bytes | None:
-    """
-    회색 배경(RGB 37,41,42)을 투명하게 만든다.
-
-    단순 임계값으로 자르면 캐릭터 외곽선이 계단처럼 남는다. 배경색과의 거리로
-    알파를 부드럽게 깎아 경계를 자연스럽게 했다.
-    """
-    try:
-        import numpy as np
-        from PIL import Image
-    except Exception:
-        return None
-
-    try:
-        im = Image.open(path).convert("RGBA")
-        arr = np.asarray(im).astype(np.float32)
-    except Exception:
-        return None
-
-    rgb = arr[..., :3]
-    bg = np.array(LEGACY_BG, dtype=np.float32)
-    dist = np.sqrt(((rgb - bg) ** 2).sum(axis=-1))
-
-    # 거리 0 → 완전 투명, tolerance 이상 → 완전 불투명 (그 사이는 선형)
-    alpha = np.clip(dist / LEGACY_TOLERANCE, 0.0, 1.0)
-    out = np.dstack([rgb, alpha * 255.0]).astype(np.uint8)
-
-    result = Image.fromarray(out, mode="RGBA")
-    bbox = result.getbbox()
-    if bbox:
-        result = result.crop(bbox)
-
-    buffer = io.BytesIO()
-    result.save(buffer, format="PNG", optimize=True)
-    return buffer.getvalue()
-
-
 def data_uri(slot: str) -> str | None:
     """슬롯에 해당하는 이미지를 data URI 로 반환한다. 없으면 None."""
     path = _api_path(slot)
@@ -199,14 +110,6 @@ def data_uri(slot: str) -> str | None:
         except Exception:
             pass
 
-    path = _legacy_path(slot)
-    if path:
-        try:
-            keyed = _keyed_png(path, os.path.getmtime(path))
-        except Exception:
-            keyed = None
-        if keyed:
-            return "data:image/png;base64," + base64.b64encode(keyed).decode("ascii")
     return None
 
 
@@ -229,12 +132,8 @@ def html(slot: str, size: int = 110, min_size: int | None = None) -> str:
         return ""
     min_size = min_size or max(56, int(size * 0.62))
     width = f"clamp({min_size}px, 18vw, {size}px)"
-    # 레거시 스티커는 회색 배경(LEGACY_BG)을 깎아낸 이미지라 흰 바탕에서는 경계의
-    # 잔여 점이 드러난다. 이미지는 그대로 두고, 원래 배경과 같은 색의 둥근 타일
-    # 위에 얹어 원본 스티커 모습대로 보이게 한다 (ui/theme.py .mjp-mascot-legacy).
-    legacy = " mjp-mascot-legacy" if _api_path(slot) is None else ""
     return (
-        f'<img src="{uri}" alt="" class="mjp-mascot{legacy}" '
+        f'<img src="{uri}" alt="" class="mjp-mascot" '
         f'style="width:{width}; height:auto; display:block;" />'
     )
 

@@ -434,7 +434,6 @@ div[data-testid="stAlert"] > div, div[data-testid="stAlertContainer"] {{
 div[data-testid="stDataFrame"] {{ border-radius: 16px; overflow: hidden; }}
 
 /* 레거시 마스코트 스티커 — 원래 배경색(RGB 37,41,42) 타일 위에 원본 그대로 (ui/mascot.py) */
-.mjp-mascot-legacy {{ background: #25292A; border-radius: 22px; padding: 8px; box-sizing: border-box; }}
 
 /* ===== 5-1. v2 공통 부품 (ui/components.py) ===== */
 .mjp-screen-head {{ margin: 8px 0 28px; }}

@@ -13,7 +13,6 @@ views/tab_next.py
 import streamlit as st
 
 from core import session as ss
-from data import ogq_assets as ogq
 from services import auth as auth_svc
 from ui import mascot
 from ui.components import back_to_hub, grid_columns, render_html, section_title, status_chip, topbar
@@ -140,18 +139,3 @@ def render() -> None:
                        "가설이 남아 있어 순서를 뒤로 미룬 항목입니다.")
             for f in planned:
                 _feature_card(f)
-
-    st.divider()
-    scol1, scol2 = st.columns([1, 2.2])
-    with scol1:
-        st.markdown(mascot.html("cheer", size=180), unsafe_allow_html=True)
-    with scol2:
-        st.markdown("#### 마스코트 캐릭터에 대하여")
-        st.markdown(
-            "점수 결과와 로드맵 스탬프에 쓰인 캐릭터는 네이버 OGQ마켓의 창작자 스티커입니다. "
-            "숫자만 보여주는 진단 도구는 낮은 점수를 받은 학생을 밀어냅니다. 같은 48점이라도 "
-            "위로하는 캐릭터가 옆에 있으면 다음 화면으로 넘어갈 확률이 달라진다는 것이 "
-            "유저 인터뷰에서 가장 반복된 반응이었습니다."
-        )
-        st.caption(f"출처: {ogq.OGQ_MARKET_URL} · 교내 프로젝트 시연 용도이며, 외부 배포 시 "
-                   f"창작자 이용 허락 또는 OGQ마켓 라이선스 정책 확인이 필요합니다.")
