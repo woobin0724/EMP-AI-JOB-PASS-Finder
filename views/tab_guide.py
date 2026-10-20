@@ -188,7 +188,7 @@ def _company_detail(c: dict) -> None:
             f'<div class="mjp-interview"><span class="mjp-qbadge">인터뷰 질문 {i + 1:02d}</span>Q. {q}</div>',
             unsafe_allow_html=True)
 
-    st.markdown("#### 코멘토 스타일 4주 맞춤 커리큘럼 (예시)")
+    st.markdown("#### 팀이 만든 4주 예시 커리큘럼")
     curriculum = generate_curriculum(c)
     st.session_state.last_curriculum = curriculum
     for wk in curriculum:

@@ -86,7 +86,7 @@ def render() -> None:
 
     with in_left:
         _step(1, "학과와 내신")
-        dept = st.selectbox("학과/계열 (하이파이브 분류 기준)", DEPARTMENT_LIST,
+        dept = st.selectbox("학과/계열 (하이파이브 분류를 참고한 팀 자체 분류)", DEPARTMENT_LIST,
                             index=DEPARTMENT_LIST.index(st.session_state.dept),
                             key="dept_widget", on_change=_mark_touched)
         st.session_state.dept = dept
