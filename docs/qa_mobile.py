@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 """Phase 6 모바일 QA — 브라우저에서 실제로 측정한다."""
-import asyncio, json
+import asyncio, json, os, tempfile
 from playwright.async_api import async_playwright
 
-URL = "http://localhost:8501/"
-OUT = "/tmp/claude-0/-home-user-EMP-AI-JOB-PASS-Finder/669256b0-90c9-52a9-8a52-b2d435ad48c8/scratchpad"
+URL = os.environ.get("QA_URL", "http://localhost:8501/")
+# 스크린샷·결과 JSON 저장 위치. 기본은 OS 임시 폴더 아래 mjp_qa (QA_OUT 으로 바꿀 수 있다)
+OUT = os.environ.get("QA_OUT", os.path.join(tempfile.gettempdir(), "mjp_qa"))
+os.makedirs(OUT, exist_ok=True)
 
 # 실측 스크립트 — 화면마다 동일하게 돌린다
 PROBE = """() => {
@@ -73,7 +75,9 @@ async def probe(pg, name, results, shot=True):
 async def run(device, vw, vh, mobile):
     results = []
     async with async_playwright() as p:
-        b = await p.chromium.launch(executable_path="/opt/pw-browsers/chromium")
+        # 크롬 실행 파일을 따로 쓰는 환경이면 PW_CHROMIUM 으로 지정 (없으면 Playwright 기본값)
+        exe = os.environ.get("PW_CHROMIUM") or None
+        b = await p.chromium.launch(executable_path=exe)
         ctx = await b.new_context(viewport={"width":vw,"height":vh}, device_scale_factor=2,
                                   is_mobile=mobile, has_touch=mobile)
         pg = await ctx.new_page()

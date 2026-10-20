@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 """Supabase 백엔드 로직을 가짜 REST 서버로 검증한다 (네트워크 없이)."""
-import sys, json
-sys.path.insert(0, "/home/user/EMP-AI-JOB-PASS-Finder")
+import json
+import os
+import sys
+
+# 저장소 루트를 import 경로에 넣는다 (어디서 실행해도 같게)
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from services import storage_backend as sb
 
 
