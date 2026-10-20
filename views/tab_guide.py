@@ -103,7 +103,7 @@ def _roadmap(company: dict) -> None:
                 st.markdown(
                     f'<div style="height:126px; background:{CARD}; border-radius:20px;'
                     f'display:flex; align-items:center; justify-content:center; color:{MUTED};'
-                    f'font-size:var(--mjp-small);">달성하면 마스코트가 축하해요</div>', unsafe_allow_html=True)
+                    f'font-size:var(--mjp-small);">달성하면 응원 문구가 나와요</div>', unsafe_allow_html=True)
 
     # [Phase 2] 로드맵 진행 단계 저장 — 체크박스 3개를 모두 반영한 뒤 한 번만 호출한다.
     # 루프 안에서 부르면 한 번의 rerun 에 세 번 저장하게 된다.
